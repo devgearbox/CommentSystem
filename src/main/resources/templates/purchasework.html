@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>荔枝批发管理系统 - 采购人员端</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -82,8 +83,8 @@
         }
 
         .user-info img {
-            width: 40px;
-            height: 40px;
+            width:  60px;
+            height: 60px;
             border-radius: 50%;
             margin-right: 10px;
         }
@@ -314,10 +315,10 @@
     <div class="header">
         <h2>采购人员工作台</h2>
         <div class="user-info">
-            <img src="https://via.placeholder.com/40" alt="用户头像">
+            <img th:src="@{/img/defaultMan.png}" alt="用户头像">
             <div>
-                <div>张采购</div>
-                <div style="font-size: 12px; color: #666;">采购专员</div>
+                <div th:text="${session.username}" style="font-size: 30px"></div>
+                <div style="font-size: 12px; color: #666; text-align: center;">采购专员</div>
             </div>
         </div>
     </div>
@@ -371,37 +372,17 @@
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>CG2023061501</td>
-                <td>海南荔枝种植基地</td>
-                <td>妃子笑</td>
-                <td>300</td>
-                <td>18.5</td>
-                <td><span class="status status-approved">已审批</span></td>
+            <tr th:each="order : ${recentOrders}">
+                <td th:text="${order.orderId}">CG2023061501</td>
+                <td th:text="${order.supplier}">海南荔枝种植基地</td>
+                <td th:text="${order.variety}">妃子笑</td>
+                <td th:text="${order.quantity}">300</td>
+                <td th:text="${order.price}">18.5</td>
                 <td>
-                    <button class="action-btn"><i class="fas fa-edit"></i> 编辑</button>
-                    <button class="action-btn"><i class="fas fa-eye"></i> 查看</button>
+                    <span class="status" th:classappend="${order.status} == '已审批' ? 'status-approved' :
+                                      (${order.status} == '待审批' ? 'status-pending' : 'status-rejected')"
+                          th:text="${order.status}">已审批</span>
                 </td>
-            </tr>
-            <tr>
-                <td>CG2023061502</td>
-                <td>广东茂名合作社</td>
-                <td>白糖罂</td>
-                <td>200</td>
-                <td>22.0</td>
-                <td><span class="status status-pending">待审批</span></td>
-                <td>
-                    <button class="action-btn"><i class="fas fa-edit"></i> 编辑</button>
-                    <button class="action-btn"><i class="fas fa-eye"></i> 查看</button>
-                </td>
-            </tr>
-            <tr>
-                <td>CG2023061405</td>
-                <td>广西灵山果农联盟</td>
-                <td>桂味</td>
-                <td>150</td>
-                <td>25.8</td>
-                <td><span class="status status-rejected">已驳回</span></td>
                 <td>
                     <button class="action-btn"><i class="fas fa-edit"></i> 编辑</button>
                     <button class="action-btn"><i class="fas fa-eye"></i> 查看</button>
@@ -430,23 +411,12 @@
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>海南荔枝种植基地</td>
-                <td>李经理</td>
-                <td>138xxxx5678</td>
-                <td>妃子笑、白糖罂</td>
-                <td>2023-06-14</td>
-                <td>
-                    <button class="action-btn"><i class="fas fa-file-alt"></i> 新建订单</button>
-                    <button class="action-btn"><i class="fas fa-eye"></i> 详情</button>
-                </td>
-            </tr>
-            <tr>
-                <td>广东茂名合作社</td>
-                <td>王主管</td>
-                <td>139xxxx1234</td>
-                <td>白糖罂、桂味</td>
-                <td>2023-06-12</td>
+            <tr th:each="supplier : ${suppliers}">
+                <td th:text="${supplier.name}">海南荔枝种植基地</td>
+                <td th:text="${supplier.contact}">李经理</td>
+                <td th:text="${supplier.phone}">138xxxx5678</td>
+                <td th:text="${supplier.varieties}">妃子笑、白糖罂</td>
+                <td th:text="${supplier.lastCooperationDate}">2023-06-14</td>
                 <td>
                     <button class="action-btn"><i class="fas fa-file-alt"></i> 新建订单</button>
                     <button class="action-btn"><i class="fas fa-eye"></i> 详情</button>
@@ -486,3 +456,5 @@
         </form>
     </div>
 </div>
+</body>
+</html>

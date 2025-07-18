@@ -23,17 +23,20 @@ public class LoginController {
 
     // 处理登录提交
     @PostMapping("/login")
-    public String login(@RequestParam String username,
-                        @RequestParam String password,
-                        HttpSession session,
-                        RedirectAttributes redirectAttributes) {
-        User user = userService.loginWithRole(username, password); // 获取完整用户信息
+    public String login(
+            @RequestParam String username,
+            @RequestParam String password,
+            HttpSession session,
+            RedirectAttributes redirectAttributes
+    ) {
+        User user = userService.loginWithRole(username, password);
         if (user != null) {
-            session.setAttribute("user", user); // 保存用户信息到Session
+            // 将用户名存储到 Session
+            session.setAttribute("username", user.getUsername());
 
             // 根据角色定向
             if (user.getRole() == 1) {
-                return "redirect:/purchase.html"; // 采购人员跳转
+                return "redirect:/purchasework"; // 采购人员跳转
             } else {
                 return "redirect:/home"; // 其他角色跳转
             }
@@ -47,5 +50,10 @@ public class LoginController {
     @GetMapping("/home")
     public String home() {
         return "home"; // 需创建 home.html 作为登录后页面
+    }
+
+    @GetMapping("/purchasework")
+    public String purchasework() {
+        return "purchasework";
     }
 }
