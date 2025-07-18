@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录</title>
+    <style>
+        /* 基础样式重置 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #165DFF;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 13px;
+        }
+
+        .forgot-password a {
+            color: #165DFF;
+            text-decoration: none;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #165DFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0E45C1;
+        }
+
+        .register-button {
+            background-color: white;
+            color: #165DFF;
+            border: 1px solid #165DFF;
+        }
+
+        .register-button:hover {
+            background-color: #f5f8ff;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider span {
+            background-color: white;
+            padding: 0 10px;
+            position: relative;
+            z-index: 1;
+            font-size: 14px;
+            color: #999;
+        }
+
+        .divider::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #ddd;
+            z-index: 0;
+        }
+
+        .wechat-button {
+            background-color: #07C160;
+        }
+
+        .wechat-button:hover {
+            background-color: #05A852;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <h2>用户登录</h2>
+    <form id="loginForm" action="/login" method="post">
+        <div class="form-group">
+            <label for="username">账号</label>
+            <input type="text" id="username" name="username" placeholder="请输入账号" required value="admin">
+        </div>
+        <div class="form-group password-container">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" autocomplete="password" placeholder="请输入密码" required value="admin">
+<!--            <span class="toggle-password" id="togglePassword"></span>-->
+        </div>
+        <div class="forgot-password">
+            <a href="#">忘记密码?</a>
+        </div>
+        <button type="submit">登录</button>
+<!--        <button type="button" id="registerBtn" class="register-button">注册</button>-->
+    </form>
+    <a href="/register">
+        <button type="button" >注册新账号</button>
+    </a>
+
+    <div class="divider">
+        <span>其他登录方式</span>
+    </div>
+
+    <button type="button" id="wechatLogin" class="wechat-button">微信登录</button>
+
+</div>
+
+<script th:inline="javascript">
+    // 从 Thymeleaf 变量取 error，修正语法，直接获取变量值
+    let errorMsg = /*[[${error}]]*/ '';
+    if (errorMsg!== null && errorMsg.trim()!== "") {
+        alert(errorMsg);
+    }
+    // 密码显示/隐藏切换
+    document.addEventListener('DOMContentLoaded', function() {
+        // 密码显示/隐藏切换
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password'? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                // 根据密码显示状态，切换伪元素图标（可选，若需要不同状态显示不同图标）
+                this.querySelector('::before');
+                if (type === 'password') {
+                    this.style.color = '#999';
+                    // icon.textContent = "🔒";
+                } else {
+                    this.style.color = '#666';
+                    // icon.textContent = "🔓";
+                }
+            });
+        }
+
+        // 注册按钮点击
+        const registerBtn = document.getElementById('registerBtn');
+        if (registerBtn) {
+            registerBtn.addEventListener('click', function() {
+                alert('注册功能已触发，实际应用中会跳转到注册页面');
+            });
+        }
+
+        // 微信登录点击
+        const wechatLogin = document.getElementById('wechatLogin');
+        if (wechatLogin) {
+            wechatLogin.addEventListener('click', function() {
+                alert('微信登录功能已触发，实际应用中会调用微信登录接口');
+            });
+        }
+    });
+</script>
+</body>
+</html>
