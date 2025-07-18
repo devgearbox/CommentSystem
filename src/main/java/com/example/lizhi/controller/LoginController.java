@@ -31,12 +31,11 @@ public class LoginController {
     ) {
         User user = userService.loginWithRole(username, password);
         if (user != null) {
-            // 将用户名存储到 Session
             session.setAttribute("username", user.getUsername());
 
-            // 根据角色定向
+            // 采购人员重定向到 /work
             if (user.getRole() == 1) {
-                return "redirect:/purchasework"; // 采购人员跳转
+                return "redirect:/work"; // 采购人员跳转
             } else {
                 return "redirect:/home"; // 其他角色跳转
             }
@@ -45,7 +44,6 @@ public class LoginController {
             return "redirect:/login";
         }
     }
-
     // 示例：登录成功后跳转的主页接口
     @GetMapping("/home")
     public String home() {
