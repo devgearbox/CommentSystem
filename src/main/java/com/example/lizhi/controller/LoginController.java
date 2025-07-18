@@ -35,7 +35,7 @@ public class LoginController {
 
             // 采购人员重定向到 /work
             if (user.getRole() == 1) {
-                return "redirect:/work"; // 采购人员跳转
+                return "redirect:/purchasework"; // 采购人员跳转
             } else {
                 return "redirect:/home"; // 其他角色跳转
             }
