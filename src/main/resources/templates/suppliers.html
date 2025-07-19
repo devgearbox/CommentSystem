@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>供应商管理</title>
+    <style>
+        /* 只保留内容区域的样式 */
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        .main-content {
+            padding: 20px;
+            margin-left: 0; /* 移除侧边栏的偏移 */
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: #2d8659;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #236b45;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f9faf9;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .action-btn {
+            color: #2d8659;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            width: 300px;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 8px;
+        }
+
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-modal:hover,
+        .close-modal:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .modal-footer .btn {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="main-content">
+    <div class="header">
+        <h2>供应商管理</h2>
+        <div class="user-info">
+            <img th:src="@{/img/defaultMan.png}" alt="用户头像">
+            <div>
+                <div th:text="${session.username}" style="font-size: 30px"></div>
+                <div style="font-size: 12px; color: #666; text-align: center;">采购专员</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>供应商列表</h2>
+            <button class="btn btn-primary" id="addSupplierBtn">
+                <i class="fas fa-plus"></i> 添加供应商
+            </button>
+        </div>
+        <div class="search-box">
+            <input type="text" id="supplierSearch" placeholder="搜索供应商名称或联系人">
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>供应商ID</th>
+                <th>供应商名称</th>
+                <th>联系人</th>
+                <th>联系电话</th>
+                <th>地址</th>
+                <th>供应品种</th>
+                <th>合作开始日期</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="supplier : ${suppliers}">
+                <td th:text="${supplier.supplierId}">1</td>
+                <td th:text="${supplier.supplierName}">海南荔枝种植基地</td>
+                <td th:text="${supplier.contact}">李经理</td>
+                <td th:text="${supplier.phone}">13800138000</td>
+                <td th:text="${supplier.address}">海南省海口市龙华区</td>
+                <td th:text="${supplier.varieties}">妃子笑,白糖罂</td>
+                <td th:text="${supplier.cooperationStartDate}">2023-01-15</td>
+                <td th:text="${supplier.status} == 1 ? '启用' : '禁用'">启用</td>
+                <td>
+                    <!-- 修改后（正确写法） -->
+                    <button class="action-btn" th:onclick="'editSupplier(' + ${supplier.supplierId} + ')'">
+                        <i class="fas fa-edit">编辑</i>
+                    </button>
+
+                    <button class="action-btn" th:onclick="'deleteSupplier(' + ${supplier.supplierId} + ')'">
+                        <i class="fas fa-trash">删除</i>
+                    </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="supplierModal">
+    <div class="modal-content">
+        <span class="close-modal" id="closeModal">×</span>
+        <h3 id="modalTitle">添加供应商</h3>
+        <form id="supplierForm">
+            <input type="hidden" id="supplierId">
+            <div class="form-group">
+                <label for="supplierName">供应商名称</label>
+                <input type="text" class="form-control" id="supplierName" required>
+            </div>
+            <div class="form-group">
+                <label for="contact">联系人</label>
+                <input type="text" class="form-control" id="contact" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">联系电话</label>
+                <input type="text" class="form-control" id="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="address">地址</label>
+                <input type="text" class="form-control" id="address" required>
+            </div>
+            <div class="form-group">
+                <label for="varieties">供应品种</label>
+                <input type="text" class="form-control" id="varieties" required>
+            </div>
+            <div class="form-group">
+                <label for="cooperationStartDate">合作开始日期</label>
+                <input type="date" class="form-control" id="cooperationStartDate" required>
+            </div>
+            <div class="form-group">
+                <label for="status">状态</label>
+                <select class="form-control" id="status" required>
+                    <option value="1">启用</option>
+                    <option value="0">禁用</option>
+                </select>
+            </div>
+        </form>
+        <div class="modal-footer">
+            <button class="btn" id="cancelBtn">取消</button>
+            <button class="btn btn-primary" id="saveBtn">保存</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // 打开添加供应商模态框
+    $('#addSupplierBtn').click(function() {
+        $('#modalTitle').text('添加供应商');
+        $('#supplierId').val('');
+        $('#supplierForm')[0].reset();
+        $('#supplierModal').show();
+    });
+
+    // 关闭模态框
+    $('#closeModal, #cancelBtn').click(function() {
+        $('#supplierModal').hide();
+    });
+
+    // 保存供应商
+    $('#saveBtn').click(function() {
+        // 获取表单数据
+        let supplierData = {
+            supplierId: $('#supplierId').val(),
+            supplierName: $('#supplierName').val(),
+            contact: $('#contact').val(),
+            phone: $('#phone').val(),
+            address: $('#address').val(),
+            varieties: $('#varieties').val(),
+            cooperationStartDate: $('#cooperationStartDate').val(),
+            status: $('#status').val()
+        };
+
+        // 发送AJAX请求
+        $.ajax({
+            url: '/suppliers/save',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(supplierData),
+            success: function(response) {
+                alert('保存成功');
+                $('#supplierModal').hide();
+                // 重新加载供应商列表
+                location.reload();
+            },
+            error: function(xhr, status, error) {
+                alert('保存失败: ' + error);
+            }
+        });
+    });
+
+    // 编辑供应商
+    function editSupplier(id) {
+        // 发送AJAX请求获取供应商数据
+        $.ajax({
+            url: '/suppliers/' + id,
+            type: 'GET',
+            success: function(supplier) {
+                $('#modalTitle').text('编辑供应商');
+                $('#supplierId').val(supplier.supplierId);
+                $('#supplierName').val(supplier.supplierName);
+                $('#contact').val(supplier.contact);
+                $('#phone').val(supplier.phone);
+                $('#address').val(supplier.address);
+                $('#varieties').val(supplier.varieties);
+                $('#cooperationStartDate').val(supplier.cooperationStartDate);
+                $('#status').val(supplier.status);
+                $('#supplierModal').show();
+            },
+            error: function(xhr, status, error) {
+                alert('获取供应商数据失败: ' + error);
+            }
+        });
+    }
+
+    // 删除供应商
+    function deleteSupplier(id) {
+        if (confirm('确定要删除该供应商吗？')) {
+            // 发送AJAX请求删除供应商
+            $.ajax({
+                url: '/suppliers/' + id,
+                type: 'DELETE',
+                success: function(response) {
+                    alert('删除成功');
+                    // 重新加载供应商列表
+                    location.reload();
+                },
+                error: function(xhr, status, error) {
+                    alert('删除失败: ' + error);
+                }
+            });
+        }
+    }
+
+    // 供应商搜索
+    $('#supplierSearch').on('input', function() {
+        let searchText = $(this).val().toLowerCase();
+        $('table tbody tr').each(function() {
+            let supplierName = $(this).find('td:eq(1)').text().toLowerCase();
+            let contact = $(this).find('td:eq(2)').text().toLowerCase();
+            if (supplierName.includes(searchText) || contact.includes(searchText)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+</script>
+</body>
+</html>

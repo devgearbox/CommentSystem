@@ -25,7 +25,7 @@ public class DashboardController {
     }
 
     // 处理供应商管理请求
-    @GetMapping("/suppliers")
+    @GetMapping("/dashboard/suppliers") // 修改映射路径
     public String showSuppliers() {
         return "suppliers"; // 对应 templates/suppliers.html
     }
