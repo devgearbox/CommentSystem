@@ -296,7 +296,7 @@
             <i class="fas fa-truck"></i>
             <span>入库管理</span>
         </div>
-        <div class="menu-item" data-url="/dashboard/suppliers">
+        <div class="menu-item" data-url="/suppliers">
             <i class="fas fa-users"></i>
             <span>供应商管理</span>
         </div>
@@ -322,10 +322,28 @@
         var url = $(this).attr('data-url');
         $('#content-frame').attr('src', url);
 
+        // 移除所有菜单项的 active 类
+        $('.menu-item').removeClass('active');
+        // 为当前点击的菜单项添加 active 类
+        $(this).addClass('active');
+
         // 更新URL（可选）
         history.pushState(null, null, url);
     });
 
+    //侧边栏颜色跟随
+    window.addEventListener('popstate', function() {
+        var currentUrl = window.location.pathname;
+        // 根据当前 URL 找到对应的菜单项并设置选中状态
+        $('.menu-item').each(function() {
+            if ($(this).attr('data-url') === currentUrl) {
+                $('.menu-item').removeClass('active');
+                $(this).addClass('active');
+                $('#content-frame').attr('src', currentUrl);
+                return false;
+            }
+        });
+    });
     // 处理浏览器前进/后退按钮
     // window.addEventListener('popstate', function() {
     //     var url = location.pathname;

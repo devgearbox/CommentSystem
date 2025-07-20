@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Suppliers List</title>
+    <link rel="stylesheet" th:href="@{/css/supplier.css}">
+</head>
+<body>
+<div class="section">
+    <div class="header">
+        <div class="search-box">
+            <input type="text" placeholder="搜索供应商...">
+            <button>搜索</button>
+        </div>
+        <button class="view-all">添加供应商</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>供应商名称</th>
+                <th>联系人</th>
+                <th>联系电话</th>
+                <th>地址</th>
+                <th>供应品种</th>
+                <th>加盟日期</th>
+                <th>状态</th>
+                <th>创建日期</th>
+                <th>更新日期</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="supplier : ${suppliers}">
+                <td th:text="${supplier.supplier_id}"></td>
+                <td th:text="${supplier.supplier_name}"></td>
+                <td th:text="${supplier.contact}"></td>
+                <td th:text="${supplier.phone}"></td>
+                <td th:text="${supplier.address}"></td>
+                <td th:text="${supplier.varieties}"></td>
+                <td th:text="${supplier.cooperation_start_date}"></td>
+                <td th:text="${supplier.status}"></td>
+                <td th:text="${#temporals.format(supplier.create_time, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                <td th:text="${#temporals.format(supplier.update_time, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                <td>
+                    <button class="action-btn"><i class="fas fa-edit"></i> 编辑</button>
+                    <button class="action-btn"><i class="fas fa-eye"></i> 查看</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<script th:src="@{/js/supplier.js}"></script>
+</body>
+</html>

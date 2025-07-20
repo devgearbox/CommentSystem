@@ -234,7 +234,7 @@
     <div class="section-header">
         <h2>常用供应商</h2>
         <button class="btn btn-primary">
-            <i class="fas fa-list"></i> 查看全部
+            <i class="fas fa-list">查看全部</i>
         </button>
     </div>
     <table>
@@ -248,16 +248,17 @@
             <th>操作</th>
         </tr>
         </thead>
+
         <tbody>
         <tr th:each="supplier : ${suppliers}">
-            <td th:text="${supplier.name}">海南荔枝种植基地</td>
-            <td th:text="${supplier.contact}">李经理</td>
-            <td th:text="${supplier.phone}">138xxxx5678</td>
-            <td th:text="${supplier.varieties}">妃子笑、白糖罂</td>
-            <td th:text="${supplier.lastCooperationDate}">2023-06-14</td>
+            <td th:text="${supplier.supplier_name}"></td>
+            <td th:text="${supplier.contact}"></td>
+            <td th:text="${supplier.phone}"></td>
+            <td th:text="${supplier.varieties}"></td>
+            <td th:text="${supplier.cooperation_start_date}"></td>
             <td>
-                <button class="action-btn"><i class="fas fa-file-alt"></i> 新建订单</button>
-                <button class="action-btn"><i class="fas fa-eye"></i> 详情</button>
+                <button class="action-btn"><i class="fas fa-edit"></i> 编辑</button>
+                <button class="action-btn"><i class="fas fa-eye"></i> 查看</button>
             </td>
         </tr>
         </tbody>

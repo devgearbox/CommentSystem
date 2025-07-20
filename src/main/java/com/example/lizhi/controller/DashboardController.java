@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class DashboardController {
 
     // 处理采购工作台请求
-    @GetMapping("/work")
-    public String showDashboard() {
-        return "work"; // 对应 templates/work.html
-    }
+//    @GetMapping("/work")
+//    public String showDashboard() {
+//        return "work"; // 对应 templates/work.html
+//    }
 
     // 处理采购订单管理请求
     @GetMapping("/orders")
@@ -25,10 +25,10 @@ public class DashboardController {
     }
 
     // 处理供应商管理请求
-    @GetMapping("/dashboard/suppliers") // 修改映射路径
-    public String showSuppliers() {
-        return "suppliers"; // 对应 templates/suppliers.html
-    }
+//    @GetMapping("/dashboard/suppliers") // 修改映射路径
+//    public String showSuppliers() {
+//        return "suppliers"; // 对应 templates/supplier.html
+//    }
 
     // 处理采购统计分析请求
     @GetMapping("/analysis")

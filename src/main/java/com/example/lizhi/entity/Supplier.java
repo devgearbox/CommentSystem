@@ -1,8 +1,7 @@
 package com.example.lizhi.entity;
 
 import jakarta.persistence.*;
-
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "supplier")
@@ -10,52 +9,37 @@ public class Supplier {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "supplier_id") // 映射到数据库中的 supplier_id 字段
-    private Integer supplierId; // 属性名保持不变，但映射的列名已修改
+    private int supplier_id;
 
-    @Column(name = "supplier_name")
-    private String supplierName;
-
-    @Column(name = "contact")
+    private String supplier_name;
     private String contact;
-
-    @Column(name = "phone")
     private String phone;
-
-    @Column(name = "address")
     private String address;
-
-    @Column(name = "varieties")
     private String varieties;
-
-    @Column(name = "cooperation_start_date")
-    private String cooperationStartDate;
-
-    @Column(name = "status")
+    private String cooperation_start_date;
     private Integer status;
 
-    @Column(name = "create_time")
-    private Date createTime;
+    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime create_time;
 
-    @Column(name = "update_time")
-    private Date updateTime;
+    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    private LocalDateTime update_time;
 
-    // Getters and Setters
-
-    public Integer getSupplierId() {
-        return supplierId;
+    // Getters and setters
+    public Integer getSupplier_id() {
+        return supplier_id;
     }
 
-    public void setSupplierId(Integer supplierId) {
-        this.supplierId = supplierId;
+    public void setSupplier_id(Integer supplier_id) {
+        this.supplier_id = supplier_id;
     }
 
-    public String getSupplierName() {
-        return supplierName;
+    public String getSupplier_name() {
+        return supplier_name;
     }
 
-    public void setSupplierName(String supplierName) {
-        this.supplierName = supplierName;
+    public void setSupplier_name(String supplier_name) {
+        this.supplier_name = supplier_name;
     }
 
     public String getContact() {
@@ -90,12 +74,12 @@ public class Supplier {
         this.varieties = varieties;
     }
 
-    public String getCooperationStartDate() {
-        return cooperationStartDate;
+    public String getCooperation_start_date() {
+        return cooperation_start_date;
     }
 
-    public void setCooperationStartDate(String cooperationStartDate) {
-        this.cooperationStartDate = cooperationStartDate;
+    public void setCooperation_start_date(String cooperation_start_date) {
+        this.cooperation_start_date = cooperation_start_date;
     }
 
     public Integer getStatus() {
@@ -106,19 +90,19 @@ public class Supplier {
         this.status = status;
     }
 
-    public Date getCreateTime() {
-        return createTime;
+    public LocalDateTime getCreate_time() {
+        return create_time;
     }
 
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
+    public void setCreate_time(LocalDateTime create_time) {
+        this.create_time = create_time;
     }
 
-    public Date getUpdateTime() {
-        return updateTime;
+    public LocalDateTime getUpdate_time() {
+        return update_time;
     }
 
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
+    public void setUpdate_time(LocalDateTime update_time) {
+        this.update_time = update_time;
     }
 }
