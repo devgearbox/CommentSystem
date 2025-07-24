@@ -19,6 +19,8 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     padding: 20px;
     margin-bottom: 30px;
+    /* 确保没有溢出隐藏 */
+    overflow: visible !important;
 }
 
 .section-header {
@@ -97,7 +99,154 @@ th {
     margin-left: 10px;
 }
 
+.view-del {
+    background-color: #ba2222;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
 .view-all:hover {
     background-color: #288352;
+}
+/* 弹窗遮罩层 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw; /* 用视口宽度，避免父元素影响 */
+    height: 100vh; /* 用视口高度 */
+    background-color: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* 确保最顶层 */
+    overflow: auto; /* 处理内容溢出 */
+}
+
+/* 弹窗内容容器 - 优化自适应 */
+.modal-content {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: relative;
+    width: 90%; /* 优先自适应 */
+    max-width: 500px; /* 限制最大宽度 */
+    margin: 20px auto; /* 兼容旧浏览器 */
+}
+
+/* 弹窗内容容器（关键调整） */
+.modal-content {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    /* 移除旧的 margin 或定位，由遮罩层的 flex 居中 */
+    position: relative;
+    width: 500px; /* 固定宽度，可按需调整 */
+}
+
+/* 关闭按钮 */
+.modal-content .close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.modal-content .close:hover {
+    color: #333;
+}
+
+/* 表单标题（可选，若需要可在HTML中添加 <h2>添加供应商</h2> ） */
+.modal-content h2 {
+    margin: 0 0 20px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* 表单分组 */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus {
+    border-color: #409eff; /* 聚焦时高亮边框 */
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+    outline: none;
+}
+
+/* 提交按钮 */
+.form-group button[type="submit"] {
+    background-color: #409eff;
+    color: #fff;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.form-group button[type="submit"]:hover {
+    background-color: #66b1ff;
+}
+
+/* 提交按钮分组样式，用于控制位置 */
+.submit-group {
+    display: flex;
+    justify-content: flex-end; /* 让按钮靠右显示 */
+}
+
+/* 提交按钮美化 */
+.submit-btn {
+    background-color: #409eff;
+    color: #fff;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.submit-btn:hover {
+    background-color: #66b1ff;
+    transform: translateY(-1px); /* 鼠标悬浮时轻微上移，增加交互感 */
+}
+
+.submit-btn:active {
+    transform: translateY(1px); /* 点击时轻微下移，模拟按压效果 */
+}
+/* 响应式适配 */
+@media (max-width: 576px) {
+    .modal-content {
+        padding: 1rem;
+    }
 }
 /* 其他样式... */

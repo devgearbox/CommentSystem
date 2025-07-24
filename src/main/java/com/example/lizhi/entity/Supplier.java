@@ -1,6 +1,8 @@
 package com.example.lizhi.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -9,9 +11,11 @@ public class Supplier {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int supplier_id;
+    private Integer supplier_id;
 
-    private String supplier_name;
+    @Column(name = "supplier_name")
+    private String suppliername;
+
     private String contact;
     private String phone;
     private String address;
@@ -19,10 +23,15 @@ public class Supplier {
     private String cooperation_start_date;
     private Integer status;
 
-    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(columnDefinition = "datetime NOT NULL DEFAULT CURRENT_TIMESTAMP")
+    @CreationTimestamp
     private LocalDateTime create_time;
 
-    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @Column(
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+            insertable = false,  // 插入时不手动设置，交给数据库
+            updatable = false    // 更新时不手动设置，交给数据库
+    )
     private LocalDateTime update_time;
 
     // Getters and setters
@@ -35,11 +44,11 @@ public class Supplier {
     }
 
     public String getSupplier_name() {
-        return supplier_name;
+        return suppliername;
     }
 
     public void setSupplier_name(String supplier_name) {
-        this.supplier_name = supplier_name;
+        this.suppliername = supplier_name;
     }
 
     public String getContact() {
