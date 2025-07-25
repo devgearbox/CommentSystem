@@ -12,12 +12,13 @@
             <input type="text" id="search-input" placeholder="搜索供应商...">
             <button id="search-button">搜索</button>
         </div>
+        <button id="cancel-delete" style="display: none;" class="view-all">取消</button>
+        <button class="view-del" id="confirm-delete" style="display: none;">确认</button>
         <button class="view-all" id="search-all">查看全部</button>
         <button class="view-all" id="add-supplier">添加供应商</button>
         <!-- 修改：添加按钮容器 -->
         <div class="delete-controls">
             <button class="view-del" id="del-supplier">删除供应商</button>
-            <button class="view-all" id="confirm-delete" style="display: none;">确认</button>
         </div>
     </div>
     <table>
@@ -34,9 +35,9 @@
             <th>供应品种</th>
             <th>加盟日期</th>
             <th>状态</th>
-            <th>创建日期</th>
-            <th>更新日期</th>
-            <th>操作</th>
+<!--            <th>创建日期</th>-->
+<!--            <th>更新日期</th>-->
+            <th><div class="action-header">操作</div></th>
         </tr>
         </thead>
         <tbody id="supplier-table-body">
@@ -51,20 +52,74 @@
             <td th:text="${supplier.address}"></td>
             <td th:text="${supplier.varieties}"></td>
             <td th:text="${supplier.cooperation_start_date}"></td>
-            <td th:text="${supplier.status}"></td>
-            <td th:text="${#temporals.format(supplier.create_time, 'yyyy-MM-dd HH:mm:ss')}"></td>
-            <td th:text="${#temporals.format(supplier.update_time, 'yyyy-MM-dd HH:mm:ss')}"></td>
-            <td>
-                <button class="action-btn"><i class="fas fa-edit"></i> 编辑</button>
-                <button class="action-btn"><i class="fas fa-eye"></i> 查看</button>
+            <td th:text="${supplier.getStatusText()}"></td>
+<!--            <td th:text="${#temporals.format(supplier.create_time, 'yyyy-MM-dd HH:mm:ss')}"></td>-->
+<!--            <td th:text="${#temporals.format(supplier.update_time, 'yyyy-MM-dd HH:mm:ss')}"></td>-->
+            <td class="action-header">
+                <button class="action-btn edit-btn" th:data-id="${supplier.supplier_id}"><i class="fas fa-edit">编辑</i></button>
+                <button class="action-btn view-btn" th:data-id="${supplier.supplier_id}"><i class="fas fa-eye">查看</i></button>
             </td>
         </tr>
         </tbody>
     </table>
+<!--    查看弹出-->
+    <div id="view-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>供应商详情</h2>
+            <!-- 用ID占位符存储当前查看的供应商ID（非显示用，用于逻辑判断） -->
+            <input type="hidden" id="current-view-id">
+            <div class="detail-group">
+                <label>供应商ID：</label>
+                <span id="detail-id"></span>
+            </div>
+            <div class="detail-group">
+                <label>状态：</label>
+                <span id="detail-status"></span>
+            </div>
+            <div class="detail-group">
+                <label>供应商名称：</label>
+                <span id="detail-name"></span>
+            </div>
+            <div class="detail-group">
+                <label>联系人：</label>
+                <span id="detail-contact"></span>
+            </div>
+            <div class="detail-group">
+                <label>联系电话：</label>
+                <span id="detail-phone"></span>
+            </div>
+            <div class="detail-group">
+                <label>地址：</label>
+                <span id="detail-address"></span>
+            </div>
+            <div class="detail-group">
+                <label>供应品种：</label>
+                <span id="detail-varieties"></span>
+            </div>
+            <div class="detail-group">
+                <label>加盟日期：</label>
+                <span id="detail-cooperation"></span>
+            </div>
+            <div class="detail-group">
+                <label>创建时间：</label>
+                <span id="detail-create-time"></span>
+            </div>
+            <div class="detail-group">
+                <label>更新时间：</label>
+                <span id="detail-update-time"></span>
+            </div>
+            <!-- 新增订单量 -->
+            <div class="detail-group">
+                <label>订单量：</label>
+                <span id="detail-order-count"></span>
+            </div>
+        </div>
+    </div>
 <!--    添加供应商框-->
     <div id="add-modal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <span class="close" id="add-modal-close">&times;</span>
             <form id="add-form">
                 <div class="form-group">
                     <label>供应商名称：</label>
@@ -96,7 +151,63 @@
             </form>
         </div>
     </div>
+    <!-- 编辑弹窗 -->
+    <!-- 编辑弹窗（对齐添加弹窗结构） -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <!-- 关闭按钮：与添加弹窗的 class 统一 -->
+            <span class="close edit-close">&times;</span>
+            <h2>编辑供应商</h2>
+            <form id="edit-form">
+                <!-- 隐藏 ID -->
+                <input type="hidden" name="supplier_id" id="edit-id">
+
+                <!-- 表单分组：与添加弹窗的 .form-group 结构一致 -->
+                <div class="form-group">
+                    <label>供应商名称：</label>
+                    <input type="text" name="supplier_name" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label>联系人：</label>
+                    <input type="text" name="contact" id="edit-contact" required>
+                </div>
+                <div class="form-group">
+                    <label>联系电话：</label>
+                    <input type="text" name="phone" id="edit-phone" required>
+                </div>
+                <div class="form-group">
+                    <label>地址：</label>
+                    <input type="text" name="address" id="edit-address">
+                </div>
+                <div class="form-group">
+                    <label>供应品种：</label>
+                    <input type="text" name="varieties" id="edit-varieties">
+                </div>
+                <div class="form-group">
+                    <label>合作开始日期：</label>
+                    <input type="text" name="cooperation_start_date" id="edit-cooperation">
+                </div>
+                <div class="form-group">
+                    <label>状态：</label>
+                    <select name="status" id="edit-status" required>
+                        <option value="1">启售</option>
+                        <option value="0">停售</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>订单量：</label>
+                    <input type="number" name="order_count" id="edit-order-count" min="0">
+                </div>
+
+                <!-- 提交按钮：与添加弹窗的 .submit-group、.submit-btn 统一 -->
+                <div class="form-group submit-group">
+                    <button type="submit" class="submit-btn">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
 <script th:src="@{/js/supplier.js}"></script>
 </body>
 </html>

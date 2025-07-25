@@ -16,12 +16,16 @@ public class Supplier {
     @Column(name = "supplier_name")
     private String suppliername;
 
+    private Integer order_count;
     private String contact;
     private String phone;
     private String address;
     private String varieties;
     private String cooperation_start_date;
     private Integer status;
+    public String getStatusText() {
+        return status == 1 ? "启售" : "停售";
+    }
 
     @Column(columnDefinition = "datetime NOT NULL DEFAULT CURRENT_TIMESTAMP")
     @CreationTimestamp
@@ -113,5 +117,13 @@ public class Supplier {
 
     public void setUpdate_time(LocalDateTime update_time) {
         this.update_time = update_time;
+    }
+
+    public Integer getOrder_count() {
+        return order_count;
+    }
+
+    public void setOrder_count(Integer order_count) {
+        this.order_count = order_count;
     }
 }

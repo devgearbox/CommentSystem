@@ -49,6 +49,21 @@ th {
     font-weight: bold;
     color: #555;
 }
+/* 操作列表头样式 */
+.action-header {
+    text-align: center; /* 标题文字居中 */
+    font-weight: bold;
+}
+
+/* 操作列单元格样式 */
+.action-cell {
+    display: flex;
+    flex-direction: column; /* 按钮垂直排列 */
+    align-items: center;    /* 按钮水平居中 */
+    justify-content: center;/* 按钮垂直居中 */
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
 .action-btn {
     color: #288352;
     background: none;
@@ -249,4 +264,33 @@ th {
         padding: 1rem;
     }
 }
-/* 其他样式... */
+
+/* 详情弹窗字段分组 */
+.detail-group {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #eee;
+}
+
+.detail-group label {
+    display: inline-block;
+    width: 100px;
+    font-weight: 600;
+    color: #555;
+}
+
+.detail-group span {
+    color: #333;
+}
+
+/* 弹窗标题 */
+.modal-content h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    color: #333;
+}
+.action-column {
+    text-align: center !important;
+    /* !important 强制覆盖其他样式，确保生效 */
+}
