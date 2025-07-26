@@ -23,28 +23,34 @@ public class RegisterController {
     }
 
     // 处理注册提交
+// 处理注册提交
     @PostMapping("/register")
     public String doRegister(
             @RequestParam("username") String username,
             @RequestParam("password") String password,
-            // 按需添加其他字段：real_name/phone/role/status
             @RequestParam("real_name") String realName,
+            // 新增电话、性别参数
+            @RequestParam("phone") String phone,
+            @RequestParam("gender") String gender,
             Model model
     ) {
         User user = new User();
         user.setUsername(username);
         user.setPassword(password);
         user.setReal_name(realName);
-        // 其他字段默认值（可根据需求调整）
-        user.setRole(2);    // 假设普通用户角色为2
-        user.setStatus(1);  // 假设状态1为启用
+        // 绑定电话、性别
+        user.setPhone(phone);
+        user.setGender(gender);
+
+        user.setRole(2);   // 假设普通用户角色为2
+        user.setStatus(1); // 假设状态1为启用
 
         if (userService.register(user)) {
             model.addAttribute("message", "注册成功，请登录");
-            return "redirect:/login"; // 跳转到登录页
+            return "redirect:/login";
         } else {
             model.addAttribute("error", "用户名已存在");
-            return "register"; // 注册失败，留在注册页
+            return "register";
         }
     }
 }

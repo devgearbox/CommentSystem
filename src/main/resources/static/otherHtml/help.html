@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>帮助中心</title>
+    <!-- 引入主系统样式保持统一 -->
+    <link rel="stylesheet" href="../css/purchasework.css">
+    <style>
+        /* 页面基础布局 */
+        .help-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        /* 标题样式 */
+        .help-container h1 {
+            font-size: 28px;
+            color: #2d8659;
+            margin-bottom: 20px;
+            border-left: 8px solid #2d8659;
+            padding-left: 15px;
+        }
+        .help-container h2 {
+            font-size: 20px;
+            color: #333;
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 4px solid #2d8659;
+        }
+        /* 段落与列表 */
+        .help-container p,
+        .help-container ul {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+        .help-container ul {
+            padding-left: 20px;
+            list-style: disc;
+        }
+        /* 步骤演示卡片 */
+        .guide-card {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .guide-card img {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .guide-card .step {
+            font-weight: bold;
+            color: #2d8659;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        /* 常见问题模块 */
+        .faq-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: #fefefe;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .faq-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .faq-question {
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .faq-answer {
+            display: none;
+            margin-top: 10px;
+            color: #666;
+        }
+        .faq-question i {
+            transition: transform 0.3s;
+        }
+        .faq-open .faq-answer {
+            display: block;
+        }
+        .faq-open i {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+<div class="help-container">
+    <h1>帮助中心</h1>
+    <p>欢迎使用荔枝批发管理系统！这里为您提供详细的操作指引、常见问题解答，帮您快速上手系统功能。</p>
+
+    <!-- 核心功能指引 -->
+    <h2>一、核心功能快速上手</h2>
+    <p>系统主要包含「采购管理」「供应商协作」「数据分析」三大模块，以下是关键功能的操作说明：</p>
+
+    <!-- 采购订单创建指引 -->
+    <div class="guide-card">
+        <div class="step">步骤1：进入采购工作台</div>
+        <p>点击左侧菜单「采购工作台」，进入操作主页。</p>
+<!--        <img src="../images/help/step1.png" alt="采购工作台">-->
+        <div class="step">步骤2：新建采购订单</div>
+        <p>点击页面右上角「新增采购订单」按钮，填写以下信息：</p>
+        <ul>
+            <li>供应商选择：从合作列表中选则对应果园/基地</li>
+            <li>荔枝品种：填写具体品种（如「妃子笑」「桂味」）</li>
+            <li>采购数量：填写kg数（支持批量采购）</li>
+            <li>交货时间：选择预计收货日期</li>
+        </ul>
+<!--        <img src="../images/help/step2.png" alt="新建订单">-->
+        <div class="step">步骤3：提交与跟踪</div>
+        <p>提交订单后，可在「采购订单管理」查看进度（待审批/已发货/已完成）。</p>
+    </div>
+
+    <!-- 供应商管理指引 -->
+    <div class="guide-card">
+        <div class="step">如何新增供应商？</div>
+        <p>进入「供应商管理」→ 点击「新增供应商」→ 填写信息（名称、联系人、品种范围等）→ 提交审核。</p>
+<!--        <img src="../images/help/supplier-add.png" alt="新增供应商">-->
+        <div class="step">如何查看供应商评级？</div>
+        <p>在供应商列表中，hover 某条记录，右侧会显示「评级」标签（优质/普通/观察），点击可查看详细评分规则。</p>
+    </div>
+
+    <!-- 常见问题解答 -->
+    <h2>二、常见问题解答（FAQ）</h2>
+    <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <span>Q：提交订单后无法修改怎么办？</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+            A：若订单状态为「待审批」，可联系管理员驳回修改；若已「发货」，需通过「订单变更申请」流程处理。
+        </div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <span>Q：供应商信息填错了能修改吗？</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+            A：进入「供应商管理」→ 找到对应供应商 → 点击「编辑」按钮修改，保存后需重新审核（不影响历史订单）。
+        </div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">
+            <span>Q：数据统计分析图表不显示？</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+            A：检查浏览器是否开启广告拦截（可能屏蔽图表），或刷新页面重试。若仍异常，联系技术支持并提供报错截图。
+        </div>
+    </div>
+
+    <!-- 联系支持 -->
+    <h2>三、联系技术支持</h2>
+    <p>若遇到以上未覆盖的问题，可通过以下方式反馈：</p>
+    <ul>
+        <li>系统内反馈：点击左侧「反馈」提交详细问题</li>
+        <li>电话支持：400-123-4567（工作日 9:00-18:00）</li>
+        <li>邮件支持：support@litchi-system.com（24小时内回复）</li>
+    </ul>
+    <p class="tips">小建议：反馈时附上<strong>操作步骤</strong>和<strong>报错截图</strong>，可加快问题处理速度哦～</p>
+</div>
+
+<script>
+    // FAQ 展开/收起逻辑
+    function toggleFaq(item) {
+        item.classList.toggle('faq-open');
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>反馈与建议 - 荔枝批发管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/purchasework.css">
+    <style>
+        /* 重置页面默认边距，确保无横向留白 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden; /* 禁止横向滚动 */
+        }
+
+        /* 主内容区域样式 - 关键修改 */
+        .main-content {
+            padding: 30px;
+            background-color: #f9f9f9;
+            width: 100%; /* 强制占满父容器宽度 */
+            min-width: 0; /* 解除最小宽度限制 */
+            box-sizing: border-box; /* 内边距包含在宽度内 */
+            margin: 0; /* 移除可能的默认外边距 */
+        }
+
+        .feedback-container {
+            width: 100%; /* 横向完全填满 */
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 35px;
+            box-sizing: border-box; /* 确保内边距不增加实际宽度 */
+            margin: 0 auto; /* 居中且无额外边距 */
+            max-width: 100%; /* 移除任何最大宽度限制 */
+        }
+
+        /* 以下为原有样式，保持功能不变 */
+        .feedback-header {
+            margin-bottom: 30px;
+        }
+
+        .feedback-header h1 {
+            font-size: 24px;
+            color: #2d8659;
+            margin-bottom: 10px;
+            border-left: 6px solid #2d8659;
+            padding-left: 12px;
+        }
+
+        .feedback-header p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .feedback-form .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group label .required {
+            color: #dc3545;
+        }
+
+        .feedback-type {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .type-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .type-option input {
+            margin-right: 8px;
+        }
+
+        .type-option span {
+            color: #555;
+        }
+
+        .feedback-textarea {
+            width: 100%;
+            height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 14px;
+            line-height: 1.6;
+            transition: border-color 0.3s;
+        }
+
+        .feedback-textarea:focus {
+            border-color: #2d8659;
+            outline: none;
+        }
+
+        .input-short {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-short:focus {
+            border-color: #2d8659;
+            outline: none;
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #2d8659;
+            background-color: #f9faf9;
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-note {
+            font-size: 12px;
+            color: #999;
+        }
+
+        #file-upload {
+            display: none;
+        }
+
+        .uploaded-files {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .uploaded-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .file-name {
+            flex: 1;
+            font-size: 14px;
+            color: #555;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-remove {
+            color: #dc3545;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel {
+            background-color: #f8f9fa;
+            color: #555;
+            border: 1px solid #ddd;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e9ecef;
+        }
+
+        .btn-submit {
+            background-color: #2d8659;
+            color: white;
+            border: none;
+        }
+
+        .btn-submit:hover {
+            background-color: #236b45;
+        }
+
+        .success-popup {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .tips-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .tips-section h3 {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .tips-list {
+            padding-left: 20px;
+        }
+
+        .tips-list li {
+            color: #666;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+<!-- 移除可能导致嵌套问题的外层容器，直接使用内容 -->
+<div class="main-content">
+    <div class="feedback-container">
+        <!-- 原有内容保持不变 -->
+        <div class="feedback-header">
+            <h1>反馈与建议</h1>
+            <p>您的反馈是我们改进系统的重要依据！请详细描述您遇到的问题或提出宝贵建议，我们会在1-3个工作日内进行处理和回复。</p>
+        </div>
+
+        <form class="feedback-form" id="feedbackForm">
+            <div class="form-group">
+                <label>反馈类型 <span class="required">*</span></label>
+                <div class="feedback-type">
+                    <div class="type-option">
+                        <input type="radio" name="feedbackType" id="typeBug" value="bug" required>
+                        <span for="typeBug">系统Bug</span>
+                    </div>
+                    <div class="type-option">
+                        <input type="radio" name="feedbackType" id="typeSuggest" value="suggest">
+                        <span for="typeSuggest">功能建议</span>
+                    </div>
+                    <div class="type-option">
+                        <input type="radio" name="feedbackType" id="typeExperience" value="experience">
+                        <span for="typeExperience">体验优化</span>
+                    </div>
+                    <div class="type-option">
+                        <input type="radio" name="feedbackType" id="typeOther" value="other">
+                        <span for="typeOther">其他问题</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="feedbackContent">反馈内容 <span class="required">*</span></label>
+                <textarea id="feedbackContent" class="feedback-textarea" placeholder="请详细描述您的反馈...
+例如：
+1. 问题发生场景：在采购订单管理页面点击导出按钮时
+2. 具体现象：点击后无反应，控制台报错
+3. 预期结果：正常导出Excel文件
+4. 补充说明：尝试刷新页面后问题依旧"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="contactInfo">联系方式（选填）</label>
+                <input type="text" id="contactInfo" class="input-short" placeholder="请输入您的手机号或邮箱，方便我们进一步沟通">
+            </div>
+
+            <div class="form-group">
+                <label>上传附件（选填）</label>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p class="upload-text">点击或拖拽文件至此处上传（支持图片、文档，最大5MB）</p>
+                    <p class="upload-note">支持格式：jpg、png、pdf、docx，最多上传3个文件</p>
+                    <input type="file" id="fileUpload" multiple accept=".jpg,.png,.pdf,.docx" style="display: none">
+                </div>
+                <div class="uploaded-files" id="uploadedFiles"></div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" id="cancelBtn">取消</button>
+                <button type="button" class="btn btn-submit" id="submitBtn">提交反馈</button>
+            </div>
+        </form>
+
+        <div class="tips-section">
+            <h3>反馈小贴士</h3>
+            <ul class="tips-list">
+                <li>反馈系统Bug时，建议附上截图或录屏，便于技术人员快速定位问题</li>
+                <li>功能建议请说明具体场景和预期效果，我们会优先评估高频需求</li>
+                <li>您可以在提交后3个工作日内关注系统通知，查看反馈处理进度</li>
+                <li>所有反馈信息仅用于系统优化，我们会严格保护您的信息安全</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="success-popup" id="successPopup">
+    <i class="fas fa-check-circle"></i> 反馈提交成功！感谢您的宝贵意见，我们会尽快处理
+</div>
+
+<script>
+    // 页面加载完成后强制刷新宽度
+    window.onload = function() {
+        // 触发重绘，确保宽度计算正确
+        setTimeout(() => {
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                mainContent.style.width = '100%';
+                // 强制重绘
+                mainContent.offsetWidth; // 触发重绘
+                mainContent.style.width = '';
+            }
+        }, 0);
+    };
+
+    // 原有JavaScript代码保持不变
+    const uploadArea = document.getElementById('uploadArea');
+    const fileUpload = document.getElementById('fileUpload');
+    const uploadedFiles = document.getElementById('uploadedFiles');
+    let selectedFiles = [];
+
+    uploadArea.addEventListener('click', () => {
+        fileUpload.click();
+    });
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#2d8659';
+        uploadArea.style.backgroundColor = '#f0f7f2';
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#ddd';
+        uploadArea.style.backgroundColor = 'transparent';
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ddd';
+        uploadArea.style.backgroundColor = 'transparent';
+
+        if (e.dataTransfer.files.length) {
+            handleFiles(e.dataTransfer.files);
+        }
+    });
+
+    fileUpload.addEventListener('change', () => {
+        handleFiles(fileUpload.files);
+    });
+
+    function handleFiles(files) {
+        if (selectedFiles.length + files.length > 3) {
+            alert('最多只能上传3个文件');
+            return;
+        }
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`文件${file.name}超过5MB限制，请压缩后重新上传`);
+                continue;
+            }
+            const allowedTypes = ['.jpg', '.png', '.pdf', '.docx'];
+            const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+            if (!allowedTypes.includes(fileExt)) {
+                alert(`文件${file.name}格式不支持，请上传jpg、png、pdf、docx格式`);
+                continue;
+            }
+
+            selectedFiles.push(file);
+            renderUploadedFiles();
+        }
+    }
+
+    function renderUploadedFiles() {
+        uploadedFiles.innerHTML = '';
+        if (selectedFiles.length === 0) {
+            uploadedFiles.style.display = 'none';
+            return;
+        }
+        uploadedFiles.style.display = 'block';
+
+        selectedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'uploaded-item';
+            fileItem.innerHTML = `
+                        <span class="file-name">${file.name}</span>
+                        <button type="button" class="file-remove" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+            uploadedFiles.appendChild(fileItem);
+        });
+
+        document.querySelectorAll('.file-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.currentTarget.getAttribute('data-index'));
+                selectedFiles.splice(index, 1);
+                renderUploadedFiles();
+            });
+        });
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', () => {
+        const feedbackType = document.querySelector('input[name="feedbackType"]:checked');
+        const feedbackContent = document.getElementById('feedbackContent').value.trim();
+
+        if (!feedbackType) {
+            alert('请选择反馈类型');
+            return;
+        }
+        if (!feedbackContent) {
+            alert('请填写反馈内容');
+            return;
+        }
+
+        console.log({
+            type: feedbackType.value,
+            content: feedbackContent,
+            contact: document.getElementById('contactInfo').value.trim(),
+            fileCount: selectedFiles.length
+        });
+
+        const successPopup = document.getElementById('successPopup');
+        successPopup.style.display = 'block';
+
+        document.getElementById('feedbackForm').reset();
+        selectedFiles = [];
+        renderUploadedFiles();
+
+        setTimeout(() => {
+            successPopup.style.display = 'none';
+        }, 3000);
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+        if (confirm('确定要取消反馈吗？已填写的内容将不会保存')) {
+            document.getElementById('feedbackForm').reset();
+            selectedFiles = [];
+            renderUploadedFiles();
+        }
+    });
+</script>
+</body>
+</html>

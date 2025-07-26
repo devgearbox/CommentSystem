@@ -16,6 +16,8 @@ public class User {
     private String phone;      // 补充数据库字段
     private Integer role;      // 补充数据库字段
     private Integer status;    // 补充数据库字段
+    private String gender;     // 用户性别（男/女/其他）
+    private String signature;  // 个性签名
 
     // Getter & Setter（必须补全所有字段）
     public Long getId() { return id; }
@@ -32,4 +34,8 @@ public class User {
     public void setRole(Integer role) { this.role = role; }
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+    public String getSignature() { return signature; }
+    public void setSignature(String signature) { this.signature = signature; }
 }

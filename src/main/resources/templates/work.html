@@ -155,7 +155,7 @@
     <div class="user-info">
         <img th:src="@{/img/defaultMan.png}" alt="用户头像">
         <div>
-            <div th:text="${session.username}" style="font-size: 30px"></div>
+            <div th:text="${session.currentUser.username}" style="font-size: 30px"></div>
             <div style="font-size: 12px; color: #666; text-align: center;">采购专员</div>
         </div>
     </div>

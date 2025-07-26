@@ -1,29 +1,28 @@
-<!doctype html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <title>用户注册</title>
-    <!-- 内联 CSS 样式 -->
     <style>
-        /* 全局样式重置 */
+        /* 全局样式重置与基础设置 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
+            font-family: "微软雅黑", sans-serif;
         }
 
         body {
-            background: #f5f7fa;
+            background-color: #f8f9fa;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
 
-        /* 表单容器 */
+        /* 注册表单容器样式 */
         .register-container {
-            background: #fff;
+            background-color: #fff;
             width: 400px;
             padding: 30px;
             border-radius: 8px;
@@ -33,11 +32,11 @@
         .register-container h2 {
             text-align: center;
             margin-bottom: 24px;
+            font-size: 22px;
             color: #333;
-            font-size: 24px;
         }
 
-        /* 表单组 */
+        /* 表单组样式 */
         .form-group {
             margin-bottom: 20px;
         }
@@ -45,52 +44,118 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #666;
+            color: #555;
             font-size: 14px;
         }
 
-        .form-group input {
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
+            padding: 10px;
+            border: 1px solid #dcdcdc;
             border-radius: 4px;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s ease;
         }
 
-        .form-group input:focus {
-            border-color: #409eff; /* 聚焦时高亮 */
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus {
+            border-color: #007bff;
         }
 
-        /* 按钮样式 */
+        /* 性别单选按钮组样式 */
+        .gender-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .gender-group label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .gender-group input[type="radio"] {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #dcdcdc;
+            border-radius: 50%;
+            margin-right: 6px;
+            outline: none;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 1px;
+        }
+
+        .gender-group input[type="radio"]:checked {
+            border-color: #007bff;
+            background-color: #007bff;
+        }
+
+        .gender-group input[type="radio"]:checked::after {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background-color: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+        }
+
+        /* 错误提示样式 */
+        .error {
+            color: red;
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        /* 成功提示样式 */
+        .success {
+            color: green;
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        /* 注册按钮样式 */
         .btn-register {
             width: 100%;
-            padding: 12px 0;
-            background: #409eff;
+            padding: 10px;
+            background-color: #007bff;
             color: #fff;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
 
         .btn-register:hover {
-            background: #66b1ff;
+            background-color: #0056b3;
         }
 
-        /* 登录链接 */
+        /* 登录链接样式 */
         .login-link {
             text-align: center;
-            margin-top: 16px;
-            color: #999;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
         }
 
         .login-link a {
-            color: #409eff;
+            color: #007bff;
             text-decoration: none;
-            margin-left: 4px;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -98,9 +163,9 @@
 <div class="register-container">
     <h2>用户注册</h2>
     <!-- 显示注册失败提示 -->
-    <p th:if="${error}" style="color: red; text-align: center;" th:text="${error}"></p>
+    <p class="error" th:if="${error}" th:text="${error}"></p>
     <!-- 显示注册成功提示（跳转前临时显示） -->
-    <p th:if="${message}" style="color: green; text-align: center;" th:text="${message}"></p>
+    <p class="success" th:if="${message}" th:text="${message}"></p>
 
     <!-- 表单提交到 /register -->
     <form method="post" action="/register">
@@ -116,12 +181,27 @@
             <label>真实姓名：</label>
             <input type="text" name="real_name" required>
         </div>
+        <div class="form-group">
+            <label>性别：</label>
+            <div class="gender-group">
+                <label>
+                    <input type="radio" name="gender" value="男" required> 男
+                </label>
+                <label>
+                    <input type="radio" name="gender" value="女" required> 女
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>联系电话：</label>
+            <input type="text" name="phone" required>
+        </div>
         <button type="submit" class="btn-register">注册</button>
     </form>
 
     <!-- 跳转到登录页 -->
     <div class="login-link">
-        已有账号？<a href="/templates/login">立即登录</a>
+        已有账号？<a href="/login">立即登录</a>
     </div>
 </div>
 </body>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>功能介绍 - 荔枝批发管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../css/purchasework.css">
+    <style>
+        .intro-container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .intro-header {
+            text-align: center;
+            margin: 40px 0 60px;
+        }
+
+        .intro-header h1 {
+            font-size: 32px;
+            color: #2d8659;
+            margin-bottom: 15px;
+        }
+
+        .intro-header p {
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* 功能模块样式 */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 80px;
+        }
+
+        .feature-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 30px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: #f0f7f2;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon i {
+            font-size: 28px;
+            color: #2d8659;
+        }
+
+        .feature-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .feature-list {
+            padding-left: 20px;
+        }
+
+        .feature-list li {
+            color: #555;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        /* 流程展示区 */
+        .process-section {
+            margin: 60px 0;
+        }
+
+        .process-section h2 {
+            text-align: center;
+            color: #2d8659;
+            margin-bottom: 40px;
+            font-size: 24px;
+        }
+
+        .process-steps {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .process-steps::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 50px;
+            right: 50px;
+            height: 2px;
+            background: #e1e8e3;
+            z-index: 1;
+        }
+
+        .process-step {
+            flex: 1;
+            min-width: 180px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            padding: 0 15px;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: #2d8659;
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .process-step h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .process-step p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* 版本特性区 */
+        .version-features {
+            background: #f9faf9;
+            border-radius: 16px;
+            padding: 30px;
+            margin: 60px 0;
+        }
+
+        .version-features h2 {
+            color: #2d8659;
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+
+        .version-tag {
+            display: inline-block;
+            background: #e6f4ee;
+            color: #2d8659;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* 底部说明 */
+        .footer-note {
+            text-align: center;
+            color: #777;
+            margin: 60px 0 30px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="intro-container">
+    <div class="intro-header">
+        <h1>荔枝批发管理系统 功能介绍</h1>
+        <p>系统专为荔枝批发业务设计，集成采购管理、供应商协作、数据分析等核心功能，帮助企业高效处理从采购到入库的全流程，降低成本，提升供应链效率。</p>
+    </div>
+
+    <!-- 核心功能模块 -->
+    <div class="features-grid">
+        <!-- 采购管理模块 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h3>采购全流程管理</h3>
+            <p>从订单创建到入库验收的完整流程数字化，支持批量操作和进度跟踪，减少人工失误。</p>
+            <ul class="feature-list">
+                <li>智能订单创建，自动关联供应商信息</li>
+                <li>多状态跟踪（待审批/已发货/已验收）</li>
+                <li>批量导出采购记录，支持Excel格式</li>
+                <li>自定义审批流程，适配不同企业需求</li>
+            </ul>
+        </div>
+
+        <!-- 供应商管理模块 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>供应商精细化管理</h3>
+            <p>建立供应商档案库，包含基础信息、合作历史和评级体系，辅助采购决策。</p>
+            <ul class="feature-list">
+                <li>供应商信息一键查询（联系方式、供应品种）</li>
+                <li>动态评级系统（基于质量、时效、价格）</li>
+                <li>合作历史记录，支持按时间筛选</li>
+                <li>新增供应商审核流程，确保资质合规</li>
+            </ul>
+        </div>
+
+        <!-- 库存管理模块 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-warehouse"></i>
+            </div>
+            <h3>入库与库存监控</h3>
+            <p>实时跟踪荔枝入库状态，监控库存水位，避免积压或短缺。</p>
+            <ul class="feature-list">
+                <li>入库单与采购订单自动关联，减少重复录入</li>
+                <li>库存预警功能，低库存自动提醒补货</li>
+                <li>按品种/批次记录库存，支持先进先出管理</li>
+                <li>入库质检记录，关联供应商评级</li>
+            </ul>
+        </div>
+
+        <!-- 数据分析模块 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3>采购数据分析</h3>
+            <p>通过可视化报表呈现采购趋势、成本分析和供应商表现，辅助决策。</p>
+            <ul class="feature-list">
+                <li>月度/季度采购量对比图表</li>
+                <li>各品种采购成本波动分析</li>
+                <li>供应商贡献度排行榜</li>
+                <li>自定义报表导出（支持PDF/Excel）</li>
+            </ul>
+        </div>
+
+        <!-- 系统工具模块 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-wrench"></i>
+            </div>
+            <h3>实用工具与支持</h3>
+            <p>提供操作辅助工具和反馈渠道，提升系统使用体验。</p>
+            <ul class="feature-list">
+                <li>操作指南与视频教程</li>
+                <li>在线反馈系统，快速提交问题</li>
+                <li>版本更新自动提示</li>
+                <li>数据备份与恢复功能</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 业务流程展示 -->
+    <div class="process-section">
+        <h2>荔枝采购全流程示意</h2>
+        <div class="process-steps">
+            <div class="process-step">
+                <div class="step-number">1</div>
+                <h3>需求确认</h3>
+                <p>根据销售计划或库存缺口，确定采购品种和数量</p>
+            </div>
+            <div class="process-step">
+                <div class="step-number">2</div>
+                <h3>供应商选择</h3>
+                <p>从合格供应商列表中，根据评级和报价筛选合作方</p>
+            </div>
+            <div class="process-step">
+                <div class="step-number">3</div>
+                <h3>订单创建</h3>
+                <p>生成采购订单，明确品种、数量、交货时间等信息</p>
+            </div>
+            <div class="process-step">
+                <div class="step-number">4</div>
+                <h3>发货与验收</h3>
+                <p>供应商发货后，到货时进行质量检测和数量核对</p>
+            </div>
+            <div class="process-step">
+                <div class="step-number">5</div>
+                <h3>入库与结算</h3>
+                <p>合格产品入库，系统记录库存，后续进行财务结算</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版本特性 -->
+    <div class="version-features">
+        <h2>当前版本 V 1.1.1.0 新特性</h2>
+        <div class="version-tag">新增</div>
+        <p>供应商评级系统，支持按季度自动更新评级结果</p>
+
+        <div class="version-tag">优化</div>
+        <p>采购订单审批流程，支持多级审批和意见备注</p>
+
+        <div class="version-tag">修复</div>
+        <p>入库单批量导入时的格式校验问题</p>
+
+        <div class="version-tag">改进</div>
+        <p>数据分析报表加载速度提升40%，支持更多筛选条件</p>
+    </div>
+
+    <div class="footer-note">
+        <p>系统持续迭代更新，如有功能建议可通过「反馈」模块提交<br>
+            客服支持：工作日 9:00-18:00 热线 400-123-4567</p>
+    </div>
+</div>
+</body>
+</html>
