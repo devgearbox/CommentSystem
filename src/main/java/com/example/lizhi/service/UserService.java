@@ -55,4 +55,9 @@ public class UserService {
         userRepository.save(user); // 调用 Repository 持久化
         return true;
     }
+
+    //手机号登录功能
+    public User findByPhone(String phone) {
+        return userRepository.findByPhone(phone);
+    }
 }

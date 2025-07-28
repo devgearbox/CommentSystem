@@ -83,6 +83,11 @@
             color: #666;
             cursor: not-allowed;
         }
+        .signature-input:disabled {
+            background-color: #fff; /* 与周围白色一致 */
+            border: none; /* 去除边框 */
+            padding-left: 0; /* 可选：移除左侧内边距使其更像普通文本 */
+        }
         .btn {
             padding: 8px 16px;
             border-radius: 4px;
@@ -223,7 +228,8 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>个性签名</label>
-                        <input type="text" class="form-control" name="signature" th:value="${user.signature}" disabled>
+                        <input type="text" class="form-control signature-input" name="signature"
+                               th:value="${user.signature ?: '该用户很懒，什么都没有留下...'}" disabled>
                     </div>
                 </div>
                 <div class="action-buttons">
@@ -303,6 +309,13 @@
 </div>
 
 <script>
+    // 区块切换通用逻辑
+    function toggleSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        const header = section.previousElementSibling;
+        section.classList.toggle('active');
+        header.classList.toggle('active');
+    }
     // 基本信息编辑逻辑
     const editBtn = document.getElementById('editBtn');
     const saveBtn = document.getElementById('saveBtn');
@@ -329,13 +342,6 @@
             .catch(() => alert('保存失败，请重试'));
     });
 
-    // 区块切换通用逻辑
-    function toggleSection(sectionId) {
-        const section = document.getElementById(sectionId);
-        const header = section.previousElementSibling;
-        section.classList.toggle('active');
-        header.classList.toggle('active');
-    }
 
     // 头像上传预览
     document.getElementById('avatar-input').addEventListener('change', (e) => {
@@ -365,8 +371,30 @@
             e.preventDefault();
         }
     });
-
-    // 移除冗余的按钮点击事件（由表单提交自然触发后端跳转）
+    // // 页面加载完成后检查是否需要显示成功提示并登出
+    // document.addEventListener('DOMContentLoaded', () => {
+    //     // 检查后端是否返回了密码修改成功的标识
+    //     // 注意：根据你使用的模板引擎调整变量获取方式
+    //
+    //     const passwordChanged = [[${passwordChanged}]]; // Thymeleaf语法
+    //
+    //     if (passwordChanged) {
+    //         // 显示成功提示
+    //         alert('密码修改成功，即将为您自动登出');
+    //
+    //         // 延迟1.5秒后执行登出，让用户有时间看到提示
+    //         setTimeout(logout, 1500);
+    //     }
+    // });
+    // // 登出方法
+    // function logout() {
+    //     // 清除客户端存储的登录状态
+    //     sessionStorage.clear();
+    //     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    //
+    //     // 跳转到登录页面
+    //     window.location.href = "http://localhost:8080/login";
+    // }
 </script>
 </body>
 </html>

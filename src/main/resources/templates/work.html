@@ -156,7 +156,11 @@
         <img th:src="@{/img/defaultMan.png}" alt="用户头像">
         <div>
             <div th:text="${session.currentUser.username}" style="font-size: 30px"></div>
-            <div style="font-size: 12px; color: #666; text-align: center;">采购专员</div>
+            <div style="font-size: 12px; color: #666; text-align: center;">
+        <span class="form-control custom-disabled"
+              th:text="${session.currentUser.role eq 1 ? '管理员' : (session.currentUser.role eq 2 ? '采购员' : '其他')}">
+        </span>
+            </div>
         </div>
     </div>
 </div>

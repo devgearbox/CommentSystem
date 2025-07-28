@@ -9,7 +9,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 
 @Controller
@@ -55,6 +60,52 @@ public class LoginController {
     @GetMapping("/purchasework")
     public String purchasework() {
         return "purchasework";
+    }
+
+    //手机号登录
+    @PostMapping("/checkPhone")
+    @ResponseBody
+    public String checkPhone(@RequestParam String phone) {
+        // 调用 UserService 校验手机号
+        User user = userService.findByPhone(phone);
+        return user != null ? "exists" : "not_exists";
+    }
+
+    private static Map<String, String> phoneCodeMap = new HashMap<>();
+    @PostMapping("/sendCode")
+    @ResponseBody
+    public Map<String, String> sendCode(@RequestParam String phone) {
+        User user = userService.findByPhone(phone);
+        Map<String, String> result = new HashMap<>();
+
+        if (user == null) {
+            result.put("status", "not_exists");
+            return result;
+        }
+
+        String code = String.format("%04d", new Random().nextInt(9000) + 1000);
+        phoneCodeMap.put(phone, code);
+        System.out.println("验证码：" + code); // 控制台输出
+
+        result.put("status", "success");
+        result.put("code", code); // 将验证码返回给前端
+        return result;
+    }
+
+    @PostMapping("/phoneLogin")
+    @ResponseBody
+    public String phoneLogin(@RequestParam String phone, HttpSession session) {
+        String code = phoneCodeMap.get(phone);
+        if (code == null) {
+            return "invalid_code";
+        }
+        User user = userService.findByPhone(phone);
+        if (user != null) {
+            session.setAttribute("currentUser", user); // 存入 Session
+            phoneCodeMap.remove(phone); // 验证码使用后移除
+            return "success";
+        }
+        return "fail";
     }
 
     @GetMapping("/settings")
@@ -139,11 +190,11 @@ public class LoginController {
 
         // 3. 密码修改逻辑
         if (userService.changePassword(user.getId(), oldPassword, newPassword)) {
-            // 修改成功：销毁会话并强制跳转登录页
-//            session.invalidate(); // 清除会话，确保登录态失效
+            model.addAttribute("passwordChanged", true);
             return "redirect:/settings";
         } else {
             model.addAttribute("passwordError", "原密码错误或修改失败！");
+            model.addAttribute("passwordChanged", false);
             return "settings";
         }
     }
