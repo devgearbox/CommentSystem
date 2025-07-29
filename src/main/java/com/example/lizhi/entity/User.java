@@ -10,6 +10,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String username;   // 与数据库字段对齐
     private String password;   // 明文存储（按需求）
     private String real_name;  // 补充数据库字段

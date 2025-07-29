@@ -14,7 +14,7 @@ public class Supplier {
     private Integer supplier_id;
 
     @Column(name = "supplier_name")
-    private String suppliername;
+    private String supplierName;
 
     private Integer order_count;
     private String contact;
@@ -48,11 +48,11 @@ public class Supplier {
     }
 
     public String getSupplier_name() {
-        return suppliername;
+        return supplierName;
     }
 
     public void setSupplier_name(String supplier_name) {
-        this.suppliername = supplier_name;
+        this.supplierName = supplier_name;
     }
 
     public String getContact() {

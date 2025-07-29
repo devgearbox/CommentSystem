@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>采购订单管理</title>
+    <link rel="stylesheet" th:href="@{/css/supplier.css}"> <!-- 复用样式表 -->
+</head>
+<body>
+<div class="section">
+    <div class="header">
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="搜索订单编号...">
+            <button id="search-button">搜索</button>
+        </div>
+        <button id="confirm-delete-order" style="display: none;" class="view-del">确认删除</button>
+        <button id="cancel-delete-order" style="display: none;" class="view-all">取消</button>
+        <button id="del-order" class="view-del">删除订单记录</button>
+        <button class="view-all" id="search-all">查看全部</button>
+        <button class="view-all" id="add-order">新增订单</button>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th style="display: none">
+                <input type="checkbox" id="select-all-order">
+            </th>
+            <th>订单编号</th>
+            <th>采购人员</th>
+            <th>供应商</th>
+            <th>采购品种</th>
+            <th>单价</th>
+            <th>下单日期</th>
+            <th>状态</th>
+            <th><div class="action-header">操作</div></th>
+        </tr>
+        </thead>
+        <tbody id="order-table-body">
+        <tr th:each="order : ${purchaseOrders}">
+            <td style="display: none">
+                <input type="checkbox" class="order-check" th:data-id="${order.order_id}">
+            </td>
+            <td th:text="${order.order_no}"></td>
+            <td th:text="${order.user.username}"></td>
+            <td th:text="${order.supplier.supplier_name}"></td>
+            <td th:text="${order.purchase_variety}"></td>
+            <td th:text="${order.purchase_quantity}"></td>
+            <td th:text="${order.create_time}"></td>
+            <td th:text="${order.order_status.label}"></td>
+<!--            <td>-->
+<!--                <button class="action-btn edit-btn" th:data-id="${order.id}">编辑</button>-->
+<!--                <button class="action-btn view-btn" th:data-id="${order.id}">查看</button>-->
+<!--                <button class="action-btn cancel-btn" th:data-id="${order.id}">取消</button>-->
+<!--            </td>-->
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- 查看弹窗 -->
+    <div id="view-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>订单详情</h2>
+            <input type="hidden" id="current-view-id">
+            <div class="detail-group"><label>订单ID：</label><span id="detail-id"></span></div>
+            <div class="detail-group"><label>订单编号：</label><span id="detail-no"></span></div>
+            <div class="detail-group"><label>采购人员：</label><span id="detail-buyer"></span></div>
+            <div class="detail-group"><label>供应商：</label><span id="detail-supplier"></span></div>
+            <div class="detail-group"><label>采购品种：</label><span id="detail-variety"></span></div>
+            <div class="detail-group"><label>单价：</label><span id="detail-price"></span></div>
+            <div class="detail-group"><label>数量：</label><span id="detail-quantity"></span></div>
+            <div class="detail-group"><label>总金额：</label><span id="detail-total"></span></div>
+            <div class="detail-group"><label>下单日期：</label><span id="detail-date"></span></div>
+            <div class="detail-group"><label>状态：</label><span id="detail-status"></span></div>
+            <div class="detail-group"><label>创建时间：</label><span id="detail-create"></span></div>
+            <div class="detail-group"><label>更新时间：</label><span id="detail-update"></span></div>
+        </div>
+    </div>
+
+    <!-- 新增订单弹窗 -->
+    <div id="add-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="add-modal-close">&times;</span>
+            <h2>新增采购订单</h2>
+            <form id="add-form">
+                <div class="form-group">
+                    <label>采购人员ID：</label>
+                    <input type="number" name="buyer_id" required>
+                </div>
+                <div class="form-group">
+                    <label>供应商ID：</label>
+                    <input type="number" name="supplier_id" required>
+                </div>
+                <div class="form-group">
+                    <label>采购品种：</label>
+                    <input type="text" name="product_variety" required>
+                </div>
+                <div class="form-group">
+                    <label>单价：</label>
+                    <input type="number" step="0.01" name="unit_price" required>
+                </div>
+                <div class="form-group">
+                    <label>数量：</label>
+                    <input type="number" min="1" name="quantity" required>
+                </div>
+                <div class="form-group submit-group">
+                    <button type="submit" class="submit-btn">提交</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 编辑订单弹窗 -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close edit-close">&times;</span>
+            <h2>编辑采购订单</h2>
+            <form id="edit-form">
+                <input type="hidden" name="id" id="edit-id">
+                <div class="form-group">
+                    <label>订单编号：</label>
+                    <input type="text" name="order_no" id="edit-no" readonly>
+                </div>
+                <div class="form-group">
+                    <label>采购人员ID：</label>
+                    <input type="number" name="buyer_id" id="edit-buyer-id" required>
+                </div>
+                <div class="form-group">
+                    <label>供应商ID：</label>
+                    <input type="number" name="supplier_id" id="edit-supplier-id" required>
+                </div>
+                <div class="form-group">
+                    <label>采购品种：</label>
+                    <input type="text" name="product_variety" id="edit-variety" required>
+                </div>
+                <div class="form-group">
+                    <label>单价：</label>
+                    <input type="number" step="0.01" name="unit_price" id="edit-price" required>
+                </div>
+                <div class="form-group">
+                    <label>数量：</label>
+                    <input type="number" min="1" name="quantity" id="edit-quantity" required>
+                </div>
+                <div class="form-group">
+                    <label>总金额：</label>
+                    <input type="number" step="0.01" name="total_amount" id="edit-total" readonly>
+                </div>
+                <div class="form-group">
+                    <label>下单日期：</label>
+                    <input type="text" name="order_date" id="edit-date" required>
+                </div>
+                <div class="form-group">
+                    <label>状态：</label>
+                    <select name="status" id="edit-status" required>
+                        <option value="0">待审批</option>
+                        <option value="1">已审批</option>
+                        <option value="2">已发货</option>
+                        <option value="3">已入库</option>
+                        <option value="4">已取消</option>
+                    </select>
+                </div>
+                <div class="form-group submit-group">
+                    <button type="submit" class="submit-btn">保存修改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/order.js}"></script>
+</body>
+</html>

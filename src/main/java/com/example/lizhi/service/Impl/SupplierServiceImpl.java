@@ -22,7 +22,7 @@ public class SupplierServiceImpl implements SupplierService{
 
     @Override
     public List<Supplier> searchSuppliersByName(String name){
-        return supplierRepository.findBySuppliernameContaining(name);
+        return supplierRepository.findBySupplierNameContaining(name);
     }
 
     public Supplier addSupplier(Supplier supplier) {
