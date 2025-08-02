@@ -1,18 +1,19 @@
 package com.example.lizhi.controller;
 
+import com.example.lizhi.entity.Address;
 import com.example.lizhi.entity.User;
+import com.example.lizhi.service.AddressService;
 import com.example.lizhi.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -21,6 +22,8 @@ import java.util.Random;
 public class LoginController {
     @Autowired
     private UserService userService;
+    @Autowired
+    private AddressService addressService;
 
     @GetMapping("/login")
     public String login() {
@@ -108,28 +111,33 @@ public class LoginController {
         return "fail";
     }
 
+    // 删除原有的第二个 @GetMapping("/settings") 方法，保留并修改第一个：
     @GetMapping("/settings")
     public String showSettings(HttpSession session, Model model) {
         // 1. 从 Session 获取登录用户（登录时已存入 "currentUser"）
         User user = (User) session.getAttribute("currentUser");
 
-        // 2. 未登录拦截（可选，登录逻辑已处理可省略）
+        // 2. 未登录拦截
         if (user == null) {
             return "redirect:/login";
         }
 
-        // 3. 补充默认值（数据库字段为 null 时显示）
+        // 3. 补充用户信息默认值（原有逻辑）
         if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
-            user.setPhone("待填写"); // 联系电话为空时显示“待填写”
+            user.setPhone("待填写");
         }
         if (user.getSignature() == null || user.getSignature().trim().isEmpty()) {
-            user.setSignature("该用户很懒，什么都没有留下..."); // 个性签名为空时显示默认文案
+            user.setSignature("该用户很懒，什么都没有留下...");
         }
 
-        // 4. 将用户数据传递到前端（Thymeleaf 通过 ${user} 渲染）
+        // 4. 新增：查询当前用户的地址列表（核心修改）
+        List<Address> addresses = addressService.getAddressesByUserId(user.getId()); // 使用登录用户的真实ID
+        model.addAttribute("addresses", addresses);
+
+        // 5. 传递用户数据到前端
         model.addAttribute("user", user);
 
-        return "settings"; // 返回 settings.html 并携带 user 数据
+        return "settings"; // 返回 settings.html
     }
 
     @PostMapping("/settings/save")
@@ -197,5 +205,69 @@ public class LoginController {
             model.addAttribute("passwordChanged", false);
             return "settings";
         }
+    }
+
+
+    // 保存地址
+    @PostMapping("/address/save")
+    @ResponseBody
+    public String saveAddress(
+            @RequestBody Address address, // 用 @RequestBody 接收 JSON
+            HttpSession session
+    ) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null) {
+            return "fail";
+        }
+        address.setUserId(currentUser.getId());
+        addressService.saveAddress(address);
+        return "success";
+    }
+
+    // 删除地址
+    @PostMapping("/address/delete")
+    @ResponseBody
+    public String deleteAddress(
+            @RequestParam Long id,
+            HttpSession session // 新增 Session 获取当前用户
+    ) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null) {
+            return "fail"; // 未登录
+        }
+        // 校验地址的 userId 是否属于当前用户（需 AddressService 新增方法）
+        boolean isOwned = addressService.isAddressOwnedByUser(id, currentUser.getId());
+        if (!isOwned) {
+            return "fail"; // 无权删除
+        }
+        addressService.deleteAddress(id);
+        return "success";
+    }
+    @PostMapping("/address/setDefault")
+    @ResponseBody
+    public String setDefaultAddress(
+            @RequestParam Long addressId,
+            HttpSession session
+    ) {
+        // 1. 获取当前登录用户
+        User currentUser = (User) session.getAttribute("currentUser");
+        if (currentUser == null) {
+            return "fail"; // 未登录
+        }
+
+        // 2. 校验地址归属（防止越权）
+        Address address = addressService.getAddressById(addressId); // 语义修正
+        if (address == null || !address.getUserId().equals(currentUser.getId())) {
+            return "fail"; // 地址不存在或不属于当前用户
+        }
+
+        // 3. 先清除当前用户原有默认地址
+        addressService.clearDefaultAddress(currentUser.getId());
+
+        // 4. 设置新默认地址
+        address.setDefault(true);
+        addressService.saveAddress(address);
+
+        return "success";
     }
 }

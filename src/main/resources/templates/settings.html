@@ -163,7 +163,7 @@
             font-size: 24px;
         }
         .btn-edit {
-            background-color: #007bff;
+            background-color: #666;
             color: white;
         }
         .btn-save {
@@ -179,6 +179,43 @@
             border-radius: 0.25rem;
             color: #666;
             cursor: not-allowed;
+        }
+        /* 地址项布局调整 */
+        .address-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* 保持删除按钮右对齐 */
+            padding: 8px 0; /* 缩小上下内边距，减小行间空隙 */
+            gap: 10px; /* 按钮与地址文本间距 */
+        }
+
+        /* 地址文本左对齐 */
+        .address-item span {
+            text-align: left;
+            flex: 1; /* 让地址文本占据中间空间 */
+        }
+
+        /* 新增按钮容器样式 */
+        .new-address {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* 输入框与按钮之间的间距 */
+            margin-top: 8px; /* 与上方地址项保持相同间距 */
+            padding: 8px 0; /* 与地址项上下间距一致 */
+        }
+
+        /* 输入框样式微调（确保与整体布局协调） */
+        .new-address .form-control {
+            flex: 1; /* 输入框占据左侧空间 */
+            margin: 0; /* 清除可能的默认外边距 */
+        }
+        /* 地址管理 - 默认地址标识样式 */
+        .address-item .default-tag {
+            font-size: 0.5em !important; /* 字体缩小为父元素的50% */
+            color: #999;
+            margin-left: 4px !important; /* 紧贴地址，更小间距 */
+            line-height: 1;              /* 消除垂直间距 */
+            display: inline-block;       /* 确保行内布局 */
         }
     </style>
 </head>
@@ -239,7 +276,7 @@
             </form>
         </div>
     </div>
-
+<!--密码修改模块-->
     <div class="section" id="password-section">
         <div class="section-header" onclick="toggleSection('password-content')">
             <h2><i class="fas fa-lock"></i> 密码修改</h2>
@@ -270,6 +307,33 @@
             </form>
         </div>
     </div>
+
+    <!-- 地址管理模块 -->
+    <div class="section" id="address-section">
+        <div class="section-header" onclick="toggleSection('address-content')">
+            <h2><i class="fas fa-map-marker-alt"></i> 地址管理</h2>
+            <i class="fas fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="section-content" id="address-content">
+            <!-- 已添加地址展示 -->
+            <div class="address-list">
+                <div class="address-item" th:each="addr : ${addresses}">
+                    <button class="btn btn-default btn-sm"
+                            th:onclick="|setDefaultAddress(${addr.id})|">设为默认地址</button>
+                    <span th:text="${addr.address}"></span>
+                    <span th:if="${addr.default}" class="default-tag">默认地址</span>
+                    <button class="btn btn-danger btn-sm" th:onclick="|deleteAddress(${addr.id})|">删除</button>
+                </div>
+            </div>
+
+            <!-- 新增地址框 -->
+            <div class="new-address">
+                <input type="text" id="newAddressInput" class="form-control" placeholder="请输入新地址">
+                <button class="btn btn-primary" onclick="addAddress()">新增</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- 系统偏好模块 -->
     <div class="section">
@@ -342,7 +406,6 @@
             .catch(() => alert('保存失败，请重试'));
     });
 
-
     // 头像上传预览
     document.getElementById('avatar-input').addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -395,6 +458,79 @@
     //     // 跳转到登录页面
     //     window.location.href = "http://localhost:8080/login";
     // }
+
+    // 新增地址
+    function addAddress() {
+        const newAddress = document.getElementById('newAddressInput').value.trim();
+        if (newAddress === '') {
+            alert('地址不能为空！');
+            return;
+        }
+
+        // 调用后端接口保存地址
+        fetch('/address/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' // 改为 JSON 格式
+            },
+            body: JSON.stringify({ address: newAddress }) // 封装为 JSON
+        })
+            .then(response => response.text())
+            .then(data => {
+                if (data ==='success') {
+                    // 刷新页面或更新地址列表
+                    window.location.reload();
+                } else {
+                    alert('新增地址失败！');
+                }
+            })
+            .catch(error => {
+                console.error('新增地址出错:', error);
+                alert('网络异常，请重试！');
+            });
+    }
+
+    // 删除地址
+    function deleteAddress(addressId) {
+        if (confirm('确定要删除该地址吗？')) {
+            fetch('/address/delete?id=' + addressId, {
+                method: 'POST'
+            })
+                .then(response => response.text())
+                .then(data => {
+                    if (data ==='success') {
+                        // 刷新页面或移除当前地址项
+                        window.location.reload();
+                    } else {
+                        alert('删除地址失败！');
+                    }
+                })
+                .catch(error => {
+                    console.error('删除地址出错:', error);
+                    alert('网络异常，请重试！');
+                });
+        }
+    }
+
+    // 默认地址逻辑
+    function setDefaultAddress(addressId) {
+        fetch('/address/setDefault?addressId=' + addressId, {
+            method: 'POST'
+        })
+            .then(response => response.text())
+            .then(data => {
+                if (data === 'success') {
+                    alert('设置默认地址成功！');
+                    window.location.reload(); // 刷新页面更新默认状态
+                } else {
+                    alert('设置失败，请重试！');
+                }
+            })
+            .catch(error => {
+                console.error('设置默认地址出错:', error);
+                alert('网络异常，请重试！');
+            });
+    }
 </script>
 </body>
 </html>

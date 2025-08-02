@@ -1,0 +1,35 @@
+body {
+    background: #f8f9fa;
+}
+.container {
+    padding: 40px 0;
+}
+.variety-card {
+    transition: all 0.3s;
+    cursor: pointer;
+    min-height: 220px;
+}
+.variety-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.selected {
+    border: 2px solid #28a745;
+}
+.order-btn {
+    width: 100%;
+    max-width: 300px;
+}
+/* 右侧栏样式 */
+.right-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}

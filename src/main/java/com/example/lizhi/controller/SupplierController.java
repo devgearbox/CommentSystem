@@ -26,13 +26,6 @@ public class SupplierController {
         return "supplier";
     }
 
-    @GetMapping("/work")
-    public String showSuppliersInWork(Model model) {
-        List<Supplier> suppliers = supplierService.getAllSuppliers();
-        model.addAttribute("suppliers", suppliers);
-        return "work";
-    }
-
     @GetMapping("/suppliers/search")
     @ResponseBody
     public List<Supplier> searchSuppliersByName(@RequestParam String name) {
