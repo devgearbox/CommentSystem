@@ -10,4 +10,6 @@ public interface AddressService {
     boolean isAddressOwnedByUser(Long addressId, Long userId);
     void clearDefaultAddress(Long userId);
     Address getAddressById(Long addressId);
+    // 添加方法获取用户的默认地址
+    Address findDefaultAddressByUserId(Long userId);
 }

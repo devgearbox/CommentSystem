@@ -81,6 +81,11 @@
         // 更新URL（可选）
         history.pushState(null, null, url);
     });
+    // 当iframe加载完成时执行
+    $('#content-frame').on('load', function() {
+        var contentHeight = $(this).contents().find('body').height();
+        $(this).height(contentHeight);
+    });
 
     //侧边栏颜色跟随
     window.addEventListener('popstate', function() {

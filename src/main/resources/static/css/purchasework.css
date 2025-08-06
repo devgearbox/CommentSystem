@@ -20,6 +20,9 @@ body {
     height: 100vh;
     position: fixed;
 }
+#content-frame {
+    overflow: hidden !important; /* 禁用iframe内部滚动 */
+}
 
 .sidebar .logo {
     text-align: center;

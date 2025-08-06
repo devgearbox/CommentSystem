@@ -53,11 +53,11 @@
             font-weight: 600;
         }
         /* 角色文本样式 */
-        .role-text {
-            font-size: 12px; /* 字号略小于用户名，可按需调整 */
-            color: #999; /* 灰色，可按需调整具体色值 */
-            margin-top: 2px; /* 与用户名拉开一点距离，可按需调整 */
-        }
+        //.role-text {
+        //    font-size: 12px; /* 字号略小于用户名，可按需调整 */
+        //    color: #999; /* 灰色，可按需调整具体色值 */
+        //    margin-top: 2px; /* 与用户名拉开一点距离，可按需调整 */
+        //}
 
         /* 头部区域布局 */
         .header-row {
@@ -88,6 +88,29 @@
             width: 750px;
             height: 420px;
             object-fit: cover;
+        }
+
+        /* 卡片基础样式 */
+        .product-card {
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .product-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        /* 图片自适应 */
+        .product-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+        /* 价格颜色 */
+        .price-text {
+            color: #e60012;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -143,6 +166,61 @@
                     </div>
                     <div class="banner-item">
                         <img th:src="@{/img/litchi01.png}" class="banner-img" alt="妃子笑">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <!-- 标题 -->
+        <h2 class="fw-bold mb-4">热门荔枝商品</h2>
+
+        <!-- 商品卡片容器：用 Bootstrap 网格系统实现响应式布局 -->
+        <div class="row g-4">
+            <!-- 循环渲染商品卡片 -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3"
+                 th:each="variety : ${varieties}">
+
+                <div class="card product-card h-100">
+
+                    <!-- 商品图片 -->
+                    <img th:src="@{/img/litchi01.png}"
+                         class="card-img-top"
+                         th:alt="${variety.varietyName}">
+                    <!-- 商品图片：动态关联品种名称对应的图片 -->
+<!--                    <img th:src="@{/img/{varietyName}.png(varietyName=${variety.varietyName})}"-->
+<!--                         class="card-img-top"-->
+<!--                         th:alt="${variety.varietyName}">-->
+
+                    <!-- 卡片内容 -->
+                    <div class="card-body d-flex flex-column">
+                        <!-- 品种名称 -->
+                        <h5 class="card-title"
+                            th:text="${variety.varietyName}"></h5>
+
+                        <!-- 品种描述 -->
+                        <p class="card-text text-muted"
+                           th:text="${variety.description}"></p>
+
+                        <!-- 供应商信息（关联 supplier 表） -->
+                        <div class="mb-2"
+                             th:if="${variety.supplier}">
+                            <small class="text-muted">
+                                供应商：<span th:text="${#strings.substring(variety.supplier.address, 0, 6)}">灵山县灵城镇</span>...<br>
+                                合作订单：<span th:text="${variety.supplier.order_count}">3000</span>单
+                            </small>
+                        </div>
+
+                        <!-- 价格和按钮 -->
+                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                    <span class="price-text"
+                          th:text="'¥' + ${variety.price} + '/斤'"></span>
+                            <button class="btn btn-success"
+                                    th:onclick="'window.location.href = \'/commodity?varietyId=' + ${variety.id} + '\';'">
+                                采购
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

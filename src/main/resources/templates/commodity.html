@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>商品详情 - 荔即批发</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 1. 全局滚动条控制：仅保留浏览器默认的最外层滚动条 */
+        body {
+            overflow-y: auto; /* 保持页面滚动能力 */
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 2. 全屏容器：消除内层滚动触发条件 */
+        .container-full {
+            width: 100%;
+            max-width: 100% !important;
+            padding: 0 1rem;
+            margin: 0 auto;
+            overflow: hidden; /* 防止容器自身产生滚动条 */
+        }
+
+        /* 商品标题区 */
+        .product-header {
+            background: #fff;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .product-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .product-meta {
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* 商品图片 */
+        .image-section {
+            width: 100%;
+            background: #fff;
+            padding: 15px 0;
+            text-align: center;
+        }
+        .main-image {
+            max-width: 800px;
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* 3. 内容容器：确保不主动触发滚动 */
+        .content-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            overflow: visible; /* 明确设置可见，避免默认溢出滚动 */
+        }
+
+        /* 内容区块 */
+        .content-section {
+            width: 100%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            margin-bottom: 15px;
+            overflow: hidden; /* 防止区块内部溢出 */
+        }
+        .section-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 价格区域 */
+        .price-info {
+            margin-bottom: 12px;
+        }
+        .current-price {
+            font-size: 26px;
+            color: #e60012;
+            font-weight: 700;
+        }
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            margin-left: 10px;
+        }
+        .price-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .price-tag {
+            background: #fff3cd;
+            color: #856404;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        /* 规格选择 */
+        .spec-group {
+            margin-bottom: 15px;
+        }
+        .spec-title {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        .spec-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .spec-option {
+            padding: 6px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .spec-option:hover {
+            border-color: #288352;
+        }
+        .spec-option.selected {
+            border-color: #288352;
+            color: #288352;
+            background: rgba(40, 131, 82, 0.1);
+        }
+
+        /* 供应商与配送信息 */
+        .supplier-info, .delivery-info {
+            line-height: 1.7;
+        }
+        .supplier-info p, .delivery-info p {
+            margin: 6px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .info-label {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 购买按钮 */
+        .buy-buttons {
+            display: flex;
+        }
+        .buy-btn {
+            width: 100%;
+            padding: 12px 0;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .purchase-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .purchase-btn:hover {
+            background: #bb2d3b;
+        }
+
+        /* 商品简介 */
+        .product-description {
+            color: #666;
+            line-height: 1.6;
+            font-size: 14px;
+            text-align: justify;
+        }
+            .custom-weight {
+        width: 90px;
+    }
+    </style>
+</head>
+<body>
+<div class="container-full">
+    <!-- 顶部分区 -->
+    <div class="product-header">
+        <h1 class="product-title" th:text="${variety.varietyName}">桂味荔枝</h1>
+        <div class="product-meta">
+            <span>★★★★★ 4.6分</span> |
+            <span>88VIP好评率96%</span> |
+            <span>平均15小时发货</span>
+        </div>
+    </div>
+
+    <!-- 商品图片 -->
+    <div class="image-section">
+        <img th:src="@{/img/litchi01.png}"
+             class="main-image"
+             th:alt="${variety.varietyName}">
+    </div>
+
+    <!-- 内容容器 -->
+    <div class="content-wrapper">
+        <div class="content-section">
+            <h2 class="section-title">价格信息</h2>
+            <div class="price-info">
+                <span class="current-price" th:text="'¥' + ${variety.price} + '/斤'">¥39.24/斤</span>
+                <span class="original-price" th:text="'原价 ¥' + ${variety.price}">原价 ¥46.8/斤</span>
+            </div>
+            <div class="price-tags">
+                <span class="price-tag" th:text="'已售 ' + ${variety.stock} + '+'">已售 9000+</span>
+                <span class="price-tag">满1件9.9折</span>
+                <span class="price-tag">广西区内免运费</span>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">供应商信息</h2>
+            <div class="supplier-info" th:if="${variety.supplier}">
+                <p><span class="info-label">供应商名称：</span><span th:text="${variety.supplier.supplier_name}">灵山县荔枝合作社</span></p>
+                <p><span class="info-label">联系人：</span><span th:text="${variety.supplier.contact}">陈经理</span></p>
+                <p><span class="info-label">联系电话：</span><span th:text="${variety.supplier.phone}">13600000000</span></p>
+                <p><span class="info-label">地址：</span><span th:text="${variety.supplier.address}">广西灵山县荔枝产业园区</span></p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">选择规格</h2>
+            <div class="spec-group">
+                <div class="spec-title">重量选择</div>
+                <div class="spec-options">
+                    <!-- 预设重量 -->
+                    <div class="spec-option weight-option" data-weight="2">2斤</div>
+                    <div class="spec-option weight-option" data-weight="3">3斤</div>
+                    <div class="spec-option weight-option" data-weight="5">5斤</div>
+                    <div class="spec-option weight-option" data-weight="10">10斤</div>
+                    <!-- 自定义重量输入框 -->
+                    <input type="number"
+                           class="spec-option custom-weight"
+                           placeholder="自定义（≤500）"
+                           min="1" max="500">
+                </div>
+            </div>
+            <div class="spec-group">
+                <div class="spec-title">品质选择</div>
+                <div class="spec-options">
+                    <div class="spec-option selected" data-quality="1">头茬鲜果（原价）</div>
+                    <div class="spec-option" data-quality="1.1">商超大果（+10%）</div>
+                    <div class="spec-option" data-quality="1.15">稀缺果王（+15%）</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="buy-buttons">
+                <button class="buy-btn purchase-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#orderConfirmModal"
+                        onclick="initOrderModal()">
+                    立即购买
+                </button>
+            </div>
+        </div>
+
+        <!-- 订单确认弹窗 -->
+        <div class="modal fade" id="orderConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">订单确认</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>荔枝名称：</strong> <span id="modalVarietyName" th:text="${variety.varietyName}"></span></p>
+                        <p><strong>供应商名称：</strong> <span id="modalSupplierName" th:text="${variety.supplier.supplier_name}"></span></p>
+                        <p><strong>单价：</strong> ¥<span id="modalPrice" th:text="${variety.price}"></span>/斤</p>
+
+                        <div class="mb-3">
+                            <label><strong>重量：</strong></label>
+                            <span id="modalWeight">0斤</span>
+                        </div>
+                        <div class="mb-3">
+                            <label><strong>品质：</strong></label>
+                            <span id="modalQuality">头茬鲜果（原价）</span>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="insuranceCheck">
+                            <label class="form-check-label" for="insuranceCheck">勾选运费险（+¥2.99）</label>
+                        </div>
+
+                        <p><strong>总价：</strong> ¥<span id="totalPrice">0.00</span></p>
+
+                        <p><strong>默认地址：</strong> <span id="modalAddress" th:text="${defaultAddress.address}"></span></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="submitOrder()">提交订单</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 Bootstrap 弹窗依赖 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<script>
+    // 初始化订单弹窗数据
+    function initOrderModal() {
+        // 1. 获取重量（预设/自定义）
+        let weight = 0;
+        // 预设重量：查找带有 selected 类的 .weight-option
+        const presetWeight = document.querySelector('.weight-option.selected');
+        // 自定义重量：获取输入框值
+        const customWeight = document.querySelector('.custom-weight').value;
+
+        // 重量优先级：预设重量 > 自定义输入（非0） > 0
+        if (presetWeight) {
+            weight = presetWeight.dataset.weight;
+            // 选择预设时，清空自定义输入框
+            document.querySelector('.custom-weight').value = "0";
+        } else if (customWeight && customWeight >= 1 && customWeight <= 500) {
+            weight = customWeight;
+            // 选择自定义时，取消所有预设选中
+            document.querySelectorAll('.weight-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+        }
+
+        // 2. 获取品质和单价
+        const qualityEl = document.querySelector('.spec-option.selected[data-quality]');
+        const quality = qualityEl ? qualityEl.dataset.quality : 1;
+        const price = parseFloat(document.querySelector('.current-price').textContent.replace('¥', '').replace('/斤', ''));
+
+        // 3. 更新弹窗内容
+        document.getElementById('modalWeight').textContent = `${weight}斤`;
+        document.getElementById('modalQuality').textContent = qualityEl ? qualityEl.textContent : '头茬鲜果（原价）';
+        document.getElementById('modalQuantity')?.remove(); // 彻底移除数量相关元素
+
+        // 4. 计算总价（重量>0 时计算）
+        if (weight > 0) {
+            calculateTotal(price, weight, quality);
+        } else {
+            document.getElementById('totalPrice').textContent = "0.00";
+        }
+    }
+
+    // 监听预设重量点击
+    document.querySelectorAll('.weight-option').forEach(option => {
+        option.addEventListener('click', function() {
+            // 取消其他预设的选中状态
+            document.querySelectorAll('.weight-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            this.classList.add('selected');
+            initOrderModal(); // 重新计算
+        });
+    });
+
+    // 监听自定义重量输入
+    document.querySelector('.custom-weight').addEventListener('input', function() {
+        // 取消所有预设的选中状态
+        document.querySelectorAll('.weight-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        initOrderModal(); // 重新计算
+    });
+
+    // 监听品质选择
+    document.querySelectorAll('.spec-option[data-quality]').forEach(option => {
+        option.addEventListener('click', function() {
+            // 取消其他品质的选中状态
+            document.querySelectorAll('.spec-option[data-quality]').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            this.classList.add('selected');
+            initOrderModal(); // 重新计算
+        });
+    });
+
+    // 监听运费险变化
+    document.getElementById('insuranceCheck').addEventListener('change', function() {
+        initOrderModal(); // 重新计算
+    });
+
+    // 计算总价（已删除数量参数，总价 = 单价 × 重量 × 品质系数）
+    function calculateTotal(price, weight, quality) {
+        let subtotal = price * weight * quality;
+        if (document.getElementById('insuranceCheck').checked) {
+            subtotal += 2.99;
+        }
+        document.getElementById('totalPrice').textContent = subtotal.toFixed(2);
+    }
+
+    // 提交订单
+    function submitOrder() {
+        // 这里可以添加订单提交逻辑
+        alert('订单提交成功！');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('orderConfirmModal'));
+        modal.hide();
+    }
+
+    function submitOrder() {
+    // 获取订单相关数据
+    const varietyName = document.getElementById('modalVarietyName').textContent;
+    const supplierName = document.getElementById('modalSupplierName').textContent;
+    const weight = document.getElementById('modalWeight').textContent.replace('斤', '');
+    const isInsuranceChecked = document.getElementById('insuranceCheck').checked;
+
+    // 构造请求参数
+    const requestData = {
+        varietyName: varietyName,
+        supplierName: supplierName,
+        quantity: weight
+    };
+
+    // 发送 AJAX 请求
+    fetch('/work/submit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+   .then(response => response.json())
+   .then(data => {
+        if (data.success) {
+            alert('订单提交成功！订单 ID：' + data.orderId);
+            const modal = bootstrap.Modal.getInstance(document.getElementById('orderConfirmModal'));
+            modal.hide();
+            // 可在此处跳转到订单列表页或其他操作
+            window.location.href = '/work';
+        } else {
+            alert('订单提交失败：' + data.message);
+        }
+    })
+   .catch(error => {
+        console.error('提交订单失败：', error);
+        alert('订单提交失败，请稍后重试');
+    });
+}
+</script>
+</body>
+</html>

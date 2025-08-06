@@ -42,6 +42,8 @@ public class LoginController {
         if (user != null) {
             // 登录成功：将完整 User 对象存入 Session，key 为 "currentUser"
             session.setAttribute("currentUser", user);
+            // 新增：同时存 userId
+            session.setAttribute("currentUserId", user.getId());
 
             // 根据角色跳转不同页面（原有逻辑）
             if (user.getRole() == 1) {
