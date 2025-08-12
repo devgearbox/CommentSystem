@@ -60,8 +60,29 @@ public class PurchaseOrder{
         this.user = user;
     }
 
+    //关联litchi_variety表
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "purchase_variety",
+            referencedColumnName = "variety_name",
+            insertable = false,  // 禁止通过此关联字段插入
+            updatable = false)    // 禁止通过此关联字段更新
+    private LitchiVariety litchiVariety;
+    public LitchiVariety getLitchiVariety() { return litchiVariety; }
+    public void setLitchiVariety(LitchiVariety litchiVariety) { this.litchiVariety = litchiVariety; }
+
+
     @Temporal(TemporalType.TIMESTAMP)
     private Date create_time;
+
+    private BigDecimal total_price;
+
+    public BigDecimal getTotal_price() {
+        return total_price;
+    }
+
+    public void setTotal_price(BigDecimal total_price) {
+        this.total_price = total_price;
+    }
 
     // 构造方法
     public PurchaseOrder() {

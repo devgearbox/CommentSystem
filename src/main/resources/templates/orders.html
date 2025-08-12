@@ -28,7 +28,8 @@
             <th>采购人员</th>
             <th>供应商</th>
             <th>采购品种</th>
-            <th>单价</th>
+            <th>数量(斤）</th>
+            <th>总价</th>
             <th>下单日期</th>
             <th>状态</th>
             <th><div class="action-header">操作</div></th>
@@ -44,35 +45,33 @@
             <td th:text="${order.supplier.supplier_name}"></td>
             <td th:text="${order.purchase_variety}"></td>
             <td th:text="${order.purchase_quantity}"></td>
+            <td th:text="${order.total_price}"></td>
             <td th:text="${order.create_time}"></td>
             <td th:text="${order.order_status.label}"></td>
-<!--            <td>-->
-<!--                <button class="action-btn edit-btn" th:data-id="${order.id}">编辑</button>-->
-<!--                <button class="action-btn view-btn" th:data-id="${order.id}">查看</button>-->
-<!--                <button class="action-btn cancel-btn" th:data-id="${order.id}">取消</button>-->
-<!--            </td>-->
+            <td>
+                <button class="view-btn" th:data-id="${order.order_id}">查看详情</button>
+            </td>
         </tr>
         </tbody>
     </table>
 
-    <!-- 查看弹窗 -->
-    <div id="view-modal" class="modal">
+    <!-- 详情弹窗（参考你的供应商弹窗结构调整） -->
+    <div id="order-view-modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>订单详情</h2>
-            <input type="hidden" id="current-view-id">
-            <div class="detail-group"><label>订单ID：</label><span id="detail-id"></span></div>
-            <div class="detail-group"><label>订单编号：</label><span id="detail-no"></span></div>
-            <div class="detail-group"><label>采购人员：</label><span id="detail-buyer"></span></div>
-            <div class="detail-group"><label>供应商：</label><span id="detail-supplier"></span></div>
-            <div class="detail-group"><label>采购品种：</label><span id="detail-variety"></span></div>
-            <div class="detail-group"><label>单价：</label><span id="detail-price"></span></div>
-            <div class="detail-group"><label>数量：</label><span id="detail-quantity"></span></div>
-            <div class="detail-group"><label>总金额：</label><span id="detail-total"></span></div>
-            <div class="detail-group"><label>下单日期：</label><span id="detail-date"></span></div>
-            <div class="detail-group"><label>状态：</label><span id="detail-status"></span></div>
-            <div class="detail-group"><label>创建时间：</label><span id="detail-create"></span></div>
-            <div class="detail-group"><label>更新时间：</label><span id="detail-update"></span></div>
+            <input type="hidden" id="current-order-id">
+            <p>订单编号：<span id="order-no"></span></p>
+            <p>采购人：<span id="order-real-name"></span></p>
+            <p>采购单价：<span id="order-price"></span></p>
+            <p>数量：<span id="order-quantity"></span> 斤</p>
+            <p>采购品种：<span id="order-variety"></span></p>
+            <p>订单总价：<span id="order-total-price"></span></p>
+            <p>供应商：<span id="order-supplier-name"></span></p>
+            <p>供应商电话：<span id="order-supplier-phone"></span></p>
+            <p>供应商地址：<span id="order-supplier-address"></span></p>
+            <p>订单状态：<span id="order-status"></span></p>
+            <p>下单日期：<span id="order-date"></span></p>
         </div>
     </div>
 

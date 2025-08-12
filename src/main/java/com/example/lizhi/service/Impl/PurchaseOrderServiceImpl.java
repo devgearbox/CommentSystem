@@ -9,12 +9,15 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Autowired
     private PurchaseOrderRepository purchaseOrderRepository;
+    @Autowired
+    private PurchaseOrderRepository orderRepository;
 
 //    @Override
 //    public List<PurchaseOrder> getAllPurchaseOrders() {return purchaseOrderRepository.findAll();}
@@ -51,5 +54,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             order.setCreate_time(new Date());
         }
         return purchaseOrderRepository.save(order);
+    }
+    @Override
+    public Optional<PurchaseOrder> getOrderById(Integer orderId) {
+        return orderRepository.findById(orderId);
     }
 }

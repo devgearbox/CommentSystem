@@ -40,55 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = '/orders'
     });
 });
-//添加供应商
-// document.addEventListener('DOMContentLoaded', function() {
-//     const addBtn = document.getElementById('add-order');
-//     const addModal = document.getElementById('add-modal');
-//     const closeBtn = document.getElementById('add-modal-close');
-// //打开和隐藏弹窗
-//     addBtn.addEventListener('click', () => {
-//         addModal.style.display = 'flex';
-//     });
-//     closeBtn.addEventListener('click', (e) => {
-//         e.stopPropagation(); // 阻止事件冒泡到父元素
-//         addModal.style.display = 'none';
-//     });
-//
-// // 2. 表单提交
-//     const addForm = document.getElementById('add-form');
-//     addForm.addEventListener('submit', async (e) => {
-//         e.preventDefault(); // 阻止默认提交
-//
-//         // 收集表单数据
-//         const formData = new FormData(addForm);
-//         const data = Object.fromEntries(formData.entries());
-//
-//         try {
-//             // 发送 POST 请求到后端
-//             const response = await fetch('/orders/add', {
-//                 method: 'POST',
-//                 headers: { 'Content-Type': 'application/json' },
-//                 body: JSON.stringify(data)
-//             });
-//
-//             // 解析响应 JSON（只执行一次）
-//             const res = await response.json();
-//
-//             console.log('完整响应:', res); // 调试用
-//
-//             if (res.success) {
-//                 alert('添加成功！');
-//                 addModal.style.display = 'none';
-//                 window.location.reload();
-//             } else {
-//                 alert('添加失败：' + (res.message || '未知错误'));
-//             }
-//         } catch (error) {
-//             console.error('添加出错：', error);
-//             alert('网络异常，请重试');
-//         }
-//     });
-// });
 //批量删除功能
 document.addEventListener('DOMContentLoaded', function() {
     const batchDeleteBtn = document.getElementById('del-order'); // 对应供应商的 del-supplier
@@ -173,6 +124,92 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('删除请求失败:', error);
             alert('网络错误，删除失败');
+        }
+    });
+});
+//订单详情功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. 获取 DOM 元素
+    const viewModal = document.getElementById('order-view-modal');
+    const closeBtn = document.querySelector('#order-view-modal .close');
+    const viewButtons = document.querySelectorAll('.view-btn'); // 订单列表的“查看”按钮
+    const STATUS_MAP = {
+            pending: "待审核",
+            approved: "已审核",
+            shipped: "已发货"
+        };
+
+    // 2. 详情字段 DOM（与弹窗 HTML 对应）
+    const detailFields = {
+        orderNo: document.getElementById('order-no'), // 订单编号
+        orderRealName: document.getElementById('order-real-name'), // 采购人
+        orderPrice: document.getElementById('order-price'), // 采购单价
+        orderQuantity: document.getElementById('order-quantity'), // 数量
+        orderVariety: document.getElementById('order-variety'), // 采购品种
+        orderTotalPrice: document.getElementById('order-total-price'), // 订单总价
+        orderSupplierName: document.getElementById('order-supplier-name'), // 供应商
+        orderSupplierPhone: document.getElementById('order-supplier-phone'), // 供应商电话
+        orderSupplierAddress: document.getElementById('order-supplier-address'), // 供应商地址
+        orderStatus: document.getElementById('order-status'), // 订单状态
+        orderDate: document.getElementById('order-date') // 下单日期
+    };
+
+    // 3. 点击“查看”按钮：获取订单 ID 并请求详情
+    viewButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const orderId = this.getAttribute('data-id'); // 获取订单 ID
+            if (!orderId) {
+                alert('未获取到订单 ID');
+                return;
+            }
+
+            try {
+                // 4. 调用后端接口（路径与 Controller 对应）
+                const response = await fetch(`/orders/detail/${orderId}`);
+                if (!response.ok) {
+                    throw new Error('获取详情失败');
+                }
+                const order = await response.json();
+
+                // 5. 验证数据（可选，防止 ID 不匹配）
+                if (!order || order.order_id !== parseInt(orderId)) {
+                    console.error('数据不匹配或为空', order);
+                    return;
+                }
+
+                // 6. 填充弹窗字段
+                detailFields.orderNo.textContent = order.order_no; // 订单编号
+                detailFields.orderRealName.textContent = order.user.real_name || '无'; // 采购人
+                detailFields.orderPrice.textContent = order.litchiVariety.price || '9.00'; // 采购单价
+                detailFields.orderQuantity.textContent = order.purchase_quantity || '0'; // 数量
+                detailFields.orderVariety.textContent = order.purchase_variety || '无'; // 采购品种
+                detailFields.orderTotalPrice.textContent = order.total_price || '0.00'; // 订单总价
+                detailFields.orderSupplierName.textContent = order.supplier.supplier_name || '无'; // 供应商名称
+                detailFields.orderSupplierPhone.textContent = order.supplier.phone || '无'; // 供应商电话
+                detailFields.orderSupplierAddress.textContent = order.supplier.address || '无'; // 供应商地址
+                detailFields.orderStatus.textContent = STATUS_MAP[order.order_status] || "未知状态"; // 订单状态
+                detailFields.orderDate.textContent = order.create_time
+                    ? new Date(order.create_time).toLocaleString()
+                    : '无'; // 下单日期
+
+                // 7. 显示弹窗
+                viewModal.style.display = 'flex';
+
+            } catch (error) {
+                console.error('查看订单详情失败：', error);
+                alert('加载详情失败，请重试');
+            }
+        });
+    });
+
+    // 8. 关闭弹窗（点击关闭按钮或遮罩层）
+    closeBtn.addEventListener('click', () => {
+        viewModal.style.display = 'none';
+    });
+
+    viewModal.addEventListener('click', (e) => {
+        if (e.target === viewModal) {
+            viewModal.style.display = 'none';
         }
     });
 });

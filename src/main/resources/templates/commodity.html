@@ -420,7 +420,8 @@
     const requestData = {
         varietyName: varietyName,
         supplierName: supplierName,
-        quantity: weight
+        quantity: weight,
+        totalPrice: document.getElementById('totalPrice').textContent // 新增总价字段
     };
 
     // 发送 AJAX 请求

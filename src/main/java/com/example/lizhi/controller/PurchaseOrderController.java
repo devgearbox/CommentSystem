@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 public class PurchaseOrderController {
@@ -26,6 +27,8 @@ public class PurchaseOrderController {
     private UserRepository userRepository;
     @Autowired
     private SupplierService supplierService;
+    @Autowired
+    private PurchaseOrderService orderService;
 
     @GetMapping("/orders")
     public String listPurchaseOrder(Model model) {
@@ -83,6 +86,8 @@ public class PurchaseOrderController {
             PurchaseOrder order = new PurchaseOrder();
             order.setPurchase_variety(request.getVarietyName());
             order.setPurchase_quantity(new BigDecimal(request.getQuantity()));
+            // 在构建PurchaseOrder对象时添加
+            order.setTotal_price(new BigDecimal(request.getTotalPrice()));
 
             // 4. 查询供应商（增加空值校验）
             Supplier supplier = supplierService.searchSuppliersByName(request.getSupplierName())
@@ -116,11 +121,31 @@ public class PurchaseOrderController {
             ));
         }
     }
+
+
+    @GetMapping("/orders/detail/{orderId}")
+    public ResponseEntity<?> getOrderDetail(@PathVariable Integer orderId) {
+        Optional<PurchaseOrder> orderOpt = orderService.getOrderById(orderId);
+        if (orderOpt.isPresent()) {
+            return ResponseEntity.ok(orderOpt.get());
+        } else {
+            return ResponseEntity.status(404).body("订单 ID 不存在");
+        }
+    }
     // 内部静态类用于接收前端提交订单的参数
     static class PurchaseOrderRequest {
         private String varietyName;
         private String supplierName;
         private String quantity;
+        private String totalPrice;
+
+        public String getTotalPrice() {
+            return totalPrice;
+        }
+
+        public void setTotalPrice(String totalPrice) {
+            this.totalPrice = totalPrice;
+        }
 
         public String getVarietyName() {
             return varietyName;

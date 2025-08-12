@@ -9,7 +9,7 @@ public class LitchiVariety {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private String varietyName;
+    private String variety_name;
     // 将 Double 改为 BigDecimal
     private BigDecimal price;
     private Integer stock;
@@ -30,11 +30,11 @@ public class LitchiVariety {
     }
 
     public String getVarietyName() {
-        return varietyName;
+        return variety_name;
     }
 
     public void setVarietyName(String varietyName) {
-        this.varietyName = varietyName;
+        this.variety_name = varietyName;
     }
 
     public BigDecimal getPrice() {
