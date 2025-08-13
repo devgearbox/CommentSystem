@@ -349,3 +349,39 @@ th {
     color: #222;
     font-weight: 600;
 }
+/* 自定义：表单组容器（包裹“当前状态”和“修改为”） */
+.form-group-status {
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* 自定义：标签样式 */
+.form-group-status label {
+  font-size: 0.95rem;
+  color: #555;
+  font-weight: 500;
+}
+
+/* 自定义：当前状态文本样式 */
+.current-status-text {
+  font-size: 0.95rem;
+  color: #666;
+  background: #f8f9fa;
+  padding: 0.5rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  white-space: nowrap;
+}
+
+/* 自定义：下拉框样式 */
+.status-select {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  color: #555;
+  appearance: none; /* 去掉默认箭头，如需兼容旧浏览器可保留 */
+  background-size: 16px;
+}

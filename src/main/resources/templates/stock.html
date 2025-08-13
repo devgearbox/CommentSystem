@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <title>入库管理 - 荔枝批发管理系统</title>
+  <link rel="stylesheet" th:href="@{/css/stock.css}">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h2>入库管理</h2>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+      <tr>
+        <th>入库单ID</th>
+        <th>关联订单编号</th>
+        <th>荔枝品种</th>
+        <th>入库数量(斤)</th>
+        <th>入库状态</th>
+        <th>操作</th>
+      </tr>
+      </thead>
+      <tbody>
+      <!-- 模拟数据，实际需通过后端接口渲染 -->
+      <tr>
+        <td>1</td>
+        <td>43fd911722f2470081fcb72b3d7da07b</td>
+        <td>白糖罂</td>
+        <td>5.00</td>
+        <td><span class="status pending">待入库</span></td>
+        <td><button class="action-btn view-btn">查看详情</button></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>65fdf0a7c8624f7794d473a34af74d97</td>
+        <td>灵山香荔</td>
+        <td>5.00</td>
+        <td><span class="status checking">验收中</span></td>
+        <td><button class="action-btn view-btn">查看详情</button></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>fabc691ad3c64136ad3cfaa280d54d4b</td>
+        <td>黑叶</td>
+        <td>5.00</td>
+        <td><span class="status done">已入库</span></td>
+        <td><button class="action-btn view-btn">查看详情</button></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<script th:src="@{/js/stock.js}"></script>
+</body>
+</html>

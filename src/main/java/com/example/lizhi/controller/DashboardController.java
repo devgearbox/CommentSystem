@@ -11,18 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class DashboardController {
 
-//    // 处理采购订单管理请求
-//    @GetMapping("/orders")
-//    public String showOrders() {
-//        return "orders"; // 对应 templates/orders.html
-//    }
-
-    // 处理入库管理请求
-    @GetMapping("/inventory")
-    public String showInventory() {
-        return "inventory"; // 对应 templates/inventory.html
-    }
-
     // 处理采购统计分析请求
     @GetMapping("/analysis")
     public String showAnalysis() {

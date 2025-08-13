@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const viewButtons = document.querySelectorAll('.view-btn'); // 订单列表的“查看”按钮
     const STATUS_MAP = {
             pending: "待审核",
-            approved: "已审核",
+            shipping: "待发货",
             shipped: "已发货"
         };
 
@@ -212,4 +212,44 @@ document.addEventListener('DOMContentLoaded', function() {
             viewModal.style.display = 'none';
         }
     });
+});
+// 状态修改按钮点击事件
+document.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-id');
+        const currentStatus = this.getAttribute('data-status');
+        document.getElementById('status-order-id').value = orderId;
+        document.getElementById('current-status').textContent = currentStatus;
+        document.getElementById('status-modal').style.display = 'block';
+    });
+});
+
+// 状态修改表单提交
+document.getElementById('status-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const orderId = document.getElementById('status-order-id').value;
+    const newStatus = document.getElementById('new-status').value;
+
+    // 调用后端接口
+    fetch(`/api/orders/${orderId}/status?newStatus=${newStatus}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+    }).then(response => {
+        if (response.ok) {
+            location.reload(); // 刷新页面显示最新状态
+        }
+    });
+});
+
+// 新增：弹窗关闭按钮点击事件
+document.querySelector('.status-close').addEventListener('click', function() {
+    document.getElementById('status-modal').style.display = 'none';
+});
+
+// 可选：点击弹窗外部也关闭（增强体验）
+window.addEventListener('click', function(e) {
+    const modal = document.getElementById('status-modal');
+    if (e.target === modal) {
+        modal.style.display = 'none';
+    }
 });

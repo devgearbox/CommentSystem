@@ -12,4 +12,5 @@ public interface PurchaseOrderService {
     // 新增创建订单方法
     PurchaseOrder createPurchaseOrder(PurchaseOrder order);
     Optional<PurchaseOrder> getOrderById(Integer orderId);
+    PurchaseOrder updateStatus(Integer orderId, String newStatus);
 }

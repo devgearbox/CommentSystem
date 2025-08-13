@@ -18,8 +18,7 @@ public class PurchaseOrder{
     private OrderStatus order_status;
     public enum OrderStatus {
         pending("待审核"),
-        approved("已批准"),
-        purchased("已采购"),
+        shipping("待发货"),
         shipped("已发货"),
         received("已接收"),
         cancelled("已取消");   // 已取消

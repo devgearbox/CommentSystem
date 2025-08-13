@@ -59,4 +59,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     public Optional<PurchaseOrder> getOrderById(Integer orderId) {
         return orderRepository.findById(orderId);
     }
+
+    @Override
+    public PurchaseOrder updateStatus(Integer orderId, String newStatus) {
+        PurchaseOrder order = purchaseOrderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("订单不存在"));
+
+        // 转换字符串状态为枚举（需与前端选项值对应）
+        order.setOrder_status(PurchaseOrder.OrderStatus.valueOf(newStatus));
+        return purchaseOrderRepository.save(order);
+    }
 }

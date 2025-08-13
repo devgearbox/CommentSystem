@@ -132,6 +132,15 @@ public class PurchaseOrderController {
             return ResponseEntity.status(404).body("订单 ID 不存在");
         }
     }
+
+    // 新增状态修改接口
+    @PutMapping("/api/orders/{orderId}/status")
+    public ResponseEntity<PurchaseOrder> updateOrderStatus(
+            @PathVariable Integer orderId,
+            @RequestParam String newStatus) {
+        PurchaseOrder updatedOrder = purchaseOrderService.updateStatus(orderId, newStatus);
+        return ResponseEntity.ok(updatedOrder);
+    }
     // 内部静态类用于接收前端提交订单的参数
     static class PurchaseOrderRequest {
         private String varietyName;
