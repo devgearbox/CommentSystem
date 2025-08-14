@@ -23,13 +23,13 @@ public class StockInServiceImpl implements StockInService {
     @Override
     @Transactional
     public StockIn createStockInFromOrder(PurchaseOrder order) {
-        if (stockInRepository.existsByOrderNo(order.getOrder_no())) {
-            throw new RuntimeException("订单 " + order.getOrder_no() + " 已生成入库单，无需重复创建");
+        if (stockInRepository.existsByOrderNo(order.getOrderNo())) {
+            throw new RuntimeException("订单 " + order.getOrderNo() + " 已生成入库单，无需重复创建");
         }
 
         // 关联查询：通过订单编号，获取订单 + 采购人（User）
-        Optional<PurchaseOrder> orderWithUserOpt = purchaseOrderRepository.findByOrderNoWithUser(order.getOrder_no());
-        PurchaseOrder orderWithUser = orderWithUserOpt.orElseThrow(() -> new RuntimeException("订单不存在：" + order.getOrder_no()));
+        Optional<PurchaseOrder> orderWithUserOpt = purchaseOrderRepository.findByOrderNoWithUser(order.getOrderNo());
+        PurchaseOrder orderWithUser = orderWithUserOpt.orElseThrow(() -> new RuntimeException("订单不存在：" + order.getOrderNo()));
 
         User purchaser = orderWithUser.getUser();
         if (purchaser == null) {
@@ -39,7 +39,7 @@ public class StockInServiceImpl implements StockInService {
         }
 
         StockIn stockIn = new StockIn();
-        stockIn.setOrderNo(order.getOrder_no());
+        stockIn.setOrderNo(order.getOrderNo());
         stockIn.setLitchi_variety(order.getPurchase_variety());
         stockIn.setQuantity(order.getPurchase_quantity());
         // 填充经办人姓名
@@ -55,13 +55,11 @@ public class StockInServiceImpl implements StockInService {
     }
 
     @Override
-    @Transactional
     public StockIn updateStatus(Integer stockId, String newStatus) {
-        // 1. 查询入库单
+        // 1. 查询并校验入库单（原有逻辑）
         StockIn stockIn = stockInRepository.findById(stockId)
                 .orElseThrow(() -> new RuntimeException("入库单不存在：" + stockId));
 
-        // 2. 转换为枚举（校验合法性）
         StockIn.StockInStatus newStatusEnum;
         try {
             newStatusEnum = StockIn.StockInStatus.valueOf(newStatus);
@@ -69,18 +67,37 @@ public class StockInServiceImpl implements StockInService {
             throw new RuntimeException("非法状态：" + newStatus, e);
         }
 
-        // 3. 状态流转校验（仿照订单逻辑，限制非法流转）
+        // 2. 状态流转校验（原有逻辑）
         StockIn.StockInStatus oldStatus = stockIn.getStock_in_status();
         int oldIndex = Arrays.asList(StockIn.StockInStatus.values()).indexOf(oldStatus);
         int newIndex = Arrays.asList(StockIn.StockInStatus.values()).indexOf(newStatusEnum);
 
-        // 示例规则：只能向后流转（pending→completed→cancelled 不允许回退）
         if (newIndex < oldIndex) {
             throw new RuntimeException("非法状态流转：" + oldStatus.getLabel() + " -> " + newStatusEnum.getLabel());
         }
 
-        // 4. 更新状态
+        // 3. 更新入库单状态（原有逻辑）
         stockIn.setStock_in_status(newStatusEnum);
-        return stockInRepository.save(stockIn);
+        StockIn updatedStock = stockInRepository.save(stockIn);
+
+        // 4. 同步修改采购订单状态（新增逻辑）
+        String orderNo = stockIn.getOrderNo(); // 获取关联订单编号
+        Optional<PurchaseOrder> orderOptional = purchaseOrderRepository.findByOrderNo(orderNo);
+        if (orderOptional.isPresent()) {
+            PurchaseOrder order = orderOptional.get();
+            // 根据入库单新状态，设置订单状态
+            if (newStatusEnum == StockIn.StockInStatus.completed) {
+                order.setOrder_status(PurchaseOrder.OrderStatus.received);
+            } else if (newStatusEnum == StockIn.StockInStatus.rejected) {
+                order.setOrder_status(PurchaseOrder.OrderStatus.rejected);
+            }
+            // 保存订单状态变更
+            purchaseOrderRepository.save(order);
+        } else {
+            // 可根据实际需求决定是否抛异常，这里简单打日志
+            System.out.println("未找到关联订单：" + orderNo);
+        }
+
+        return updatedStock;
     }
 }

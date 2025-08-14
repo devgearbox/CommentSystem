@@ -27,6 +27,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, In
     List<PurchaseOrder> findBySupplierSupplierNameContaining(String supplierName);
 
     // 新增：通过订单编号，查询订单 + 关联的采购人（User）
-    @Query("SELECT po FROM PurchaseOrder po LEFT JOIN FETCH po.user WHERE po.order_no = ?1")
+    @Query("SELECT po FROM PurchaseOrder po LEFT JOIN FETCH po.user WHERE po.orderNo = ?1")
     Optional<PurchaseOrder> findByOrderNoWithUser(String orderNo);
+    Optional<PurchaseOrder> findByOrderNo(String orderNo);
 }

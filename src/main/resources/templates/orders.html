@@ -40,7 +40,7 @@
             <td style="display: none">
                 <input type="checkbox" class="order-check" th:data-id="${order.order_id}">
             </td>
-            <td th:text="${order.order_no}"></td>
+            <td th:text="${order.orderNo}"></td>
             <td th:text="${order.user.username}"></td>
             <td th:text="${order.supplier.supplier_name}"></td>
             <td th:text="${order.purchase_variety}"></td>
@@ -50,7 +50,12 @@
             <td th:text="${order.order_status.label}"></td>
             <td>
                 <button class="view-btn" th:data-id="${order.order_id}">查看详情</button>
-                <button class="status-btn" th:data-id="${order.order_id}" th:data-status="${order.order_status}">修改状态</button>
+                <button class="status-btn"
+                        th:data-id="${order.order_id}"
+                        th:data-status="${order.order_status}"
+                th:disabled="${order.order_status == 'received' or order.order_status == 'rejected'}">
+                修改状态
+                </button>
             </td>
         </tr>
         </tbody>

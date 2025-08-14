@@ -252,6 +252,11 @@ document.addEventListener('DOMContentLoaded', function(){
         btn.addEventListener('click', function() {
             const orderId = this.getAttribute('data-id');
             const currentStatus = this.getAttribute('data-status');
+                    // 新增：如果是已接收或拒收状态，直接提示并返回
+                    if (currentStatus === 'received' || currentStatus === 'rejected') {
+                        alert('该订单状态为【' + (currentStatus === 'received' ? '已接收' : '拒收') + '】，请联系采购人协商');
+                        return; // 阻止后续操作
+                    }
 
             // 【新增】动态渲染允许的状态选项
             renderStatusOptions(currentStatus);
