@@ -135,11 +135,19 @@ public class PurchaseOrderController {
 
     // 新增状态修改接口
     @PutMapping("/api/orders/{orderId}/status")
-    public ResponseEntity<PurchaseOrder> updateOrderStatus(
+    public ResponseEntity<?> updateOrderStatus(
             @PathVariable Integer orderId,
             @RequestParam String newStatus) {
-        PurchaseOrder updatedOrder = purchaseOrderService.updateStatus(orderId, newStatus);
-        return ResponseEntity.ok(updatedOrder);
+        try {
+            PurchaseOrder updatedOrder = purchaseOrderService.updateStatus(orderId, newStatus);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (RuntimeException e) {
+            // 捕获服务层抛出的非法状态异常
+            return ResponseEntity.badRequest().body("修改失败：" + e.getMessage());
+        } catch (Exception e) {
+            // 其他未知异常
+            return ResponseEntity.status(500).body("服务器错误：" + e.getMessage());
+        }
     }
     // 内部静态类用于接收前端提交订单的参数
     static class PurchaseOrderRequest {

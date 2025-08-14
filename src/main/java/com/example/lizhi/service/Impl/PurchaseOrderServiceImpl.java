@@ -4,13 +4,12 @@ import com.example.lizhi.entity.PurchaseOrder;
 import com.example.lizhi.entity.Supplier;
 import com.example.lizhi.repository.PurchaseOrderRepository;
 import com.example.lizhi.service.PurchaseOrderService;
+import com.example.lizhi.service.StockInService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class PurchaseOrderServiceImpl implements PurchaseOrderService {
@@ -60,13 +59,38 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         return orderRepository.findById(orderId);
     }
 
-    @Override
-    public PurchaseOrder updateStatus(Integer orderId, String newStatus) {
-        PurchaseOrder order = purchaseOrderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("订单不存在"));
+    private final StockInService stockInService;
 
-        // 转换字符串状态为枚举（需与前端选项值对应）
-        order.setOrder_status(PurchaseOrder.OrderStatus.valueOf(newStatus));
-        return purchaseOrderRepository.save(order);
+    // 【手动添加构造函数】显式注入依赖
+    public PurchaseOrderServiceImpl(
+            PurchaseOrderRepository orderRepository,
+            StockInService stockInService
+    ) {
+        this.orderRepository = orderRepository;
+        this.stockInService = stockInService;
+    }
+    @Override
+    @Transactional
+    public PurchaseOrder updateStatus(Integer orderId, String newStatus) {
+        PurchaseOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("订单不存在：" + orderId));
+        PurchaseOrder.OrderStatus oldStatus = order.getOrder_status();
+
+        PurchaseOrder.OrderStatus newStatusEnum = PurchaseOrder.OrderStatus.valueOf(newStatus);
+        int oldIndex = Arrays.asList(PurchaseOrder.OrderStatus.values()).indexOf(oldStatus);
+        int newIndex = Arrays.asList(PurchaseOrder.OrderStatus.values()).indexOf(newStatusEnum);
+
+        if (newIndex < oldIndex || newIndex >= 3) {
+            throw new RuntimeException("非法状态流转：" + oldStatus.getLabel() + " -> " + newStatusEnum.getLabel());
+        }
+
+        order.setOrder_status(newStatusEnum);
+        PurchaseOrder updatedOrder = orderRepository.save(order);
+
+        if (newStatusEnum == PurchaseOrder.OrderStatus.shipped && oldStatus != PurchaseOrder.OrderStatus.shipped) {
+            stockInService.createStockInFromOrder(updatedOrder);
+        }
+
+        return updatedOrder;
     }
 }

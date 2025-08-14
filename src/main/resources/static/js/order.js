@@ -214,13 +214,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 // 状态修改按钮点击事件
+// order.js
+// 定义状态流转顺序（仅开放前三个状态，屏蔽已接收、已取消）
+const STATUS_FLOW = [
+    { value: 'pending', label: '待审核' },
+    { value: 'shipping', label: '待发货' },
+    { value: 'shipped', label: '已发货' }
+    // 暂时屏蔽以下状态，如需开放可取消注释
+    // { value: 'received', label: '已接收' },
+    // { value: 'cancelled', label: '已取消' }
+];
+
+// 【新增】动态渲染状态下拉框（限制可选状态）
+function renderStatusOptions(currentStatus) {
+    const select = document.getElementById('new-status');
+    select.innerHTML = ''; // 清空原有选项
+
+    // 找到当前状态在流转顺序中的索引
+    const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
+
+    // 仅渲染当前状态及之后的选项
+    STATUS_FLOW.forEach((item, index) => {
+        if (index >= currentIndex) {
+            const option = document.createElement('option');
+            option.value = item.value;
+            option.textContent = item.label;
+            // 默认选中当前状态
+            if (item.value === currentStatus) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+    });
+}
+
+// 修改原有“状态修改按钮”点击事件
 document.querySelectorAll('.status-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const orderId = this.getAttribute('data-id');
         const currentStatus = this.getAttribute('data-status');
+
+        // 【新增】动态渲染允许的状态选项
+        renderStatusOptions(currentStatus);
+
+        // 显示弹窗（原有逻辑保留）
+        document.getElementById('status-modal').style.display = 'block';
         document.getElementById('status-order-id').value = orderId;
         document.getElementById('current-status').textContent = currentStatus;
-        document.getElementById('status-modal').style.display = 'block';
     });
 });
 
