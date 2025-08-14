@@ -25,6 +25,8 @@ public class StockIn {
     private StockInStatus stock_in_status;
 
     private LocalDateTime create_time;
+    private String operator_name;
+    private Integer operator_id;
 
     @PrePersist
     public void prePersist() {
@@ -35,9 +37,10 @@ public class StockIn {
     public enum StockInStatus {
         pending("待入库"),
         checking("验收中"),
-        completed("已入库"),
+        rejected("拒收"),
         partial("部分入库"),
-        rejected("拒收");
+        completed("已入库");
+
 
         private final String label;
 

@@ -21,7 +21,8 @@ public class PurchaseOrder{
         shipping("待发货"),
         shipped("已发货"),
         received("已接收"),
-        cancelled("已取消");   // 已取消
+        cancelled("已取消"),   // 已取消
+        rejected("拒收");
         private final String label;
 
         OrderStatus(String label) {
