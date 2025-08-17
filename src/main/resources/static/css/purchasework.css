@@ -5,6 +5,9 @@
     font-family: "Microsoft YaHei", sans-serif;
 }
 
+html, body {
+    overflow: hidden;
+}
 body {
     background-color: #f8f9fa;
     color: #333;
@@ -21,7 +24,8 @@ body {
     position: fixed;
 }
 #content-frame {
-    overflow: hidden !important; /* 禁用iframe内部滚动 */
+    overflow: hidden !important;
+    min-height: 800px; /* 保持最小高度避免页面过短 */
 }
 
 .sidebar .logo {

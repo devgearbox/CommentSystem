@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class DashboardController {
 
     // 处理采购统计分析请求
-    @GetMapping("/analysis")
+    @GetMapping("/analyse")
     public String showAnalysis() {
-        return "analysis"; // 对应 templates/analysis.html
+        return "analyse"; // 对应 templates/analysis.html
     }
 
 

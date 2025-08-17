@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>采购统计分析</title>
+  <link rel="stylesheet" th:href="@{/css/supplier.css}"> <!-- 复用现有样式表 -->
+  <!-- 引入图表库 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <style>
+    /* 统计卡片样式 */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        padding: 20px;
+        transition: transform 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-title {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .stat-change {
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+    }
+
+    .stat-increase {
+        color: #28a745;
+    }
+
+    .stat-decrease {
+        color: #dc3545;
+    }
+
+    /* 图表容器 */
+    .charts-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .chart-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        padding: 20px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .chart-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .chart-filters {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .charts-container {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+  </style>
+</head>
+<body>
+  <div class="section">
+    <div class="card-header">
+      <h2>采购统计分析</h2>
+    </div>
+
+    <!-- 筛选区域 -->
+    <div class="header" style="margin-bottom: 30px;">
+      <div class="search-box">
+        <select id="period-select" class="status-select" style="margin-right: 10px;">
+          <option value="month">本月</option>
+          <option value="quarter">本季度</option>
+          <option value="year">本年</option>
+          <option value="custom">自定义</option>
+        </select>
+        <input type="date" id="start-date" class="status-select" style="margin-right: 10px; display: none;">
+        <input type="date" id="end-date" class="status-select" style="margin-right: 10px; display: none;">
+        <button id="filter-btn" class="view-all">筛选</button>
+      </div>
+      <button id="export-btn" class="view-all">
+        <i class="fa fa-download" aria-hidden="true"></i> 导出报表
+      </button>
+    </div>
+
+    <!-- 关键指标卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">总采购订单数</div>
+        <div class="stat-value">1,284</div>
+        <div class="stat-change stat-increase">
+          <i class="fa fa-arrow-up" aria-hidden="true"></i> 12.5% 较上月
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-title">总采购金额</div>
+        <div class="stat-value">¥386,520</div>
+        <div class="stat-change stat-increase">
+          <i class="fa fa-arrow-up" aria-hidden="true"></i> 8.2% 较上月
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-title">平均订单金额</div>
+        <div class="stat-value">¥301</div>
+        <div class="stat-change stat-decrease">
+          <i class="fa fa-arrow-down" aria-hidden="true"></i> 2.1% 较上月
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-title">已完成订单占比</div>
+        <div class="stat-value">87.3%</div>
+        <div class="stat-change stat-increase">
+          <i class="fa fa-arrow-up" aria-hidden="true"></i> 3.2% 较上月
+        </div>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="charts-container">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">采购金额趋势</div>
+          <div class="chart-filters">
+            <button class="btn-primary">周</button>
+            <button class="btn-primary">月</button>
+            <button class="btn-primary">年</button>
+          </div>
+        </div>
+        <div style="height: 300px;">
+          <canvas id="purchaseTrendChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">订单状态分布</div>
+        </div>
+        <div style="height: 300px; display: flex; justify-content: center; align-items: center;">
+          <canvas id="orderStatusChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-container">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">按品种采购分布</div>
+        </div>
+        <div style="height: 300px;">
+          <canvas id="varietyDistributionChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">供应商采购占比</div>
+        </div>
+        <div style="height: 300px;">
+          <canvas id="supplierDistributionChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 详细数据表格 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">采购统计明细</div>
+      </div>
+      <table>
+        <thead>
+        <tr>
+          <th>日期</th>
+          <th>订单数量</th>
+          <th>采购金额</th>
+          <th>平均单价</th>
+          <th>已完成订单</th>
+          <th>完成率</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>2025-08-01</td>
+          <td>45</td>
+          <td>¥13,520</td>
+          <td>¥298</td>
+          <td>42</td>
+          <td>93.3%</td>
+        </tr>
+        <tr>
+          <td>2025-08-02</td>
+          <td>38</td>
+          <td>¥11,280</td>
+          <td>¥305</td>
+          <td>35</td>
+          <td>92.1%</td>
+        </tr>
+        <tr>
+          <td>2025-08-03</td>
+          <td>52</td>
+          <td>¥16,840</td>
+          <td>¥312</td>
+          <td>48</td>
+          <td>92.3%</td>
+        </tr>
+        <tr>
+          <td>2025-08-04</td>
+          <td>41</td>
+          <td>¥12,560</td>
+          <td>¥295</td>
+          <td>36</td>
+          <td>87.8%</td>
+        </tr>
+        <tr>
+          <td>2025-08-05</td>
+          <td>36</td>
+          <td>¥10,820</td>
+          <td>¥301</td>
+          <td>30</td>
+          <td>83.3%</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+  // 初始化图表（仅为展示用，无实际数据交互）
+  document.addEventListener('DOMContentLoaded', function() {
+      // 日期筛选逻辑
+      const periodSelect = document.getElementById('period-select');
+      const startDate = document.getElementById('start-date');
+      const endDate = document.getElementById('end-date');
+
+      periodSelect.addEventListener('change', function() {
+          if (this.value === 'custom') {
+              startDate.style.display = 'inline-block';
+              endDate.style.display = 'inline-block';
+          } else {
+              startDate.style.display = 'none';
+              endDate.style.display = 'none';
+          }
+      });
+
+      // 采购趋势图表
+      const trendCtx = document.getElementById('purchaseTrendChart').getContext('2d');
+      new Chart(trendCtx, {
+          type: 'line',
+          data: {
+              labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月'],
+              datasets: [{
+                  label: '采购金额',
+                  data: [280000, 320000, 310000, 350000, 330000, 360000, 370000, 386520],
+                  borderColor: '#288352',
+                  backgroundColor: 'rgba(40, 131, 82, 0.1)',
+                  tension: 0.3,
+                  fill: true
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false
+          }
+      });
+
+      // 订单状态分布图表
+      const statusCtx = document.getElementById('orderStatusChart').getContext('2d');
+      new Chart(statusCtx, {
+          type: 'doughnut',
+          data: {
+              labels: ['待审核', '待发货', '已发货', '已接收', '拒收'],
+              datasets: [{
+                  data: [120, 150, 210, 750, 54],
+                  backgroundColor: [
+                      '#ffc107',
+                      '#17a2b8',
+                      '#007bff',
+                      '#28a745',
+                      '#dc3545'
+                  ]
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false
+          }
+      });
+
+      // 品种分布图表
+      const varietyCtx = document.getElementById('varietyDistributionChart').getContext('2d');
+      new Chart(varietyCtx, {
+          type: 'bar',
+          data: {
+              labels: ['妃子笑', '桂味', '糯米糍', '槐枝', '三月红', '其他'],
+              datasets: [{
+                  label: '采购数量(斤)',
+                  data: [12500, 9800, 8200, 6500, 4300, 2100],
+                  backgroundColor: '#288352'
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false
+          }
+      });
+
+      // 供应商分布图表
+      const supplierCtx = document.getElementById('supplierDistributionChart').getContext('2d');
+      new Chart(supplierCtx, {
+          type: 'pie',
+          data: {
+              labels: ['岭南果业', '华南农业', '东方果园', '其他供应商'],
+              datasets: [{
+                  data: [45, 25, 20, 10],
+                  backgroundColor: [
+                      '#288352',
+                      '#20c997',
+                      '#66b1ff',
+                      '#adb5bd'
+                  ]
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false
+          }
+      });
+  });
+</script>
+</body>
+</html>
