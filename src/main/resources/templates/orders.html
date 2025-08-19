@@ -36,7 +36,8 @@
         </tr>
         </thead>
         <tbody id="order-table-body">
-        <tr th:each="order : ${purchaseOrders}">
+        <!-- 原 Thymeleaf 渲染逻辑 -->
+        <tr th:each="order : ${purchaseOrders}" th:fragment="orderRow">
             <td style="display: none">
                 <input type="checkbox" class="order-check" th:data-id="${order.order_id}">
             </td>
@@ -46,14 +47,15 @@
             <td th:text="${order.purchase_variety}"></td>
             <td th:text="${order.purchase_quantity}"></td>
             <td th:text="${order.total_price}"></td>
-            <td th:text="${order.create_time}"></td>
-            <td th:text="${order.order_status.label}"></td>
+            <td th:text="${#dates.format(order.create_time, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td th:text="${order.orderStatus.label}"></td>
             <td>
                 <button class="view-btn" th:data-id="${order.order_id}">查看详情</button>
                 <button class="status-btn"
                         th:data-id="${order.order_id}"
-                        th:data-status="${order.order_status}"
-                th:disabled="${order.order_status == 'received' or order.order_status == 'rejected'}">
+                        th:data-status="${order.orderStatus}"
+                th:disabled="${order.orderStatus == T(com.example.lizhi.entity.PurchaseOrder.OrderStatus).received
+                || order.orderStatus == T(com.example.lizhi.entity.PurchaseOrder.OrderStatus).rejected}">
                 修改状态
                 </button>
             </td>

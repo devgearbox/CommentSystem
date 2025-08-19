@@ -32,34 +32,38 @@ public class PurchaseOrderController {
 
     @GetMapping("/orders")
     public String listPurchaseOrder(Model model) {
-        // 替换为关联查询的方法
-        List<PurchaseOrder> purchaseOrders = purchaseOrderService.getAllPurchaseOrdersSupplierUser();
+        // 替换为“关联查询 + 软删除过滤”的新方法
+        List<PurchaseOrder> purchaseOrders = purchaseOrderService.getValidPurchaseOrdersSupplierUser();
         model.addAttribute("purchaseOrders", purchaseOrders);
         return "orders";
     }
 
     @GetMapping("/orders/search")
-    @ResponseBody
-    public List<PurchaseOrder> searchOrders(
-            @RequestParam String supplierName // 与前端传参名一致
-    ) {
-        return purchaseOrderService.searchBySupplierName(supplierName);
+    public String searchOrders(@RequestParam String supplierName, Model model) {
+        List<PurchaseOrder> orders = purchaseOrderService.searchBySupplierName(supplierName);
+        model.addAttribute("purchaseOrders", orders);
+        return "orders :: #order-table-body"; // 仅返回表格片段（需配置 Thymeleaf 片段渲染）
     }
 
     // 与供应商的 /delete/batch 对齐，路径可根据前端调整
     @DeleteMapping("/orders/delete/batch")
-    public ResponseEntity<?> batchDeleteOrders(@RequestBody Map<String, List<Integer>> request) {
+    public ResponseEntity<Map<String, Object>> batchDeleteOrders(@RequestBody Map<String, List<Integer>> request) {
         List<Integer> ids = request.get("ids");
         try {
             purchaseOrderService.batchDelete(ids);
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "批量删除订单成功"
+                    "message", "批量删除成功（仅已接收状态订单）"
             ));
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "系统错误：" + e.getMessage()
             ));
         }
     }

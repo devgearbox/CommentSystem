@@ -68,58 +68,55 @@
 </div>
 
 <script>
-    // 点击菜单项加载对应页面到iframe
+    // 1. 初始化时，先给iframe设置固定高度（充满视口，减去侧边栏/导航栏高度）
+    $(function() {
+      // 计算视口高度 - 20px（避免边缘溢出），可根据实际布局调整数值
+      const viewportHeight = $(window).height() - 20;
+      $('#content-frame').height(viewportHeight);
+    });
+
+    // 2. 点击菜单加载页面时，重置iframe高度（防止页面切换后高度异常）
     $('.menu-item').click(function() {
-        var url = $(this).attr('data-url');
-        $('#content-frame').attr('src', url);
+      var url = $(this).attr('data-url');
+      $('#content-frame').attr('src', url);
 
-        // 移除所有菜单项的 active 类
-        $('.menu-item').removeClass('active');
-        // 为当前点击的菜单项添加 active 类
-        $(this).addClass('active');
+      // 重置iframe高度为视口高度
+      const viewportHeight = $(window).height() - 20;
+      $('#content-frame').height(viewportHeight);
 
-        // 更新URL（可选）
-        history.pushState(null, null, url);
+      $('.menu-item').removeClass('active');
+      $(this).addClass('active');
+      history.pushState(null, null, url);
     });
-// 替换原有的iframe加载完成事件
-$('#content-frame').on('load', function() {
-    // 延迟 300ms 确保图表等动态内容渲染完成
-    setTimeout(() => {
-        const $iframe = $(this);
-        const contentHeight = $iframe.contents().find('body').outerHeight(true);
-        // 增加 20px 冗余避免内容溢出
-        $iframe.height(contentHeight + 20);
-    }, 3);
-});
 
-    //侧边栏颜色跟随
-    window.addEventListener('popstate', function() {
-        var currentUrl = window.location.pathname;
-        // 根据当前 URL 找到对应的菜单项并设置选中状态
-        $('.menu-item').each(function() {
-            if ($(this).attr('data-url') === currentUrl) {
-                $('.menu-item').removeClass('active');
-                $(this).addClass('active');
-                $('#content-frame').attr('src', currentUrl);
-                return false;
-            }
+        //侧边栏颜色跟随
+        window.addEventListener('popstate', function() {
+            var currentUrl = window.location.pathname;
+            // 根据当前 URL 找到对应的菜单项并设置选中状态
+            $('.menu-item').each(function() {
+                if ($(this).attr('data-url') === currentUrl) {
+                    $('.menu-item').removeClass('active');
+                    $(this).addClass('active');
+                    $('#content-frame').attr('src', currentUrl);
+                    return false;
+                }
+            });
         });
-    });
-    // 处理浏览器前进/后退按钮
-    // window.addEventListener('popstate', function() {
-    //     var url = location.pathname;
-    //     $('#content-frame').attr('src', url);
-    // });
-    function logout() {
-        // 跳转到登录页面（替换为你的实际登录页 URL）
-        window.location.href = "http://localhost:8080/login";
+        // 处理浏览器前进/后退按钮
+        // window.addEventListener('popstate', function() {
+        //     var url = location.pathname;
+        //     $('#content-frame').attr('src', url);
+        // });
+        function logout() {
+            // 跳转到登录页面（替换为你的实际登录页 URL）
+            window.location.href = "http://localhost:8080/login";
 
-        // 可选：清除登录状态（如 Cookie、SessionStorage 等）
-        // 示例：清除 SessionStorage
-        sessionStorage.clear();
-        // 示例：清除 Cookie（需根据实际情况实现）
-        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    }
+            // 可选：清除登录状态（如 Cookie、SessionStorage 等）
+            // 示例：清除 SessionStorage
+            sessionStorage.clear();
+            // 示例：清除 Cookie（需根据实际情况实现）
+            document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        }
 </script>
 </body>
 </html>

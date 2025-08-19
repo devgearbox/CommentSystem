@@ -3,6 +3,7 @@ package com.example.lizhi.service.Impl;
 import com.example.lizhi.entity.PurchaseOrder;
 import com.example.lizhi.entity.Supplier;
 import com.example.lizhi.repository.PurchaseOrderRepository;
+import com.example.lizhi.repository.StockInRepository;
 import com.example.lizhi.service.PurchaseOrderService;
 import com.example.lizhi.service.StockInService;
 import jakarta.transaction.Transactional;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PurchaseOrderServiceImpl implements PurchaseOrderService {
@@ -17,14 +19,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     private PurchaseOrderRepository purchaseOrderRepository;
     @Autowired
     private PurchaseOrderRepository orderRepository;
-
-//    @Override
-//    public List<PurchaseOrder> getAllPurchaseOrders() {return purchaseOrderRepository.findAll();}
+    @Autowired
+    private StockInRepository stockInRepo;
 
     @Override
     public List<PurchaseOrder> getAllPurchaseOrdersSupplierUser() {
         // 调用关联查询方法
         return purchaseOrderRepository.findAllWithSupplierAndUser();
+    }
+    @Override
+    public List<PurchaseOrder> getValidPurchaseOrdersSupplierUser() {
+        return orderRepository.findAllValidWithSupplierUser();
     }
 
     // 搜索方法
@@ -33,9 +38,26 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     }
 
     @Override
+    @Transactional // 事务保证：要么全成功，要么全失败
     public void batchDelete(List<Integer> ids) {
-        // JPA 批量删除（与 Supplier 逻辑一致）
-        purchaseOrderRepository.deleteAllById(ids);
+        // 1. 校验订单是否存在且未被删除
+        List<PurchaseOrder> orders = new ArrayList<>();
+        for (Integer id : ids) {
+            PurchaseOrder order = orderRepository.findByIdAndIsDeletedFalse(id)
+                    .orElseThrow(() -> new IllegalArgumentException("订单ID不存在或已被删除：" + id));
+            orders.add(order);
+        }
+
+        // 2. 校验订单状态是否为"received"
+        for (PurchaseOrder order : orders) {
+            if (order.getOrderStatus() != PurchaseOrder.OrderStatus.received) {
+                throw new IllegalArgumentException("订单 [" + order.getOrderNo() + "] 状态非【已接收】，无法删除");
+            }
+        }
+
+        // 3. 执行软删除：标记isDeleted为true
+        orders.forEach(order -> order.setDeleted(true));
+        orderRepository.saveAll(orders); // 批量更新
     }
 
     // 实现新增的创建订单方法
@@ -46,8 +68,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             // 简单生成订单号示例，可根据实际需求调整（如 UUID、雪花算法等）
             order.setOrderNo(UUID.randomUUID().toString().replace("-", "").substring(0, 32));
         }
-        if (order.getOrder_status() == null) {
-            order.setOrder_status(PurchaseOrder.OrderStatus.pending); // 设置默认待审核状态
+        if (order.getOrderStatus() == null) {
+            order.setOrderStatus(PurchaseOrder.OrderStatus.pending); // 设置默认待审核状态
         }
         if (order.getCreate_time() == null) {
             order.setCreate_time(new Date());
@@ -74,7 +96,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     public PurchaseOrder updateStatus(Integer orderId, String newStatus) {
         PurchaseOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("订单不存在：" + orderId));
-        PurchaseOrder.OrderStatus oldStatus = order.getOrder_status();
+        PurchaseOrder.OrderStatus oldStatus = order.getOrderStatus();
 
         PurchaseOrder.OrderStatus newStatusEnum = PurchaseOrder.OrderStatus.valueOf(newStatus);
         int oldIndex = Arrays.asList(PurchaseOrder.OrderStatus.values()).indexOf(oldStatus);
@@ -84,7 +106,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             throw new RuntimeException("非法状态流转：" + oldStatus.getLabel() + " -> " + newStatusEnum.getLabel());
         }
 
-        order.setOrder_status(newStatusEnum);
+        order.setOrderStatus(newStatusEnum);
         PurchaseOrder updatedOrder = orderRepository.save(order);
 
         if (newStatusEnum == PurchaseOrder.OrderStatus.shipped && oldStatus != PurchaseOrder.OrderStatus.shipped) {

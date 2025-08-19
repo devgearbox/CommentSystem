@@ -17,9 +17,13 @@ public class PurchaseOrder{
     private String orderNo;
 
     private BigDecimal purchase_quantity;
+    // 新增软删除字段
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false; // 默认未删除
 
     @Enumerated(EnumType.STRING)
-    private OrderStatus order_status;
+    @Column(name = "order_status")
+    private OrderStatus orderStatus;
     public enum OrderStatus {
         pending("待审核"),
         shipping("待发货"),

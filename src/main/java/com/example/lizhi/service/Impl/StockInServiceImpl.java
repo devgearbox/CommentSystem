@@ -87,9 +87,9 @@ public class StockInServiceImpl implements StockInService {
             PurchaseOrder order = orderOptional.get();
             // 根据入库单新状态，设置订单状态
             if (newStatusEnum == StockIn.StockInStatus.completed) {
-                order.setOrder_status(PurchaseOrder.OrderStatus.received);
+                order.setOrderStatus(PurchaseOrder.OrderStatus.received);
             } else if (newStatusEnum == StockIn.StockInStatus.rejected) {
-                order.setOrder_status(PurchaseOrder.OrderStatus.rejected);
+                order.setOrderStatus(PurchaseOrder.OrderStatus.rejected);
             }
             // 保存订单状态变更
             purchaseOrderRepository.save(order);

@@ -1,102 +1,104 @@
-//搜索和查看订单
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded!');
-    document.getElementById('search-button').addEventListener('click', function() {
-        const searchTerm = document.getElementById('search-input').value.trim();
-        if (searchTerm) {
-            // 发送搜索请求到后端
-            fetch('/orders/search?supplierName=' + encodeURIComponent(searchTerm))
-                .then(response => response.json())
-                .then(data => {
-                    // 清空表格
-                    const tableBody = document.getElementById('order-table-body');
-                    tableBody.innerHTML = '';
+document.addEventListener('DOMContentLoaded', function () {
+    // 核心静态元素（提前获取，避免重复查询）
+    const orderTableBody = document.getElementById('order-table-body'); // 表格tbody（事件委托父容器）
+    const selectAllOrder = document.getElementById('select-all-order'); // 全选框
 
-                    // 填充搜索结果
-                    data.forEach(order => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                                <td>${order.order_no}</td>
-                                <td>${order.user.username}</td>
-                                <td>${order.supplier.supplier_name}</td>
-                                <td>${order.purchase_variety}</td>
-                                <td>${order.purchase_quantity}</td>
-                                <td>${order.create_time}</td>
-                                <td>${order.order_status.label}</td>
-<!--                                <td class="action">-->
-<!--                                    <button class="action-btn"><i class="fas fa-edit"></i> 编辑</button>-->
-<!--                                    <button class="action-btn"><i class="fas fa-eye"></i> 查看</button>-->
-<!--                                </td>-->
-                            `;
-                        tableBody.appendChild(row);
-                    });
+    // ====================== 1. 搜索和查看全部订单 ======================
+    const searchButton = document.getElementById('search-button');
+    const searchAllButton = document.getElementById('search-all');
+    const searchInput = document.getElementById('search-input');
+
+    // 搜索订单
+    searchButton.addEventListener('click', function () {
+        const searchTerm = searchInput.value.trim();
+        if (searchTerm) {
+            fetch('/orders/search?supplierName=' + encodeURIComponent(searchTerm))
+                .then(response => response.text())
+                .then(html => {
+                    orderTableBody.innerHTML = html; // 动态替换表格内容
+                    resetBatchDeleteState(); // 搜索后重置批量删除状态
+                    updateOrderChecks(); // 重新绑定复选框事件
                 })
                 .catch(error => {
-                    console.error('Error fetching search results:', error);
+                    console.error('搜索失败:', error);
                 });
         }
     });
-    document.getElementById('search-all').addEventListener('click',function (){
-        window.location.href = '/orders'
+
+    // 查看全部订单
+    searchAllButton.addEventListener('click', function () {
+        window.location.href = '/orders';
     });
-});
-//批量删除功能
-document.addEventListener('DOMContentLoaded', function() {
-    const batchDeleteBtn = document.getElementById('del-order'); // 对应供应商的 del-supplier
-    const confirmDeleteBtn = document.getElementById('confirm-delete-order'); // 对应 confirm-delete
-    const cancelDeleteBtn = document.getElementById('cancel-delete-order'); // 对应 cancel-delete
-    const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)'); // 复选框列
-    const selectAll = document.getElementById('select-all-order'); // 对应 select-all
-    const orderChecks = document.querySelectorAll('.order-check'); // 对应 supplier-check
+
+
+    // ====================== 2. 批量删除功能（修复动态勾选框） ======================
+    const batchDeleteBtn = document.getElementById('del-order');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-order');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-order');
     let isSelectVisible = false;
 
-    // 点击"删除订单记录"显示选择框和确认/取消按钮
+    // 点击"删除订单"显示勾选框
     batchDeleteBtn.addEventListener('click', () => {
         if (!isSelectVisible) {
             isSelectVisible = true;
+            // 每次点击重新获取勾选框列（解决动态渲染后DOM失效）
+            const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
             selectColumns.forEach(column => {
                 column.style.display = 'table-cell';
             });
             confirmDeleteBtn.style.display = 'inline-block';
             cancelDeleteBtn.style.display = 'inline-block';
+            updateOrderChecks(); // 重新绑定复选框事件
         }
     });
 
-    // 取消按钮：退出批量删除状态
-    cancelDeleteBtn.addEventListener('click', () => {
+    // 取消批量删除
+    cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);
+
+    // 全选/取消全选
+    if (selectAllOrder) {
+        selectAllOrder.addEventListener('change', () => {
+            const orderChecks = document.querySelectorAll('.order-check');
+            orderChecks.forEach(check => check.checked = selectAllOrder.checked);
+        });
+    }
+
+    // 更新订单复选框事件（动态渲染后重新绑定）
+    function updateOrderChecks() {
+        const orderChecks = document.querySelectorAll('.order-check');
+        orderChecks.forEach(check => {
+            check.removeEventListener('change', handleOrderCheckChange);
+            check.addEventListener('change', handleOrderCheckChange);
+        });
+    }
+
+    // 复选框变化：更新全选状态
+    function handleOrderCheckChange() {
+        const allChecks = document.querySelectorAll('.order-check');
+        if (selectAllOrder) {
+            selectAllOrder.checked = Array.from(allChecks).every(cb => cb.checked);
+        }
+    }
+
+    // 重置批量删除状态（通用函数）
+    function resetBatchDeleteState() {
         isSelectVisible = false;
+        const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
         selectColumns.forEach(column => {
             column.style.display = 'none';
         });
         confirmDeleteBtn.style.display = 'none';
         cancelDeleteBtn.style.display = 'none';
-        selectAll.checked = false;
-        orderChecks.forEach(check => {
-            check.checked = false;
-        });
-    });
+        if (selectAllOrder) selectAllOrder.checked = false;
+        // 重置所有复选框
+        document.querySelectorAll('.order-check').forEach(check => check.checked = false);
+    }
 
-    // 全选/取消全选
-    selectAll.addEventListener('change', function() {
-        orderChecks.forEach(check => {
-            check.checked = selectAll.checked;
-        });
-    });
-
-    // 单个选择框变化：更新全选状态
-    orderChecks.forEach(check => {
-        check.addEventListener('change', function() {
-            selectAll.checked = Array.from(orderChecks).every(c => c.checked);
-        });
-    });
-
-    // 确认删除：调用订单批量删除接口
-    confirmDeleteBtn.addEventListener('click', async function() {
+    // 确认批量删除
+    confirmDeleteBtn.addEventListener('click', async function () {
         const selectedIds = [];
-        orderChecks.forEach(check => {
-            if (check.checked) {
-                selectedIds.push(parseInt(check.dataset.id));
-            }
+        document.querySelectorAll('.order-check').forEach(check => {
+            if (check.checked) selectedIds.push(parseInt(check.dataset.id));
         });
 
         if (selectedIds.length === 0) {
@@ -107,14 +109,11 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/orders/delete/batch', {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids: selectedIds })
             });
 
             const result = await response.json();
-
             if (result.success) {
                 alert('批量删除订单成功');
                 window.location.reload();
@@ -126,175 +125,184 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('网络错误，删除失败');
         }
     });
-});
-//订单详情功能
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. 获取 DOM 元素
-    const viewModal = document.getElementById('order-view-modal');
-    const closeBtn = document.querySelector('#order-view-modal .close');
-    const viewButtons = document.querySelectorAll('.view-btn'); // 订单列表的“查看”按钮
-    const STATUS_MAP = {
-            pending: "待审核",
-            shipping: "待发货",
-            shipped: "已发货"
-        };
 
-    // 2. 详情字段 DOM（与弹窗 HTML 对应）
-    const detailFields = {
-        orderNo: document.getElementById('order-no'), // 订单编号
-        orderRealName: document.getElementById('order-real-name'), // 采购人
-        orderPrice: document.getElementById('order-price'), // 采购单价
-        orderQuantity: document.getElementById('order-quantity'), // 数量
-        orderVariety: document.getElementById('order-variety'), // 采购品种
-        orderTotalPrice: document.getElementById('order-total-price'), // 订单总价
-        orderSupplierName: document.getElementById('order-supplier-name'), // 供应商
-        orderSupplierPhone: document.getElementById('order-supplier-phone'), // 供应商电话
-        orderSupplierAddress: document.getElementById('order-supplier-address'), // 供应商地址
-        orderStatus: document.getElementById('order-status'), // 订单状态
-        orderDate: document.getElementById('order-date') // 下单日期
+
+    // ====================== 3. 订单详情功能（事件委托强化） ======================
+    const viewModal = document.getElementById('order-view-modal');
+    const closeViewBtn = document.querySelector('#order-view-modal .close');
+    const STATUS_MAP = {
+        pending: "待审核",
+        shipping: "待发货",
+        shipped: "已发货",
+        received: "已接收",
+        rejected: "已拒收",
+        cancelled: "已取消"
     };
 
-    // 3. 点击“查看”按钮：获取订单 ID 并请求详情
-    viewButtons.forEach(button => {
-        button.addEventListener('click', async function() {
-            const orderId = this.getAttribute('data-id'); // 获取订单 ID
+    // 详情字段DOM映射
+    const detailFields = {
+        orderNo: document.getElementById('order-no'),
+        orderRealName: document.getElementById('order-real-name'),
+        orderPrice: document.getElementById('order-price'),
+        orderQuantity: document.getElementById('order-quantity'),
+        orderVariety: document.getElementById('order-variety'),
+        orderTotalPrice: document.getElementById('order-total-price'),
+        orderSupplierName: document.getElementById('order-supplier-name'),
+        orderSupplierPhone: document.getElementById('order-supplier-phone'),
+        orderSupplierAddress: document.getElementById('order-supplier-address'),
+        orderStatus: document.getElementById('order-status'),
+        orderDate: document.getElementById('order-date')
+    };
+
+    // 事件委托：支持按钮内部元素点击（如<i>标签）
+    orderTableBody.addEventListener('click', async function (event) {
+        // 找到最近的.view-btn（解决按钮内有图标时的点击穿透）
+        const viewBtn = event.target.closest('.view-btn');
+        if (viewBtn) {
+            const orderId = viewBtn.getAttribute('data-id');
             if (!orderId) {
                 alert('未获取到订单 ID');
                 return;
             }
 
             try {
-                // 4. 调用后端接口（路径与 Controller 对应）
                 const response = await fetch(`/orders/detail/${orderId}`);
-                if (!response.ok) {
-                    throw new Error('获取详情失败');
-                }
+                if (!response.ok) throw new Error('获取详情失败');
                 const order = await response.json();
 
-                // 5. 验证数据（可选，防止 ID 不匹配）
-                if (!order || order.order_id !== parseInt(orderId)) {
-                    console.error('数据不匹配或为空', order);
-                    return;
-                }
-
-                // 6. 填充弹窗字段
-                detailFields.orderNo.textContent = order.order_no; // 订单编号
-                detailFields.orderRealName.textContent = order.user.real_name || '无'; // 采购人
-                detailFields.orderPrice.textContent = order.litchiVariety.price || '9.00'; // 采购单价
-                detailFields.orderQuantity.textContent = order.purchase_quantity || '0'; // 数量
-                detailFields.orderVariety.textContent = order.purchase_variety || '无'; // 采购品种
-                detailFields.orderTotalPrice.textContent = order.total_price || '0.00'; // 订单总价
-                detailFields.orderSupplierName.textContent = order.supplier.supplier_name || '无'; // 供应商名称
-                detailFields.orderSupplierPhone.textContent = order.supplier.phone || '无'; // 供应商电话
-                detailFields.orderSupplierAddress.textContent = order.supplier.address || '无'; // 供应商地址
-                detailFields.orderStatus.textContent = STATUS_MAP[order.order_status] || "未知状态"; // 订单状态
+                // 填充弹窗数据
+                detailFields.orderNo.textContent = order.orderNo || '无';
+                detailFields.orderRealName.textContent = order.user?.real_name || '无';
+                detailFields.orderPrice.textContent = order.litchiVariety?.price || '9.00';
+                detailFields.orderQuantity.textContent = order.purchase_quantity || '0';
+                detailFields.orderVariety.textContent = order.purchase_variety || '无';
+                detailFields.orderTotalPrice.textContent = order.total_price || '0.00';
+                detailFields.orderSupplierName.textContent = order.supplier?.supplier_name || '无';
+                detailFields.orderSupplierPhone.textContent = order.supplier?.phone || '无';
+                detailFields.orderSupplierAddress.textContent = order.supplier?.address || '无';
+                detailFields.orderStatus.textContent = STATUS_MAP[order.orderStatus] || "未知状态";
                 detailFields.orderDate.textContent = order.create_time
                     ? new Date(order.create_time).toLocaleString()
-                    : '无'; // 下单日期
+                    : '无';
 
-                // 7. 显示弹窗
                 viewModal.style.display = 'flex';
-
             } catch (error) {
                 console.error('查看订单详情失败：', error);
                 alert('加载详情失败，请重试');
             }
-        });
-    });
-
-    // 8. 关闭弹窗（点击关闭按钮或遮罩层）
-    closeBtn.addEventListener('click', () => {
-        viewModal.style.display = 'none';
-    });
-
-    viewModal.addEventListener('click', (e) => {
-        if (e.target === viewModal) {
-            viewModal.style.display = 'none';
         }
     });
-});
-// 状态修改按钮点击事件
-document.addEventListener('DOMContentLoaded', function(){
+
+    // 关闭详情弹窗
+    closeViewBtn.addEventListener('click', () => {
+        viewModal.style.display = 'none';
+    });
+    viewModal.addEventListener('click', (e) => {
+        if (e.target === viewModal) viewModal.style.display = 'none';
+    });
+
+
+    // ====================== 4. 订单状态修改功能（事件委托强化） ======================
+    const statusModal = document.getElementById('status-modal');
+    const closeStatusBtn = document.querySelector('.status-close');
+    const statusForm = document.getElementById('status-form');
+    const statusOrderIdInput = document.getElementById('status-order-id');
+    const currentStatusSpan = document.getElementById('current-status');
+    const newStatusSelect = document.getElementById('new-status');
     const STATUS_FLOW = [
         { value: 'pending', label: '待审核' },
         { value: 'shipping', label: '待发货' },
         { value: 'shipped', label: '已发货' }
-        // 暂时屏蔽以下状态，如需开放可取消注释
         // { value: 'received', label: '已接收' },
         // { value: 'cancelled', label: '已取消' }
     ];
 
-    // 【新增】动态渲染状态下拉框（限制可选状态）
+    // 动态渲染状态下拉框
     function renderStatusOptions(currentStatus) {
-        const select = document.getElementById('new-status');
-        select.innerHTML = ''; // 清空原有选项
-
-        // 找到当前状态在流转顺序中的索引
+        newStatusSelect.innerHTML = '';
         const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
-
-        // 仅渲染当前状态及之后的选项
         STATUS_FLOW.forEach((item, index) => {
             if (index >= currentIndex) {
                 const option = document.createElement('option');
                 option.value = item.value;
                 option.textContent = item.label;
-                // 默认选中当前状态
-                if (item.value === currentStatus) {
-                    option.selected = true;
-                }
-                select.appendChild(option);
+                if (item.value === currentStatus) option.selected = true;
+                newStatusSelect.appendChild(option);
             }
         });
     }
 
-    // 修改原有“状态修改按钮”点击事件
-    document.querySelectorAll('.status-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const orderId = this.getAttribute('data-id');
-            const currentStatus = this.getAttribute('data-status');
-                    // 新增：如果是已接收或拒收状态，直接提示并返回
-                    if (currentStatus === 'received' || currentStatus === 'rejected') {
-                        alert('该订单状态为【' + (currentStatus === 'received' ? '已接收' : '拒收') + '】，请联系采购人协商');
-                        return; // 阻止后续操作
-                    }
+    // 事件委托：支持按钮内部元素点击（如<i>标签）
+    orderTableBody.addEventListener('click', function (event) {
+        // 找到最近的.status-btn（解决按钮内有图标时的点击穿透）
+        const statusBtn = event.target.closest('.status-btn');
+        if (statusBtn) {
+            const orderId = statusBtn.getAttribute('data-id');
+            const currentStatus = statusBtn.getAttribute('data-status');
 
-            // 【新增】动态渲染允许的状态选项
+            // 已接收/已拒收状态不允许修改
+            if (currentStatus === 'received' || currentStatus === 'rejected') {
+                alert(`该订单状态为【${currentStatus === 'received' ? '已接收' : '已拒收'}】，请联系采购人协商`);
+                return;
+            }
+
             renderStatusOptions(currentStatus);
-
-            // 显示弹窗（原有逻辑保留）
-            document.getElementById('status-modal').style.display = 'block';
-            document.getElementById('status-order-id').value = orderId;
-            document.getElementById('current-status').textContent = currentStatus;
-        });
+            statusOrderIdInput.value = orderId;
+            currentStatusSpan.textContent = STATUS_MAP[currentStatus] || currentStatus;
+            statusModal.style.display = 'block';
+        }
     });
 
-    // 状态修改表单提交
-    document.getElementById('status-form').addEventListener('submit', function(e) {
+    // 提交状态修改表单
+    statusForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        const orderId = document.getElementById('status-order-id').value;
-        const newStatus = document.getElementById('new-status').value;
+        const orderId = statusOrderIdInput.value;
+        const newStatus = newStatusSelect.value;
 
-        // 调用后端接口
         fetch(`/api/orders/${orderId}/status?newStatus=${newStatus}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' }
         }).then(response => {
             if (response.ok) {
-                location.reload(); // 刷新页面显示最新状态
+                location.reload();
             }
+        }).catch(error => {
+            console.error('修改状态失败:', error);
+            alert('状态修改失败，请重试');
         });
     });
 
-    // 新增：弹窗关闭按钮点击事件
-    document.querySelector('.status-close').addEventListener('click', function() {
-        document.getElementById('status-modal').style.display = 'none';
+    // 关闭状态修改弹窗
+    closeStatusBtn.addEventListener('click', () => {
+        statusModal.style.display = 'none';
+    });
+    window.addEventListener('click', function (e) {
+        if (e.target === statusModal) statusModal.style.display = 'none';
     });
 
-    // 可选：点击弹窗外部也关闭（增强体验）
-    window.addEventListener('click', function(e) {
-        const modal = document.getElementById('status-modal');
-        if (e.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
+
+    // ====================== 5. 其他弹窗关闭逻辑（统一处理） ======================
+    // 新增订单弹窗关闭
+    const addModal = document.getElementById('add-modal');
+    const addModalClose = document.getElementById('add-modal-close');
+    if (addModal && addModalClose) {
+        addModalClose.addEventListener('click', () => {
+            addModal.style.display = 'none';
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === addModal) addModal.style.display = 'none';
+        });
+    }
+
+    // 编辑订单弹窗关闭
+    const editModal = document.getElementById('edit-modal');
+    const editModalClose = document.querySelector('.edit-close');
+    if (editModal && editModalClose) {
+        editModalClose.addEventListener('click', () => {
+            editModal.style.display = 'none';
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal) editModal.style.display = 'none';
+        });
+    }
 });

@@ -13,4 +13,5 @@ public interface PurchaseOrderService {
     PurchaseOrder createPurchaseOrder(PurchaseOrder order);
     Optional<PurchaseOrder> getOrderById(Integer orderId);
     PurchaseOrder updateStatus(Integer orderId, String newStatus);
+    List<PurchaseOrder> getValidPurchaseOrdersSupplierUser();
 }

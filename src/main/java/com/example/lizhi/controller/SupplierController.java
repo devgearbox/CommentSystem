@@ -27,9 +27,11 @@ public class SupplierController {
     }
 
     @GetMapping("/suppliers/search")
-    @ResponseBody
-    public List<Supplier> searchSuppliersByName(@RequestParam String name) {
-        return supplierService.searchSuppliersByName(name);
+    public String searchSuppliers(@RequestParam String name, Model model) {
+        List<Supplier> suppliers = supplierService.searchSuppliersByName(name);
+        model.addAttribute("suppliers", suppliers);
+        // 返回表格片段而非完整页面，对应Thymeleaf中定义的片段
+        return "supplier :: #supplier-table-body";
     }
 
     @PostMapping("/suppliers/add")

@@ -40,7 +40,7 @@
             <th><div class="action-header">操作</div></th>
         </tr>
         </thead>
-        <tbody id="supplier-table-body">
+        <tbody id="supplier-table-body" th:fragment="supplierTableBody(suppliers)">
         <tr th:each="supplier : ${suppliers}">
             <td style="display: none">
                 <input type="checkbox" class="supplier-check" th:data-id="${supplier.supplier_id}">
@@ -53,11 +53,13 @@
             <td th:text="${supplier.varieties}"></td>
             <td th:text="${supplier.cooperation_start_date}"></td>
             <td th:text="${supplier.getStatusText()}"></td>
-<!--            <td th:text="${#temporals.format(supplier.create_time, 'yyyy-MM-dd HH:mm:ss')}"></td>-->
-<!--            <td th:text="${#temporals.format(supplier.update_time, 'yyyy-MM-dd HH:mm:ss')}"></td>-->
             <td class="action-header">
-                <button class="action-btn edit-btn" th:data-id="${supplier.supplier_id}"><i class="fas fa-edit">编辑</i></button>
-                <button class="action-btn view-btn" th:data-id="${supplier.supplier_id}"><i class="fas fa-eye">查看</i></button>
+                <button class="action-btn edit-btn" th:data-id="${supplier.supplier_id}">
+                    <i class="fas fa-edit"></i> 编辑
+                </button>
+                <button class="action-btn view-btn" th:data-id="${supplier.supplier_id}">
+                    <i class="fas fa-eye"></i> 查看
+                </button>
             </td>
         </tr>
         </tbody>
