@@ -71,8 +71,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         if (order.getOrderStatus() == null) {
             order.setOrderStatus(PurchaseOrder.OrderStatus.pending); // 设置默认待审核状态
         }
-        if (order.getCreate_time() == null) {
-            order.setCreate_time(new Date());
+        if (order.getCreateTime() == null) {
+            order.setCreateTime(new Date());
         }
         return purchaseOrderRepository.save(order);
     }

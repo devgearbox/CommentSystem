@@ -63,23 +63,13 @@ public class PurchaseOrder{
     private LitchiVariety litchiVariety;
 
     @Temporal(TemporalType.TIMESTAMP)
-    private Date create_time;
+    @Column(name = "create_time")
+    private Date createTime;
 
-    private BigDecimal total_price;
+    @Column(name = "total_price")
+    private BigDecimal totalPrice;
 
     // 构造方法
     public PurchaseOrder() {
     }
-
-//    @Override
-//    public String toString() {
-//        return "PurchaseOrder{" +
-//                "orderId=" + order_id +
-//                ", orderNo='" + order_no + '\'' +
-//                ", purchaseQuantity=" + purchase_quantity +
-//                ", orderStatus=" + order_status +
-//                ", purchaseVariety='" + purchase_variety + '\'' +
-//                ", createTime=" + create_time +
-//                '}';
-//    }
 }

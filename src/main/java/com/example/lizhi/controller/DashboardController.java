@@ -11,14 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class DashboardController {
 
-    // 处理采购统计分析请求
-    @GetMapping("/analyse")
-    public String showAnalysis() {
-        return "analyse"; // 对应 templates/analysis.html
-    }
-
-
-
     @GetMapping("/feedback")
     public String feedback() {
         return "forward:/otherHtml/feedback.html" ;// 对应 templates 目录下的 feedback.html（Thymeleaf 模板）

@@ -176,13 +176,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 detailFields.orderPrice.textContent = order.litchiVariety?.price || '9.00';
                 detailFields.orderQuantity.textContent = order.purchase_quantity || '0';
                 detailFields.orderVariety.textContent = order.purchase_variety || '无';
-                detailFields.orderTotalPrice.textContent = order.total_price || '0.00';
+                detailFields.orderTotalPrice.textContent = order.totalPrice || '0.00';
                 detailFields.orderSupplierName.textContent = order.supplier?.supplier_name || '无';
                 detailFields.orderSupplierPhone.textContent = order.supplier?.phone || '无';
                 detailFields.orderSupplierAddress.textContent = order.supplier?.address || '无';
                 detailFields.orderStatus.textContent = STATUS_MAP[order.orderStatus] || "未知状态";
-                detailFields.orderDate.textContent = order.create_time
-                    ? new Date(order.create_time).toLocaleString()
+                detailFields.orderDate.textContent = order.createTime
+                    ? new Date(order.createTime).toLocaleString()
                     : '无';
 
                 viewModal.style.display = 'flex';

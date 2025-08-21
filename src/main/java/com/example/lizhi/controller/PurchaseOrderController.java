@@ -91,7 +91,7 @@ public class PurchaseOrderController {
             order.setPurchase_variety(request.getVarietyName());
             order.setPurchase_quantity(new BigDecimal(request.getQuantity()));
             // 在构建PurchaseOrder对象时添加
-            order.setTotal_price(new BigDecimal(request.getTotalPrice()));
+            order.setTotalPrice(new BigDecimal(request.getTotalPrice()));
 
             // 4. 查询供应商（增加空值校验）
             Supplier supplier = supplierService.searchSuppliersByName(request.getSupplierName())

@@ -46,8 +46,8 @@
             <td th:text="${order.supplier.supplier_name}"></td>
             <td th:text="${order.purchase_variety}"></td>
             <td th:text="${order.purchase_quantity}"></td>
-            <td th:text="${order.total_price}"></td>
-            <td th:text="${#dates.format(order.create_time, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td th:text="${order.totalPrice}"></td>
+            <td th:text="${#dates.format(order.createTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
             <td th:text="${order.orderStatus.label}"></td>
             <td>
                 <button class="view-btn" th:data-id="${order.order_id}">查看详情</button>
