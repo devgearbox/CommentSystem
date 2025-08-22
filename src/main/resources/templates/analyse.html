@@ -113,7 +113,7 @@
       <div class="card stat-box">
         <div class="stat-title">总采购金额</div>
         <!-- 总采购金额：元 → 万元 -->
-        <div class="stat-value" id="totalAmount">32.08 万元</div>
+        <div class="stat-value" id="totalAmount" th:text="${#numbers.formatDecimal(totalPurchaseAmountYuan / 10000, 2, 2)} + ' 万元'">错误</div>
         <p class="text-success mb-0"><i class="fa fa-arrow-up"></i> 8.2% 较上月</p>
       </div>
     </div>
@@ -121,7 +121,7 @@
       <div class="card stat-box">
         <div class="stat-title">平均订单金额</div>
         <!-- 平均订单金额：元 → 万元 -->
-        <div class="stat-value" id="averageAmount">2.47 万元</div>
+        <div class="stat-value" id="averageAmount" th:text="${#numbers.formatDecimal(averageOrderAmountYuan / 10000, 1, 2)} + ' 万元'">错误</div>
         <p class="text-danger mb-0"><i class="fa fa-arrow-down"></i> 2.1% 较上月</p>
       </div>
     </div>
@@ -139,9 +139,9 @@
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0">采购金额趋势</h5>
       <div class="chart-nav">
-        <button class="btn btn-primary btn-sm" id="trend-week">周</button>
-        <button class="btn btn-primary btn-sm" id="trend-month">月</button>
-        <button class="btn btn-primary btn-sm" id="trend-year">年</button>
+        <button class="btn btn-primary btn-sm" data-time-unit="week" id="trend-week">周</button>
+        <button class="btn btn-primary btn-sm" data-time-unit="month" id="trend-month">月</button>
+        <button class="btn btn-primary btn-sm" data-time-unit="year" id="trend-year">年</button>
       </div>
     </div>
     <div class="card-body">
@@ -215,168 +215,329 @@
 
 <!-- 引入 Bootstrap JS 和 Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns@2.30.0/dist/date-fns.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 <script>
-// 金额单位转换函数（元 → 万元，保留2位小数）
-function formatToTenThousandYuan(amount) {
-  if (isNaN(amount) || amount === 0) return '0.00';
-  return (amount / 10000).toFixed(2);
-}
+  // 金额单位转换函数（元 → 万元，保留2位小数）
+  function formatToTenThousandYuan(amount) {
+      return isNaN(amount) || amount === 0 ? '0.00' : (amount / 10000).toFixed(2);
+  }
 
-document.addEventListener('DOMContentLoaded', function () {
-  // 1. 总采购金额转换（元 → 万元）
-  const totalAmountYuan = [[${totalPurchaseAmountYuan}]];
-  document.getElementById('totalAmount').innerText =
-    formatToTenThousandYuan(totalAmountYuan) + ' 万（元）';
+  document.addEventListener('DOMContentLoaded', function () {
+      // -------------------------- 1. 趋势图核心渲染函数（按时间单位处理数据） --------------------------
+      function renderTrendChart(rawData, timeUnit) {
+          const ctx = document.getElementById('purchaseTrendChart').getContext('2d');
+          // 销毁已有图表，避免重复渲染
+          const existingChart = Chart.getChart(ctx.canvas);
+          if (existingChart) existingChart.destroy();
 
-  // 2. 平均订单金额转换（元 → 万元）
-  const averageAmountYuan = [[${averageOrderAmountYuan}]];
-  document.getElementById('averageAmount').innerText =
-    formatToTenThousandYuan(averageAmountYuan) + ' 万（元）';
+          // -------------------------- 周视图：周一到周日7个节点（每日平均值） --------------------------
+          if (timeUnit === 'week') {
+              const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+              // 初始化7天数据结构：{总金额, 数据天数（用于计算平均值）}
+              const weeklyData = Array(7).fill(null).map(() => ({ total: 0, days: 0 }));
 
-  // 2. 趋势图动态渲染（复用万元数据）
-    function renderTrendChart(data) {
-      const ctx = document.getElementById('purchaseTrendChart').getContext('2d');
-      // 关键：销毁旧图表（若存在）
-      const existingChart = Chart.getChart(ctx.canvas);
-      if (existingChart) {
-        existingChart.destroy();
-      }
+              // 1. 按“星期几”分组统计原始数据
+              rawData.forEach(item => {
+                  const date = new Date(item.time);
+                  let dayOfWeek = date.getDay(); // 原生：0=周日，1=周一，...，6=周六
+                  // 转换为：0=周一，1=周二，...，6=周日
+                  dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-      const labels = data.map(item => item.time);
-      const amounts = data.map(item => item.amount);
+                  weeklyData[dayOfWeek].total += parseFloat(item.amount); // 累加当日金额
+                  weeklyData[dayOfWeek].days += 1; // 统计当日有数据的次数（避免无数据时除以0）
+              });
 
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '采购金额（万元）',
-            data: amounts,
-            borderColor: '#28a745',
-            backgroundColor: 'rgba(40, 167, 69, 0.1)',
-            tension: 0,
-            fill: false
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true }
+              // 2. 计算每日平均值（无数据时显示0）
+              const labels = weekdays;
+              const amounts = weeklyData.map(item => {
+                  return item.days === 0 ? 0 : (item.total / item.days).toFixed(2);
+              });
+
+              // 3. 渲染折线图
+              new Chart(ctx, {
+                  type: 'line',
+                  data: {
+                      labels: labels,
+                      datasets: [{
+                          label: '日均采购金额（万元）',
+                          data: amounts,
+                          borderColor: '#28a745',
+                          backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                          tension: 0.3,
+                          fill: true,
+                          pointRadius: 4,
+                          pointHoverRadius: 6
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                          y: {
+                              beginAtZero: true,
+                              ticks: { callback: val => `${val} 万` }
+                          }
+                      },
+                      plugins: {
+                          tooltip: {
+                              callbacks: {
+                                  label: (ctx) => `日均金额: ${ctx.raw} 万元`
+                              }
+                          }
+                      }
+                  }
+              });
           }
-        }
+
+          // -------------------------- 月视图：按“每周”聚合（1-4周，每周平均值） --------------------------
+          else if (timeUnit === 'month') {
+              // 1. 按“周”分组（每月最多4周，不足4周按实际周数）
+              const monthlyWeeks = Array(4).fill(null).map(() => ({ total: 0, days: 0 }));
+              rawData.forEach(item => {
+                  const date = new Date(item.time);
+                  const dayOfMonth = date.getDate();
+                  // 计算当月第几周（1-4周）
+                  const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 3); // 0=第1周，3=第4周
+
+                  monthlyWeeks[weekIndex].total += parseFloat(item.amount);
+                  monthlyWeeks[weekIndex].days += 1;
+              });
+
+              // 2. 过滤无数据的周，计算每周平均值
+              const filteredData = monthlyWeeks.filter(item => item.days > 0);
+              const labels = filteredData.map((_, i) => `第${i + 1}周`);
+              const amounts = filteredData.map(item => (item.total / item.days).toFixed(2));
+
+              // 3. 无数据时显示提示
+              if (amounts.length === 0) {
+                  document.getElementById('purchaseTrendChart').parentNode.innerHTML =
+                      '<div class="text-muted text-center py-3">本月无采购数据</div>';
+                  return;
+              }
+
+              // 4. 渲染折线图
+              new Chart(ctx, {
+                  type: 'line',
+                  data: {
+                      labels: labels,
+                      datasets: [{
+                          label: '周均采购金额（万元）',
+                          data: amounts,
+                          borderColor: '#20c997',
+                          backgroundColor: 'rgba(32, 201, 151, 0.1)',
+                          tension: 0.3,
+                          fill: true,
+                          pointRadius: 4,
+                          pointHoverRadius: 6
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                          y: {
+                              beginAtZero: true,
+                              ticks: { callback: val => `${val} 万` }
+                          }
+                      },
+                      plugins: {
+                          tooltip: {
+                              callbacks: {
+                                  label: (ctx) => `周均金额: ${ctx.raw} 万元`
+                              }
+                          }
+                      }
+                  }
+              });
+          }
+
+          // -------------------------- 年视图：偶数月6个节点（2/4/6/8/10/12月，每月平均值） --------------------------
+          else if (timeUnit === 'year') {
+              const evenMonths = [2, 4, 6, 8, 10, 12]; // 目标偶数月
+              // 初始化6个偶数月数据结构
+              const yearlyData = Array(6).fill(null).map(() => ({ total: 0, days: 0 }));
+
+              // 1. 按“偶数月”分组统计
+              rawData.forEach(item => {
+                  const date = new Date(item.time);
+                  const month = date.getMonth() + 1; // 原生月份0-11，转换为1-12
+                  const monthIndex = evenMonths.indexOf(month); // 找到对应偶数月的索引（0-5）
+
+                  if (monthIndex !== -1) { // 仅处理偶数月数据
+                      yearlyData[monthIndex].total += parseFloat(item.amount);
+                      yearlyData[monthIndex].days += 1;
+                  }
+              });
+
+              // 2. 计算每月平均值（无数据时显示0）
+              const labels = evenMonths.map(month => `${month}月`);
+              const amounts = yearlyData.map(item => {
+                  return item.days === 0 ? 0 : (item.total / item.days).toFixed(2);
+              });
+
+              // 3. 渲染折线图
+              new Chart(ctx, {
+                  type: 'line',
+                  data: {
+                      labels: labels,
+                      datasets: [{
+                          label: '月均采购金额（万元）',
+                          data: amounts,
+                          borderColor: '#66b1ff',
+                          backgroundColor: 'rgba(102, 177, 255, 0.1)',
+                          tension: 0.3,
+                          fill: true,
+                          pointRadius: 4,
+                          pointHoverRadius: 6
+                      }]
+                  },
+                  options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                          y: {
+                              beginAtZero: true,
+                              ticks: { callback: val => `${val} 万` }
+                          }
+                      },
+                      plugins: {
+                          tooltip: {
+                              callbacks: {
+                                  label: (ctx) => `月均金额: ${ctx.raw} 万元`
+                              }
+                          }
+                      }
+                  }
+              });
+          }
+      }
+
+      // -------------------------- 2. 异步获取趋势数据（对接后端接口） --------------------------
+      async function fetchTrendData(timeUnit, start, end) {
+          try {
+              // 构建请求参数（时间范围转ISO格式）
+              const params = new URLSearchParams({ timeUnit });
+              if (start) params.append('start', start.toISOString());
+              if (end) params.append('end', end.toISOString());
+
+              // 调用后端接口
+              const response = await fetch(`/api/purchase/statistics?${params}`);
+              if (!response.ok) throw new Error('数据获取失败');
+
+              const result = await response.json();
+              // 渲染趋势图（传递原始数据和时间单位）
+              renderTrendChart(result.trendData, timeUnit);
+          } catch (error) {
+              console.error('趋势数据加载失败:', error);
+              // 错误提示
+              document.getElementById('purchaseTrendChart').parentNode.innerHTML =
+                  '<div class="text-danger text-center py-3">数据加载失败，请重试</div>';
+          }
+      }
+
+      // -------------------------- 3. 初始化与事件绑定 --------------------------
+      // 3.1 初始化：默认加载“本月”数据
+      const init = () => {
+          const now = new Date();
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+          fetchTrendData('month', monthStart, monthEnd);
+      };
+
+      // 3.2 时间单位切换按钮（周/月/年）
+      document.querySelectorAll('[id^="trend-"]').forEach(btn => {
+          btn.addEventListener('click', () => {
+              // 切换按钮激活状态
+              document.querySelectorAll('[id^="trend-"]').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+
+              const timeUnit = btn.id.split('-')[1];
+              const now = new Date();
+              let start, end;
+
+              // 按时间单位计算默认时间范围
+              if (timeUnit === 'week') {
+                  // 本周：周一0点 ~ 周日23:59
+                  const dayOfWeek = now.getDay() || 7; // 0=周日→7
+                  start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1);
+                  end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 7, 23, 59, 59);
+              } else if (timeUnit === 'month') {
+                  // 本月：1号0点 ~ 月末23:59
+                  start = new Date(now.getFullYear(), now.getMonth(), 1);
+                  end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+              } else if (timeUnit === 'year') {
+                  // 本年：1月1号0点 ~ 12月31号23:59
+                  start = new Date(now.getFullYear(), 0, 1);
+                  end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+              }
+
+              // 加载对应时间范围的数据
+              fetchTrendData(timeUnit, start, end);
+          });
       });
-    }
 
-  // 3. 筛选器逻辑：调用后端接口更新趋势图
-    async function fetchTrendData(timeUnit, start, end) {
-      let format = '%Y-%m'; // 默认按月
-      if (timeUnit === 'week') {
-        format = '%Y-%u'; // 按周分组（MySQL 周格式）
-      } else if (timeUnit === 'month') {
-        format = '%Y-%m'; // 按月分组
-      } else if (timeUnit === 'year') {
-        format = '%Y'; // 按年分组
-      } else if (timeUnit === 'custom') {
-        format = '%Y-%m-%d'; // 自定义时间默认按天
-      }
+      // 3.3 自定义时间筛选（“自定义”选项逻辑）
+      document.getElementById('period-select').addEventListener('change', (e) => {
+          const isCustom = e.target.value === 'custom';
+          document.getElementById('date-range').style.display = isCustom ? 'flex' : 'none';
+      });
 
-      const params = new URLSearchParams({ timeUnit, format }); // 传递 format
-      if (start) params.append('start', start);
-      if (end) params.append('end', end);
+      document.getElementById('filter-btn').addEventListener('click', () => {
+          const startStr = document.getElementById('start-date').value;
+          const endStr = document.getElementById('end-date').value;
+          if (!startStr || !endStr) {
+              alert('请选择完整的时间范围');
+              return;
+          }
 
-      const response = await fetch(`/api/purchase/statistics?${params}`);
-      const result = await response.json();
+          // 转换为Date对象（自定义时间默认按“日”展示）
+          const start = new Date(startStr);
+          const end = new Date(endStr);
+          end.setHours(23, 59, 59); // 结束时间设为当日23:59:59
+          fetchTrendData('month', start, end); // 复用月视图逻辑（按周聚合）
+      });
 
-      renderTrendChart(result.trendData);
-    }
+      // -------------------------- 4. 初始化其他图表（品种分布+供应商占比） --------------------------
+      // 4.1 按品种采购分布（柱状图）
+      const varietyCtx = document.getElementById('varietyDistributionChart').getContext('2d');
+      new Chart(varietyCtx, {
+          type: 'bar',
+          data: {
+              labels: ['妃子笑', '桂味', '糯米糍', '槐枝', '三月红', '其他'],
+              datasets: [{
+                  label: '采购数量(斤)',
+                  data: [12500, 9800, 8200, 6500, 4300, 2100],
+                  backgroundColor: '#28a745',
+                  borderWidth: 1
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: { y: { beginAtZero: true } }
+          }
+      });
 
-  // 4. 初始化趋势图（默认本月数据）
-  const now = new Date();
-  // 本月第一天 00:00:00
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  // 本月最后一天 23:59:59
-  const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      // 4.2 供应商采购占比（饼图）
+      const supplierCtx = document.getElementById('supplierDistributionChart').getContext('2d');
+      new Chart(supplierCtx, {
+          type: 'pie',
+          data: {
+              labels: ['岭南果业', '华南农业', '东方果园', '其他供应商'],
+              datasets: [{
+                  data: [45, 25, 20, 10],
+                  backgroundColor: ['#28a745', '#20c997', '#66b1ff', '#adb5bd']
+              }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+      });
 
-  // 转换为 ISO 格式字符串（后端 @DateTimeFormat 可识别）
-  fetchTrendData(
-    'month',
-    thisMonthStart.toISOString(),
-    thisMonthEnd.toISOString()
-  );
-
-  // 5. 绑定时间维度切换（周/月/年）
-  document.querySelectorAll('[id^="trend-"]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const timeUnit = btn.id.split('-')[1]; // trend-week → week
-      fetchTrendData(timeUnit);
-    });
+      // 页面加载完成后初始化
+      init();
   });
-
-  // 6. 自定义时间筛选
-  document.getElementById('filter-btn').addEventListener('click', () => {
-    const start = document.getElementById('start-date').value;
-    const end = document.getElementById('end-date').value;
-    fetchTrendData('custom', start, end);
-  });
-
-  // 按品种采购分布柱状图初始化（示例数据）
-  const varietyCtx = document.getElementById('varietyDistributionChart').getContext('2d');
-  new Chart(varietyCtx, {
-    type: 'bar',
-    data: {
-      labels: ['妃子笑', '桂味', '糯米糍', '槐枝', '三月红', '其他'],
-      datasets: [{
-        label: '采购数量(斤)',
-        data: [12500, 9800, 8200, 6500, 4300, 2100],
-        backgroundColor: '#28a745',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-
-  // 供应商采购占比饼图初始化（示例数据）
-  const supplierCtx = document.getElementById('supplierDistributionChart').getContext('2d');
-  new Chart(supplierCtx, {
-    type: 'pie',
-    data: {
-      labels: ['岭南果业', '华南农业', '东方果园', '其他供应商'],
-      datasets: [{
-        data: [45, 25, 20, 10],
-        backgroundColor: [
-          '#28a745',
-          '#20c997',
-          '#66b1ff',
-          '#adb5bd'
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
-  });
-
-  // 趋势图表切换逻辑（示例，可扩展）
-  const trendBtns = document.querySelectorAll('[id^="trend-"]');
-  trendBtns.forEach(btn => {
-    btn.addEventListener('click', function () {
-      trendBtns.forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      // 这里可根据点击的按钮切换图表数据，如周、月、年数据
-    });
-  });
-});
 </script>
 </body>
 </html>

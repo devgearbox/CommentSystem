@@ -29,7 +29,8 @@ public interface AnalyseRepository extends JpaRepository<PurchaseOrder, Integer>
             "FROM PurchaseOrder p " +
             "WHERE p.isDeleted = false " +
             "AND p.createTime BETWEEN :start AND :end " +
-            "GROUP BY FUNCTION('DATE_FORMAT', p.createTime, :format)")
+            "GROUP BY FUNCTION('DATE_FORMAT', p.createTime, :format) " +
+            "ORDER BY FUNCTION('DATE_FORMAT', p.createTime, :format) ASC") // 按时间升序
     List<Object[]> sumTotalPriceByTimeRange(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
