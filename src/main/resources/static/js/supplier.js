@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let isSelectVisible = false;
 
     // 显示批量删除选择框（关键修复：动态获取列）
+    if (batchDeleteBtn) {
     batchDeleteBtn.addEventListener('click', () => {
         if (!isSelectVisible) {
             isSelectVisible = true;
@@ -45,16 +46,20 @@ document.addEventListener('DOMContentLoaded', function () {
             updateSupplierChecks(); // 绑定新复选框事件
         }
     });
+    }
 
     // 取消批量删除（关键修复：动态获取列）
-    cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);
+    if (cancelDeleteBtn) {
+    cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);}
 
     // 全选/取消全选
+    if (selectAll) {
     selectAll.addEventListener('change', () => {
         document.querySelectorAll('.supplier-check').forEach(cb => {
             cb.checked = selectAll.checked;
         });
     });
+    }
 
     // 复选框事件处理函数
     function handleCheckChange() {
@@ -231,12 +236,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // 关闭编辑弹窗
+    if (closeEditBtn) {
     closeEditBtn.addEventListener('click', () => editModal.style.display = 'none');
     editModal.addEventListener('click', (e) => {
         if (e.target === editModal) editModal.style.display = 'none';
     });
+    }
 
     // 提交编辑表单
+    if (editForm) {
     editForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(editForm);
@@ -262,6 +270,7 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('网络错误，请重试');
         }
     });
+    }
 
 
     // ====================== 5. 添加供应商 ======================
@@ -270,12 +279,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const addModalClose = document.getElementById('add-modal-close');
     const addForm = document.getElementById('add-form');
 
-    addBtn.addEventListener('click', () => addModal.style.display = 'flex');
+    if (addBtn) {
+    addBtn.addEventListener('click', () => addModal.style.display = 'flex');}
+    if (addModalClose) {
     addModalClose.addEventListener('click', (e) => {
         e.stopPropagation();
         addModal.style.display = 'none';
     });
+    }
 
+    if (addForm) {
     addForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(addForm).entries());
@@ -300,4 +313,5 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('网络错误，请重试');
         }
     });
+    }
 });

@@ -40,23 +40,32 @@ public class LoginController {
     ) {
         User user = userService.loginWithRole(username, password);
         if (user != null) {
-            // 登录成功：将完整 User 对象存入 Session，key 为 "currentUser"
+            // 登录成功：存入完整 User 对象和 userId 到 Session
             session.setAttribute("currentUser", user);
-            // 新增：同时存 userId
             session.setAttribute("currentUserId", user.getId());
 
-            // 根据角色跳转不同页面（原有逻辑）
+            // 核心：根据角色分流
             if (user.getRole() == 1) {
+                // 系统管理员，假设后续跳转到管理员页面（如 /adminDashboard）
                 return "redirect:/purchasework";
+            } else if (user.getRole() == 2) {
+                // 普通采购员：跳转到采购人员端主页面
+                return "redirect:/purchasework";
+            } else if (user.getRole() == 3) {
+                // 供应商：后续扩展，当前可先跳转到临时页面或采购人员端（根据需求）
+                return "redirect:/supplier";
             } else {
-                return "redirect:/home";
+                // 未知角色，返回登录页
+                redirectAttributes.addFlashAttribute("error", "角色异常，请联系管理员");
+                return "redirect:/login";
             }
         } else {
-            redirectAttributes.addFlashAttribute("error", "登录失败");
+            // 登录失败
+            redirectAttributes.addFlashAttribute("error", "登录失败：账号或密码错误");
             return "redirect:/login";
         }
     }
-    // 示例：登录成功后跳转的主页接口
+    //登录成功后跳转的主页接口
     @GetMapping("/home")
     public String home() {
         return "home"; // 需创建 home.html 作为登录后页面

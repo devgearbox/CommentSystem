@@ -36,6 +36,10 @@ public class WorkController {
         // 通过注入的 Service 查询数据库
         List<LitchiVariety> varieties = litchiVarietyService.findAll();
         model.addAttribute("varieties", varieties);
+
+        // 新增：检查用户是否有默认地址
+        Address defaultAddress = addressService.findDefaultAddressByUserId(user.getId());
+        model.addAttribute("hasDefaultAddress", defaultAddress != null);
         return "work";
     }
 

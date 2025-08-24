@@ -32,9 +32,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // ====================== 2. 批量删除功能（修复动态勾选框） ======================
-    const batchDeleteBtn = document.getElementById('del-order');
+const batchDeleteBtn = document.getElementById('del-order');
+if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
     const confirmDeleteBtn = document.getElementById('confirm-delete-order');
     const cancelDeleteBtn = document.getElementById('cancel-delete-order');
+    const selectAllOrder = document.getElementById('select-all-order');
     let isSelectVisible = false;
 
     // 点击"删除订单"显示勾选框
@@ -46,16 +48,18 @@ document.addEventListener('DOMContentLoaded', function () {
             selectColumns.forEach(column => {
                 column.style.display = 'table-cell';
             });
-            confirmDeleteBtn.style.display = 'inline-block';
-            cancelDeleteBtn.style.display = 'inline-block';
+            if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'inline-block';
+            if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'inline-block';
             updateOrderChecks(); // 重新绑定复选框事件
         }
     });
 
-    // 取消批量删除
-    cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);
+    // 取消批量删除（判断按钮存在）
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);
+    }
 
-    // 全选/取消全选
+    // 全选/取消全选（判断全选框存在）
     if (selectAllOrder) {
         selectAllOrder.addEventListener('change', () => {
             const orderChecks = document.querySelectorAll('.order-check');
@@ -87,45 +91,47 @@ document.addEventListener('DOMContentLoaded', function () {
         selectColumns.forEach(column => {
             column.style.display = 'none';
         });
-        confirmDeleteBtn.style.display = 'none';
-        cancelDeleteBtn.style.display = 'none';
+        if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'none';
+        if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'none';
         if (selectAllOrder) selectAllOrder.checked = false;
         // 重置所有复选框
         document.querySelectorAll('.order-check').forEach(check => check.checked = false);
     }
 
-    // 确认批量删除
-    confirmDeleteBtn.addEventListener('click', async function () {
-        const selectedIds = [];
-        document.querySelectorAll('.order-check').forEach(check => {
-            if (check.checked) selectedIds.push(parseInt(check.dataset.id));
-        });
-
-        if (selectedIds.length === 0) {
-            alert('请选择要删除的订单');
-            return;
-        }
-
-        try {
-            const response = await fetch('/orders/delete/batch', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: selectedIds })
+    // 确认批量删除（判断按钮存在）
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async function () {
+            const selectedIds = [];
+            document.querySelectorAll('.order-check').forEach(check => {
+                if (check.checked) selectedIds.push(parseInt(check.dataset.id));
             });
 
-            const result = await response.json();
-            if (result.success) {
-                alert('批量删除订单成功');
-                window.location.reload();
-            } else {
-                alert('删除失败: ' + (result.message || '未知错误'));
+            if (selectedIds.length === 0) {
+                alert('请选择要删除的订单');
+                return;
             }
-        } catch (error) {
-            console.error('删除请求失败:', error);
-            alert('网络错误，删除失败');
-        }
-    });
 
+            try {
+                const response = await fetch('/orders/delete/batch', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: selectedIds })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('批量删除订单成功');
+                    window.location.reload();
+                } else {
+                    alert('删除失败: ' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('删除请求失败:', error);
+                alert('网络错误，删除失败');
+            }
+        });
+    }
+}
 
     // ====================== 3. 订单详情功能（事件委托强化） ======================
     const viewModal = document.getElementById('order-view-modal');

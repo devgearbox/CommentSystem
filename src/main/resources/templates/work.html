@@ -217,7 +217,8 @@
                     <span class="price-text"
                           th:text="'¥' + ${variety.price} + '/斤'"></span>
                             <button class="btn btn-success"
-                                    th:onclick="'window.location.href = \'/commodity?varietyId=' + ${variety.id} + '\';'">
+                                    th:data-variety-id="${variety.id}"
+                                    onclick="checkAddressAndRedirect(this)">
                                 采购
                             </button>
                         </div>
@@ -257,6 +258,21 @@
                 currentIndex = 1;
             }
         }, intervalTime);
+    }
+        // 检查地址并跳转
+    function checkAddressAndRedirect(button) {
+        // 获取品种ID
+        const varietyId = button.getAttribute('data-variety-id');
+        // 从后端模型获取是否有默认地址
+        const hasDefaultAddress = [[${hasDefaultAddress}]];
+
+        if (!hasDefaultAddress) {
+            alert('请先设置默认收货地址再进行采购');
+            return;
+        }
+
+        // 存在默认地址则跳转
+        window.location.href = '/commodity?varietyId=' + varietyId;
     }
 </script>
 </body>
