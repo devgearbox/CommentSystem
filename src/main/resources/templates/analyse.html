@@ -90,7 +90,7 @@
         <div class="stat-title">采购金额</div>
         <!-- 总采购金额：元 → 万元 -->
         <div class="stat-value" id="totalAmount"
-             th:text="${#numbers.formatDecimal(totalPurchaseAmountYuan / 10000, 2, 2)} + ' 万元'">错误</div>
+             th:text="${totalPurchaseAmountYuan == null ? '0.00 万元' : #numbers.formatDecimal(totalPurchaseAmountYuan / 10000, 2, 2) + ' 万元'}">暂无数据</div>
         <!-- 动态渲染“较上月”增长率 -->
         <p th:utext="${amountGrowthHtml}" class="mb-0"></p>
       </div>
@@ -100,7 +100,7 @@
         <div class="stat-title">平均订单金额</div>
         <!-- 平均订单金额：元 → 万元 -->
         <div class="stat-value" id="averageAmount"
-             th:text="${#numbers.formatDecimal(averageOrderAmountYuan / 10000, 1, 2)} + ' 万元'">错误</div>
+             th:text="${averageOrderAmountYuan == null ? '0.00 万元' : #numbers.formatDecimal(averageOrderAmountYuan / 10000, 1, 2) + ' 万元'}">暂无数据</div>
         <!-- 动态渲染“较上月”增长率 -->
         <p th:utext="${avgAmountGrowthHtml}" class="mb-0"></p>
       </div>
@@ -163,257 +163,257 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script th:inline="javascript">
-  // 金额单位转换函数（元 → 万元，保留2位小数）
-  function formatToTenThousandYuan(amount) {
-    return isNaN(amount) || amount === 0 ? '0.00' : (amount / 10000).toFixed(2);
+// 金额单位转换函数（元 → 万元，保留2位小数）
+function formatToTenThousandYuan(amount) {
+return isNaN(amount) || amount === 0 ? '0.00' : (amount / 10000).toFixed(2);
+}
+
+// 全局存储图表实例，用于销毁旧实例
+const chartInstances = {};
+
+document.addEventListener('DOMContentLoaded', function () {
+// -------------------------- 1. 采购金额趋势图（周/月/年） --------------------------
+const trendCtx = document.getElementById('purchaseTrendChart').getContext('2d');
+initTrendChart();
+
+// -------------------------- 2. 按品种采购分布（柱状图） --------------------------
+const varietyCtx = document.getElementById('varietyDistributionChart').getContext('2d');
+renderVarietyDistributionChart(varietyCtx);
+
+// -------------------------- 3. 供应商采购占比（饼图） --------------------------
+const supplierCtx = document.getElementById('supplierDistributionChart').getContext('2d');
+renderSupplierRatioChart(supplierCtx);
+
+// -------------------------- 4. 时间单位切换事件（周/月/年） --------------------------
+document.querySelectorAll('[id^="trend-"]').forEach(btn => {
+btn.addEventListener('click', function () {
+// 销毁旧的趋势图实例
+if (chartInstances['trendChart']) {
+  chartInstances['trendChart'].destroy();
+}
+// 重新初始化趋势图（根据时间单位）
+initTrendChart(this.id.split('-')[1]);
+});
+});
+});
+
+// ============= 采购金额趋势图相关函数 =============
+function initTrendChart(timeUnit = 'month') {
+const now = new Date();
+let start, end;
+
+// 计算时间范围
+if (timeUnit === 'week') {
+const dayOfWeek = now.getDay() || 7; // 0=周日→7
+start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1);
+end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 7, 23, 59, 59);
+} else if (timeUnit === 'month') {
+start = new Date(now.getFullYear(), now.getMonth(), 1);
+end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+} else if (timeUnit === 'year') {
+start = new Date(now.getFullYear(), 0, 1);
+end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+}
+
+// 调用接口获取数据并渲染
+fetchTrendData(timeUnit, start, end);
+}
+
+async function fetchTrendData(timeUnit, start, end) {
+try {
+const params = new URLSearchParams({ timeUnit });
+if (start) params.append('start', start.toISOString());
+if (end) params.append('end', end.toISOString());
+
+const response = await fetch(`/api/purchase/statistics?${params}`);
+if (!response.ok) throw new Error('数据获取失败');
+
+const result = await response.json();
+renderTrendChart(result.trendData, timeUnit);
+} catch (error) {
+console.error('趋势数据加载失败:', error);
+document.getElementById('purchaseTrendChart').parentNode.innerHTML =
+'<div class="text-danger text-center py-3">数据加载失败，请重试</div>';
+}
+}
+
+function renderTrendChart(rawData, timeUnit) {
+const ctx = document.getElementById('purchaseTrendChart').getContext('2d');
+// 销毁旧实例（若存在）
+if (chartInstances['trendChart']) {
+chartInstances['trendChart'].destroy();
+}
+
+let labels = [];
+let amounts = [];
+
+if (timeUnit === 'week') {
+labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const weeklyData = Array(7).fill(null).map(() => ({ total: 0, days: 0 }));
+
+rawData.forEach(item => {
+const date = new Date(item.time);
+let dayOfWeek = date.getDay();
+dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+weeklyData[dayOfWeek].total += parseFloat(item.amount);
+weeklyData[dayOfWeek].days += 1;
+});
+
+amounts = weeklyData.map(item =>
+item.days === 0 ? 0 : (item.total / item.days).toFixed(2)
+);
+} else if (timeUnit === 'month') {
+const monthlyWeeks = Array(4).fill(null).map(() => ({ total: 0, days: 0 }));
+rawData.forEach(item => {
+const dayOfMonth = new Date(item.time).getDate();
+const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 3);
+
+monthlyWeeks[weekIndex].total += parseFloat(item.amount);
+monthlyWeeks[weekIndex].days += 1;
+});
+
+const filteredData = monthlyWeeks.filter(item => item.days > 0);
+labels = filteredData.map((_, i) => `第${i + 1}周`);
+amounts = filteredData.map(item => (item.total / item.days).toFixed(2));
+
+if (amounts.length === 0) {
+document.getElementById('purchaseTrendChart').parentNode.innerHTML =
+  '<div class="text-muted text-center py-3">本月无采购数据</div>';
+return;
+}
+} else if (timeUnit === 'year') {
+const evenMonths = [2, 4, 6, 8, 10, 12];
+const yearlyData = Array(6).fill(null).map(() => ({ total: 0, days: 0 }));
+
+rawData.forEach(item => {
+const month = new Date(item.time).getMonth() + 1;
+const monthIndex = evenMonths.indexOf(month);
+
+if (monthIndex !== -1) {
+  yearlyData[monthIndex].total += parseFloat(item.amount);
+  yearlyData[monthIndex].days += 1;
+}
+});
+
+labels = evenMonths.map(month => `${month}月`);
+amounts = yearlyData.map(item =>
+item.days === 0 ? 0 : (item.total / item.days).toFixed(2)
+);
+}
+
+// 渲染新图表
+const newChart = new Chart(ctx, {
+type: 'line',
+data: {
+labels: labels,
+datasets: [
+  {
+    label: timeUnit === 'week' ? '日均采购金额（万元）' :
+      timeUnit === 'month' ? '周均采购金额（万元）' : '月均采购金额（万元）',
+    data: amounts,
+    borderColor: timeUnit === 'week' ? '#28a745' :
+      timeUnit === 'month' ? '#20c997' : '#66b1ff',
+    backgroundColor: timeUnit === 'week' ? 'rgba(40, 167, 69, 0.1)' :
+      timeUnit === 'month' ? 'rgba(32, 201, 151, 0.1)' : 'rgba(102, 177, 255, 0.1)',
+    tension: 0.3,
+    fill: true,
+    pointRadius: 4,
+    pointHoverRadius: 6
   }
-
-  // 全局存储图表实例，用于销毁旧实例
-  const chartInstances = {};
-
-  document.addEventListener('DOMContentLoaded', function () {
-    // -------------------------- 1. 采购金额趋势图（周/月/年） --------------------------
-    const trendCtx = document.getElementById('purchaseTrendChart').getContext('2d');
-    initTrendChart();
-
-    // -------------------------- 2. 按品种采购分布（柱状图） --------------------------
-    const varietyCtx = document.getElementById('varietyDistributionChart').getContext('2d');
-    renderVarietyDistributionChart(varietyCtx);
-
-    // -------------------------- 3. 供应商采购占比（饼图） --------------------------
-    const supplierCtx = document.getElementById('supplierDistributionChart').getContext('2d');
-    renderSupplierRatioChart(supplierCtx);
-
-    // -------------------------- 4. 时间单位切换事件（周/月/年） --------------------------
-    document.querySelectorAll('[id^="trend-"]').forEach(btn => {
-      btn.addEventListener('click', function () {
-        // 销毁旧的趋势图实例
-        if (chartInstances['trendChart']) {
-          chartInstances['trendChart'].destroy();
-        }
-        // 重新初始化趋势图（根据时间单位）
-        initTrendChart(this.id.split('-')[1]);
-      });
-    });
-  });
-
-  // ============= 采购金额趋势图相关函数 =============
-  function initTrendChart(timeUnit = 'month') {
-    const now = new Date();
-    let start, end;
-
-    // 计算时间范围
-    if (timeUnit === 'week') {
-      const dayOfWeek = now.getDay() || 7; // 0=周日→7
-      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1);
-      end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 7, 23, 59, 59);
-    } else if (timeUnit === 'month') {
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-    } else if (timeUnit === 'year') {
-      start = new Date(now.getFullYear(), 0, 1);
-      end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-    }
-
-    // 调用接口获取数据并渲染
-    fetchTrendData(timeUnit, start, end);
+]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+scales: {
+  y: {
+    beginAtZero: true,
+    ticks: { callback: val => `${val} 万` }
   }
-
-  async function fetchTrendData(timeUnit, start, end) {
-    try {
-      const params = new URLSearchParams({ timeUnit });
-      if (start) params.append('start', start.toISOString());
-      if (end) params.append('end', end.toISOString());
-
-      const response = await fetch(`/api/purchase/statistics?${params}`);
-      if (!response.ok) throw new Error('数据获取失败');
-
-      const result = await response.json();
-      renderTrendChart(result.trendData, timeUnit);
-    } catch (error) {
-      console.error('趋势数据加载失败:', error);
-      document.getElementById('purchaseTrendChart').parentNode.innerHTML =
-        '<div class="text-danger text-center py-3">数据加载失败，请重试</div>';
-    }
-  }
-
-  function renderTrendChart(rawData, timeUnit) {
-    const ctx = document.getElementById('purchaseTrendChart').getContext('2d');
-    // 销毁旧实例（若存在）
-    if (chartInstances['trendChart']) {
-      chartInstances['trendChart'].destroy();
-    }
-
-    let labels = [];
-    let amounts = [];
-
-    if (timeUnit === 'week') {
-      labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-      const weeklyData = Array(7).fill(null).map(() => ({ total: 0, days: 0 }));
-
-      rawData.forEach(item => {
-        const date = new Date(item.time);
-        let dayOfWeek = date.getDay();
-        dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-        weeklyData[dayOfWeek].total += parseFloat(item.amount);
-        weeklyData[dayOfWeek].days += 1;
-      });
-
-      amounts = weeklyData.map(item =>
-        item.days === 0 ? 0 : (item.total / item.days).toFixed(2)
-      );
-    } else if (timeUnit === 'month') {
-      const monthlyWeeks = Array(4).fill(null).map(() => ({ total: 0, days: 0 }));
-      rawData.forEach(item => {
-        const dayOfMonth = new Date(item.time).getDate();
-        const weekIndex = Math.min(Math.floor((dayOfMonth - 1) / 7), 3);
-
-        monthlyWeeks[weekIndex].total += parseFloat(item.amount);
-        monthlyWeeks[weekIndex].days += 1;
-      });
-
-      const filteredData = monthlyWeeks.filter(item => item.days > 0);
-      labels = filteredData.map((_, i) => `第${i + 1}周`);
-      amounts = filteredData.map(item => (item.total / item.days).toFixed(2));
-
-      if (amounts.length === 0) {
-        document.getElementById('purchaseTrendChart').parentNode.innerHTML =
-          '<div class="text-muted text-center py-3">本月无采购数据</div>';
-        return;
+},
+plugins: {
+  tooltip: {
+    callbacks: {
+      label: ctx => {
+        const unit = timeUnit === 'week' ? '日均' :
+          timeUnit === 'month' ? '周均' : '月均';
+        return `${unit}金额: ${ctx.raw} 万元`;
       }
-    } else if (timeUnit === 'year') {
-      const evenMonths = [2, 4, 6, 8, 10, 12];
-      const yearlyData = Array(6).fill(null).map(() => ({ total: 0, days: 0 }));
-
-      rawData.forEach(item => {
-        const month = new Date(item.time).getMonth() + 1;
-        const monthIndex = evenMonths.indexOf(month);
-
-        if (monthIndex !== -1) {
-          yearlyData[monthIndex].total += parseFloat(item.amount);
-          yearlyData[monthIndex].days += 1;
-        }
-      });
-
-      labels = evenMonths.map(month => `${month}月`);
-      amounts = yearlyData.map(item =>
-        item.days === 0 ? 0 : (item.total / item.days).toFixed(2)
-      );
     }
-
-    // 渲染新图表
-    const newChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: timeUnit === 'week' ? '日均采购金额（万元）' :
-              timeUnit === 'month' ? '周均采购金额（万元）' : '月均采购金额（万元）',
-            data: amounts,
-            borderColor: timeUnit === 'week' ? '#28a745' :
-              timeUnit === 'month' ? '#20c997' : '#66b1ff',
-            backgroundColor: timeUnit === 'week' ? 'rgba(40, 167, 69, 0.1)' :
-              timeUnit === 'month' ? 'rgba(32, 201, 151, 0.1)' : 'rgba(102, 177, 255, 0.1)',
-            tension: 0.3,
-            fill: true,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { callback: val => `${val} 万` }
-          }
-        },
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: ctx => {
-                const unit = timeUnit === 'week' ? '日均' :
-                  timeUnit === 'month' ? '周均' : '月均';
-                return `${unit}金额: ${ctx.raw} 万元`;
-              }
-            }
-          }
-        }
-      }
-    });
-
-    // 存储新实例
-    chartInstances['trendChart'] = newChart;
   }
+}
+}
+});
 
-  // ============= 按品种采购分布（柱状图）相关函数 =============
-  function renderVarietyDistributionChart(ctx) {
-    // 从 Thymeleaf 获取数据（如果用 th:inline）
-    const varietyDistribution = /*[[${varietyDistribution}]]*/ {};
+// 存储新实例
+chartInstances['trendChart'] = newChart;
+}
 
-    // 销毁旧实例（若存在）
-    if (chartInstances['varietyChart']) {
-      chartInstances['varietyChart'].destroy();
-    }
+// ============= 按品种采购分布（柱状图）相关函数 =============
+function renderVarietyDistributionChart(ctx) {
+// 从 Thymeleaf 获取数据（如果用 th:inline）
+const varietyDistribution = /*[[${varietyDistribution}]]*/ {};
 
-    const newChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: Object.keys(varietyDistribution),
-        datasets: [
-          {
-            label: '采购数量(斤)',
-            data: Object.values(varietyDistribution),
-            backgroundColor: '#28a745',
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
-    });
+// 销毁旧实例（若存在）
+if (chartInstances['varietyChart']) {
+chartInstances['varietyChart'].destroy();
+}
 
-    chartInstances['varietyChart'] = newChart;
+const newChart = new Chart(ctx, {
+type: 'bar',
+data: {
+labels: Object.keys(varietyDistribution),
+datasets: [
+  {
+    label: '采购数量(斤)',
+    data: Object.values(varietyDistribution),
+    backgroundColor: '#28a745',
+    borderWidth: 1
   }
+]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+scales: {
+  y: { beginAtZero: true }
+}
+}
+});
 
-  // ============= 供应商采购占比（饼图）相关函数 =============
-  function renderSupplierRatioChart(ctx) {
-    // 从 Thymeleaf 获取数据（如果用 th:inline）
-    const supplierRatio = /*[[${supplierRatio}]]*/ {};
+chartInstances['varietyChart'] = newChart;
+}
 
-    // 销毁旧实例（若存在）
-    if (chartInstances['supplierChart']) {
-      chartInstances['supplierChart'].destroy();
-    }
+// ============= 供应商采购占比（饼图）相关函数 =============
+function renderSupplierRatioChart(ctx) {
+// 从 Thymeleaf 获取数据（如果用 th:inline）
+const supplierRatio = /*[[${supplierRatio}]]*/ {};
 
-    const newChart = new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: Object.keys(supplierRatio),
-        datasets: [
-          {
-            data: Object.values(supplierRatio),
-            backgroundColor: ['#28a745', '#20c997', '#66b1ff', '#adb5bd']
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
+// 销毁旧实例（若存在）
+if (chartInstances['supplierChart']) {
+chartInstances['supplierChart'].destroy();
+}
 
-    chartInstances['supplierChart'] = newChart;
+const newChart = new Chart(ctx, {
+type: 'pie',
+data: {
+labels: Object.keys(supplierRatio),
+datasets: [
+  {
+    data: Object.values(supplierRatio),
+    backgroundColor: ['#28a745', '#20c997', '#66b1ff', '#adb5bd']
   }
+]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false
+}
+});
+
+chartInstances['supplierChart'] = newChart;
+}
 </script>
 </body>
 </html>

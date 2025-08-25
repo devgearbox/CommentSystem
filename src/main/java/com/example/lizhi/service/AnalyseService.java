@@ -10,8 +10,16 @@ public interface AnalyseService {
     BigDecimal getTotalPurchaseAmountYuan(); // 总采购金额（元）
     BigDecimal getAverageOrderAmountYuan();  // 平均订单金额（元）
     String getCompletedOrderRatio();
+    Long getTotalOrderCountByUser(Long userId);
+    BigDecimal getTotalPurchaseAmountYuanByUser(Long userId);
+    BigDecimal getAverageOrderAmountYuanByUser(Long userId);
+    String getCompletedOrderRatioByUser(Long userId);
+    // 在原有接口基础上添加按用户查询趋势数据的方法
+    List<Map<String, Object>> getPurchaseTrendByUser(LocalDateTime start, LocalDateTime end, String timeUnit, Long userId);
     // 时间范围筛选（用于趋势图）
     List<Map<String, Object>> getPurchaseTrend(LocalDateTime start, LocalDateTime end, String timeUnit);
+    // 按用户计算各指标较上月增长率
+    Map<String, Object> calculateMonthOnMonthGrowthByUser(LocalDateTime currentStart, LocalDateTime currentEnd, Long userId);
     // 获取上月同期总采购订单数
     Long getLastMonthTotalOrderCount();
     // 获取上月同期总采购金额（元）

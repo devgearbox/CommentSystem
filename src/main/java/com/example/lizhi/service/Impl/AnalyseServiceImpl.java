@@ -55,6 +55,44 @@ public class AnalyseServiceImpl implements AnalyseService {
     }
 
     @Override
+    public Long getTotalOrderCountByUser(Long userId) {
+        // 假设PurchaseOrder实体中有user属性关联用户，通过JPQL查询
+        return analyseRepository.countOrdersByUserId(userId);
+    }
+
+    @Override
+    public BigDecimal getTotalPurchaseAmountYuanByUser(Long userId) {
+        BigDecimal total = analyseRepository.sumTotalPriceByUserId(userId);
+        return total == null ? BigDecimal.ZERO : total;
+    }
+
+    @Override
+    public BigDecimal getAverageOrderAmountYuanByUser(Long userId) {
+        Long totalCount = getTotalOrderCountByUser(userId);
+        if (totalCount == 0) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal totalAmount = getTotalPurchaseAmountYuanByUser(userId);
+        return totalAmount == null? BigDecimal.ZERO :
+                totalAmount.divide(new BigDecimal(totalCount), 2, RoundingMode.HALF_UP);
+    }
+
+    @Override
+    public String getCompletedOrderRatioByUser(Long userId) {
+        Long totalCount = getTotalOrderCountByUser(userId);
+        if (totalCount == 0) {
+            return "0%";
+        }
+        Long receivedCount = analyseRepository.countReceivedOrdersByUserId(userId);
+        receivedCount = receivedCount == null? 0L : receivedCount;
+        BigDecimal ratio = new BigDecimal(receivedCount)
+                .divide(new BigDecimal(totalCount), 4, RoundingMode.HALF_UP)
+                .multiply(new BigDecimal(100))
+                .setScale(1, RoundingMode.HALF_UP);
+        return ratio + "%";
+    }
+
+    @Override
     public List<Map<String, Object>> getPurchaseTrend(LocalDateTime start, LocalDateTime end, String timeUnit) {
         // 关键调整：按时间单位定义分组格式（周视图按日分组，用于计算每日平均值）
         String format = switch (timeUnit) {
@@ -70,6 +108,31 @@ public class AnalyseServiceImpl implements AnalyseService {
         for (Object[] row : results) {
             Map<String, Object> data = new HashMap<>();
             data.put("time", row[0].toString());    // 时间标签（日：2025-08-14；月：2025-08）
+            BigDecimal amountYuan = (BigDecimal) row[1];
+            // 元转万元，保留2位小数
+            BigDecimal amountTenThousand = amountYuan.divide(new BigDecimal("10000"), 2, RoundingMode.HALF_UP);
+            data.put("amount", amountTenThousand);
+            trendData.add(data);
+        }
+        return trendData;
+    }
+    @Override
+    public List<Map<String, Object>> getPurchaseTrendByUser(LocalDateTime start, LocalDateTime end, String timeUnit, Long userId) {
+        // 时间分组格式（与全局趋势图保持一致）
+        String format = switch (timeUnit) {
+            case "week" -> "%Y-%m-%d";   // 周视图：按日分组
+            case "month" -> "%Y-%m-%d";  // 月视图：按日分组
+            case "year" -> "%Y-%m";      // 年视图：按月分组
+            default -> "%Y-%m-%d";
+        };
+
+        // 调用Repository的用户+时间范围查询
+        List<Object[]> results = analyseRepository.sumTotalPriceByUserAndTimeRange(userId, start, end, format);
+        List<Map<String, Object>> trendData = new ArrayList<>();
+
+        for (Object[] row : results) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("time", row[0].toString());    // 时间标签
             BigDecimal amountYuan = (BigDecimal) row[1];
             // 元转万元，保留2位小数
             BigDecimal amountTenThousand = amountYuan.divide(new BigDecimal("10000"), 2, RoundingMode.HALF_UP);
@@ -130,6 +193,66 @@ public class AnalyseServiceImpl implements AnalyseService {
         return String.format("<i class='fa %s'></i> %s 较上月", iconClass, displayText);
     }
 
+    // 新增：按用户计算所有指标的“较上月”数据（含HTML片段）
+    public Map<String, Object> calculateMonthOnMonthGrowthByUser(LocalDateTime currentStart, LocalDateTime currentEnd, Long userId) {
+        Map<String, Object> growthResult = new HashMap<>();
+
+        // -------------------------- 1. 计算当前周期用户指标 --------------------------
+        // 1.1 用户总采购订单数（当前周期）
+        Long currentTotalOrder = analyseRepository.countOrdersByUserIdAndTimeRange(userId, currentStart, currentEnd);
+        currentTotalOrder = currentTotalOrder == null ? 0L : currentTotalOrder;
+        // 1.2 用户总采购金额（当前周期，元）
+        BigDecimal currentTotalAmount = analyseRepository.sumTotalPriceByUserIdAndTimeRange(userId, currentStart, currentEnd);
+        currentTotalAmount = currentTotalAmount == null ? BigDecimal.ZERO : currentTotalAmount;
+        // 1.3 用户已完成订单数（当前周期）
+        Long currentReceivedOrder = analyseRepository.countReceivedOrdersByUserIdAndTimeRange(userId, currentStart, currentEnd);
+        currentReceivedOrder = currentReceivedOrder == null ? 0L : currentReceivedOrder;
+        // 1.4 用户平均订单金额（当前周期，元）
+        BigDecimal currentAvgAmount = currentTotalOrder == 0 ? BigDecimal.ZERO :
+                currentTotalAmount.divide(new BigDecimal(currentTotalOrder), 2, RoundingMode.HALF_UP);
+        // 1.5 用户已完成订单占比（当前周期）
+        BigDecimal currentRatio = currentTotalOrder == 0 ? BigDecimal.ZERO :
+                new BigDecimal(currentReceivedOrder).divide(new BigDecimal(currentTotalOrder), 4, RoundingMode.HALF_UP);
+
+        // -------------------------- 2. 计算上月同期用户指标 --------------------------
+        LocalDateTime lastMonthStart = getLastMonthStart();
+        LocalDateTime lastMonthEnd = getLastMonthEnd();
+        // 2.1 用户总采购订单数（上月同期）
+        Long lastMonthTotalOrder = analyseRepository.countOrdersByUserIdAndTimeRange(userId, lastMonthStart, lastMonthEnd);
+        lastMonthTotalOrder = lastMonthTotalOrder == null ? 0L : lastMonthTotalOrder;
+        // 2.2 用户总采购金额（上月同期，元）
+        BigDecimal lastMonthTotalAmount = analyseRepository.sumTotalPriceByUserIdAndTimeRange(userId, lastMonthStart, lastMonthEnd);
+        lastMonthTotalAmount = lastMonthTotalAmount == null ? BigDecimal.ZERO : lastMonthTotalAmount;
+        // 2.3 用户已完成订单数（上月同期）
+        Long lastMonthReceivedOrder = analyseRepository.countReceivedOrdersByUserIdAndTimeRange(userId, lastMonthStart, lastMonthEnd);
+        lastMonthReceivedOrder = lastMonthReceivedOrder == null ? 0L : lastMonthReceivedOrder;
+        // 2.4 用户平均订单金额（上月同期，元）
+        BigDecimal lastMonthAvgAmount = lastMonthTotalOrder == 0 ? BigDecimal.ZERO :
+                lastMonthTotalAmount.divide(new BigDecimal(lastMonthTotalOrder), 2, RoundingMode.HALF_UP);
+        // 2.5 用户已完成订单占比（上月同期）
+        BigDecimal lastMonthRatio = lastMonthTotalOrder == 0 ? BigDecimal.ZERO :
+                new BigDecimal(lastMonthReceivedOrder).divide(new BigDecimal(lastMonthTotalOrder), 4, RoundingMode.HALF_UP);
+
+        // -------------------------- 3. 计算增长率 + 拼接HTML片段 --------------------------
+        // 3.1 总采购订单数：增长率 + HTML片段
+        String orderGrowth = calculateGrowthRate(new BigDecimal(currentTotalOrder), new BigDecimal(lastMonthTotalOrder));
+        growthResult.put("orderGrowth", orderGrowth);
+        growthResult.put("orderGrowthHtml", buildGrowthHtml(orderGrowth));
+        // 3.2 总采购金额：增长率 + HTML片段
+        String amountGrowth = calculateGrowthRate(currentTotalAmount, lastMonthTotalAmount);
+        growthResult.put("amountGrowth", amountGrowth);
+        growthResult.put("amountGrowthHtml", buildGrowthHtml(amountGrowth));
+        // 3.3 平均订单金额：增长率 + HTML片段
+        String avgAmountGrowth = calculateGrowthRate(currentAvgAmount, lastMonthAvgAmount);
+        growthResult.put("avgAmountGrowth", avgAmountGrowth);
+        growthResult.put("avgAmountGrowthHtml", buildGrowthHtml(avgAmountGrowth));
+        // 3.4 已完成订单占比：增长率 + HTML片段
+        String ratioGrowth = calculateGrowthRate(currentRatio, lastMonthRatio);
+        growthResult.put("ratioGrowth", ratioGrowth);
+        growthResult.put("ratioGrowthHtml", buildGrowthHtml(ratioGrowth));
+
+        return growthResult;
+    }
     // 4. 对外提供：计算所有指标的“较上月”数据（含HTML片段）
     public Map<String, Object> calculateMonthOnMonthGrowth(LocalDateTime currentStart, LocalDateTime currentEnd) {
         Map<String, Object> growthResult = new HashMap<>();
