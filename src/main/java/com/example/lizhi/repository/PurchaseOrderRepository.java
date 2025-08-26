@@ -49,4 +49,18 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, In
         where po.isDeleted = false
     """)
     List<PurchaseOrder> findAllValidWithSupplierUser();
+    // 新增1：按供应商ID查询未删除的订单（关联供应商+用户信息，避免懒加载）
+    @Query("""
+        select po from PurchaseOrder po 
+        left join fetch po.supplier 
+        left join fetch po.user 
+        where po.isDeleted = false 
+        and po.supplier.supplier_id = :supplierId
+    """)
+    List<PurchaseOrder> findValidOrdersBySupplierId(@Param("supplierId") Integer supplierId);
+
+    // 新增2：按用户ID查询关联的供应商（用于“用户→供应商”的中间查询）
+    // （注：此方法也可放在SupplierRepository，此处为方便订单查询统一管理）
+    @Query("select s.supplier_id from Supplier s where s.userId = :userId")
+    List<Integer> findSupplierIdsByUserId(@Param("userId") Long userId);
 }

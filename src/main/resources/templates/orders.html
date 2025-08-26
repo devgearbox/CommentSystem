@@ -14,7 +14,7 @@
         </div>
         <button id="confirm-delete-order" style="display: none;" class="view-del">确认删除</button>
         <button id="cancel-delete-order" style="display: none;" class="view-all">取消</button>
-        <button id="del-order" class="view-del" th:if="${session.currentUser.role != 2}">删除订单记录</button>
+        <button id="del-order" class="view-del" th:if="${session.currentUser.role == 1}">删除订单记录</button>
         <button class="view-all" id="search-all">查看全部</button>
     </div>
 

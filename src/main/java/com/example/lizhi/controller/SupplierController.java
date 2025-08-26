@@ -1,7 +1,9 @@
 package com.example.lizhi.controller;
 
 import com.example.lizhi.entity.Supplier;
+import com.example.lizhi.entity.User;
 import com.example.lizhi.service.SupplierService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -20,17 +22,40 @@ public class SupplierController {
     private SupplierService supplierService;
 
     @GetMapping("/suppliers")
-    public String listSuppliers(Model model) {
-        List<Supplier> suppliers = supplierService.getAllSuppliers();
+    public String listSuppliers(Model model, HttpSession session) {
+        // 获取当前登录用户
+        User currentUser = (User) session.getAttribute("currentUser");
+        List<Supplier> suppliers;
+
+        // 根据角色筛选数据：角色为3（供应商）只看自己的，其他角色看全部
+        if (currentUser != null && currentUser.getRole() == 3) {
+            suppliers = supplierService.getSuppliersByUserId(currentUser.getId());
+        } else {
+            suppliers = supplierService.getAllSuppliers();
+        }
+
         model.addAttribute("suppliers", suppliers);
         return "supplier";
     }
 
     @GetMapping("/suppliers/search")
-    public String searchSuppliers(@RequestParam String name, Model model) {
-        List<Supplier> suppliers = supplierService.searchSuppliersByName(name);
+    public String searchSuppliers(@RequestParam String name, Model model, HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        List<Supplier> suppliers;
+
+        if (currentUser != null && currentUser.getRole() == 3) {
+            // 供应商角色：搜索自己名下的供应商
+            List<Supplier> mySuppliers = supplierService.getSuppliersByUserId(currentUser.getId());
+            // 从自己的供应商中筛选名称匹配的
+            suppliers = mySuppliers.stream()
+                    .filter(s -> s.getSupplier_name().contains(name))
+                    .toList();
+        } else {
+            // 其他角色：搜索全部
+            suppliers = supplierService.searchSuppliersByName(name);
+        }
+
         model.addAttribute("suppliers", suppliers);
-        // 返回表格片段而非完整页面，对应Thymeleaf中定义的片段
         return "supplier :: #supplier-table-body";
     }
 

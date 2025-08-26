@@ -225,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 editFields.varieties.value = supplier.varieties || '';
                 editFields.cooperation.value = supplier.cooperation_start_date || '';
                 editFields.status.value = supplier.status || 1;
-                editFields.orderCount.value = supplier.order_count || 0;
 
                 editModal.style.display = 'flex';
             } catch (err) {

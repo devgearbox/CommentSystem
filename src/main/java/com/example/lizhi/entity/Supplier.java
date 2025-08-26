@@ -27,6 +27,9 @@ public class Supplier {
         return status == 1 ? "启售" : "停售";
     }
 
+    @Column(name = "user_id")
+    private Long userId;  // 关联的用户ID
+
     @Column(columnDefinition = "datetime NOT NULL DEFAULT CURRENT_TIMESTAMP")
     @CreationTimestamp
     private LocalDateTime create_time;
@@ -39,6 +42,10 @@ public class Supplier {
     private LocalDateTime update_time;
 
     // Getters and setters
+    public Long getUser_id() {return userId;}
+
+    public void setUser_id(Long user_id) {this.userId = user_id;}
+
     public Integer getSupplier_id() {
         return supplier_id;
     }

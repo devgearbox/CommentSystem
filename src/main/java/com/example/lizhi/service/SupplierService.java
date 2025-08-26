@@ -11,4 +11,5 @@ public interface SupplierService {
     void batchDelete(List<Integer> ids);
     Optional<Supplier> getSupplierById(Integer id);
     Supplier updateSupplier(Supplier supplier);
+    List<Supplier> getSuppliersByUserId(Long userId);  // 新增方法
 }

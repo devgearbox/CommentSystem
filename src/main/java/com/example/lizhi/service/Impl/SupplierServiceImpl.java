@@ -1,10 +1,14 @@
 package com.example.lizhi.service.Impl;
 
 import com.example.lizhi.entity.Supplier;
+import com.example.lizhi.entity.User;
 import com.example.lizhi.repository.SupplierRepository;
 import com.example.lizhi.service.SupplierService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,10 +30,25 @@ public class SupplierServiceImpl implements SupplierService{
     }
 
     public Supplier addSupplier(Supplier supplier) {
+        // 获取当前登录用户
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpSession session = attributes.getRequest().getSession();
+        User currentUser = (User) session.getAttribute("currentUser");
+
+        // 如果当前用户是供应商角色（role=3），关联用户ID
+        if (currentUser != null && currentUser.getRole() == 3) {
+            supplier.setUser_id(currentUser.getId());
+        }
         // 可在此处补充业务逻辑（如默认值设置）
         supplier.setStatus(1); // 示例：默认状态为 1
         return supplierRepository.save(supplier);
     }
+
+    @Override
+    public List<Supplier> getSuppliersByUserId(Long userId) {
+        return supplierRepository.findByUserId(userId);
+    }
+
     public void batchDelete(List<Integer> ids) {
         // JPA 批量删除（推荐：避免逐条删除的性能问题）
         supplierRepository.deleteAllById(ids);

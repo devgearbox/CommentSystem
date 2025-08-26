@@ -14,4 +14,9 @@ public interface PurchaseOrderService {
     Optional<PurchaseOrder> getOrderById(Integer orderId);
     PurchaseOrder updateStatus(Integer orderId, String newStatus);
     List<PurchaseOrder> getValidPurchaseOrdersSupplierUser();
+    // 新增：按用户ID查询其关联供应商的订单（仅供应商角色用户用）
+    List<PurchaseOrder> getOrdersByUserId(Long userId);
+
+    // 新增：搜索当前用户关联供应商的订单（兼容搜索功能）
+    List<PurchaseOrder> searchOrdersBySupplierNameAndUserId(String supplierName, Long userId);
 }

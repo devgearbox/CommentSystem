@@ -53,7 +53,7 @@ public class LoginController {
                 return "redirect:/purchasework";
             } else if (user.getRole() == 3) {
                 // 供应商：后续扩展，当前可先跳转到临时页面或采购人员端（根据需求）
-                return "redirect:/supplier";
+                return "redirect:/purchasework?target=/suppliers";
             } else {
                 // 未知角色，返回登录页
                 redirectAttributes.addFlashAttribute("error", "角色异常，请联系管理员");

@@ -31,18 +31,44 @@ public class PurchaseOrderController {
     private PurchaseOrderService orderService;
 
     @GetMapping("/orders")
-    public String listPurchaseOrder(Model model) {
-        // 替换为“关联查询 + 软删除过滤”的新方法
-        List<PurchaseOrder> purchaseOrders = purchaseOrderService.getValidPurchaseOrdersSupplierUser();
+    public String listPurchaseOrder(Model model, HttpSession session) {
+        // 1. 获取当前登录用户
+        User currentUser = (User) session.getAttribute("currentUser");
+        List<PurchaseOrder> purchaseOrders;
+
+        // 2. 按角色筛选数据
+        if (currentUser != null && currentUser.getRole() == 3) {
+            // 供应商角色：只显示自己关联的供应商订单
+            purchaseOrders = orderService.getOrdersByUserId(currentUser.getId());
+        } else {
+            // 其他角色：显示全部未删除的订单（原有逻辑）
+            purchaseOrders = orderService.getValidPurchaseOrdersSupplierUser();
+        }
+
+        // 3. 传递数据到前端
         model.addAttribute("purchaseOrders", purchaseOrders);
         return "orders";
     }
 
     @GetMapping("/orders/search")
-    public String searchOrders(@RequestParam String supplierName, Model model) {
-        List<PurchaseOrder> orders = purchaseOrderService.searchBySupplierName(supplierName);
+    public String searchOrders(
+            @RequestParam String supplierName,
+            Model model,
+            HttpSession session
+    ) {
+        User currentUser = (User) session.getAttribute("currentUser");
+        List<PurchaseOrder> orders;
+
+        if (currentUser != null && currentUser.getRole() == 3) {
+            // 供应商角色：搜索自己关联的供应商订单
+            orders = orderService.searchOrdersBySupplierNameAndUserId(supplierName, currentUser.getId());
+        } else {
+            // 其他角色：搜索全部订单（原有逻辑）
+            orders = orderService.searchBySupplierName(supplierName);
+        }
+
         model.addAttribute("purchaseOrders", orders);
-        return "orders :: #order-table-body"; // 仅返回表格片段（需配置 Thymeleaf 片段渲染）
+        return "orders :: #order-table-body"; // 仅返回表格片段，保持前端渲染逻辑不变
     }
 
     // 与供应商的 /delete/batch 对齐，路径可根据前端调整

@@ -48,7 +48,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             orders.add(order);
         }
 
-        // 2. 校验订单状态是否为"received"
+        // 2. 校验订单状态是否为received
         for (PurchaseOrder order : orders) {
             if (order.getOrderStatus() != PurchaseOrder.OrderStatus.received) {
                 throw new IllegalArgumentException("订单 [" + order.getOrderNo() + "] 状态非【已接收】，无法删除");
@@ -79,6 +79,39 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     public Optional<PurchaseOrder> getOrderById(Integer orderId) {
         return orderRepository.findById(orderId);
+    }
+
+    @Override
+    public List<PurchaseOrder> getOrdersByUserId(Long userId) {
+        // 1. 通过用户ID获取关联的所有供应商ID
+        List<Integer> supplierIds = orderRepository.findSupplierIdsByUserId(userId);
+        if (supplierIds.isEmpty()) {
+            return Collections.emptyList(); // 无关联供应商，返回空列表
+        }
+        // 2. 通过供应商ID列表查询所有未删除的订单
+        List<PurchaseOrder> allOrders = new ArrayList<>();
+        for (Integer supplierId : supplierIds) {
+            List<PurchaseOrder> orders = orderRepository.findValidOrdersBySupplierId(supplierId);
+            allOrders.addAll(orders);
+        }
+        // 3. 按创建时间倒序（可选，优化展示体验）
+        return allOrders.stream()
+                .sorted((o1, o2) -> o2.getCreateTime().compareTo(o1.getCreateTime()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 搜索当前用户关联供应商的订单（兼容搜索功能）
+     */
+    @Override
+    public List<PurchaseOrder> searchOrdersBySupplierNameAndUserId(String supplierName, Long userId) {
+        // 1. 先获取当前用户关联的所有供应商订单
+        List<PurchaseOrder> myOrders = getOrdersByUserId(userId);
+        // 2. 叠加“供应商名称模糊匹配”筛选
+        return myOrders.stream()
+                .filter(po -> po.getSupplier() != null
+                        && po.getSupplier().getSupplier_name().contains(supplierName))
+                .collect(Collectors.toList());
     }
 
     private final StockInService stockInService;

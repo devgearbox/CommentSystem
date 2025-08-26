@@ -23,7 +23,7 @@
           <th>经办人</th>
           <th>创建时间</th>
           <th>状态</th>
-          <th><div class="action-header">操作</div></th>
+          <th><div class="action-header" th:if="${session.currentUser.role != 3}">操作</div></th>
         </tr>
         </thead>
         <tbody id="stock-table-body">
@@ -38,7 +38,7 @@
           <td th:text="${stock.create_time}"></td>
           <td th:text="${stock.stock_in_status.label}"></td>
           <td>
-            <button class="status-btn" th:data-id="${stock.stock_id}" th:data-status="${stock.stock_in_status}">修改状态</button>
+            <button class="status-btn" th:data-id="${stock.stock_id}" th:data-status="${stock.stock_in_status}" th:if="${session.currentUser.role != 3}">修改状态</button>
           </td>
         </tr>
         </tbody>

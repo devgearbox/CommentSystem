@@ -309,7 +309,7 @@
     </div>
 
     <!-- 地址管理模块 -->
-    <div class="section" id="address-section">
+    <div class="section" id="address-section" th:if="${session.currentUser.role != 3}">
         <div class="section-header" onclick="toggleSection('address-content')">
             <h2><i class="fas fa-map-marker-alt"></i> 地址管理</h2>
             <i class="fas fa-chevron-down toggle-icon"></i>
