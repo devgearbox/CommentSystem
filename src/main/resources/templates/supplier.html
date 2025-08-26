@@ -35,8 +35,6 @@
             <th>供应品种</th>
             <th>加盟日期</th>
             <th>状态</th>
-<!--            <th>创建日期</th>-->
-<!--            <th>更新日期</th>-->
             <th><div class="action-header">操作</div></th>
         </tr>
         </thead>
@@ -54,6 +52,11 @@
             <td th:text="${supplier.cooperation_start_date}"></td>
             <td th:text="${supplier.getStatusText()}"></td>
             <td class="action-header">
+                <button class="action-btn add-product-btn"
+                        th:data-id="${supplier.supplier_id}"
+                th:if="${session.currentUser.role != 2}">
+                <i class="fas fa-plus"></i> 上架商品
+                </button>
                 <button class="action-btn edit-btn" th:data-id="${supplier.supplier_id}"  th:if="${session.currentUser.role != 2}">
                     <i class="fas fa-edit"></i> 编辑
                 </button>
@@ -64,6 +67,37 @@
         </tr>
         </tbody>
     </table>
+    <!-- 商品上架弹窗 -->
+    <div id="add-product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close add-product-close">&times;</span>
+            <h2>为供应商上架商品</h2>
+            <form id="add-product-form">
+                <!-- 隐藏域存储供应商ID（自动填充） -->
+                <input type="hidden" name="supplierId" id="product-supplier-id">
+
+                <div class="form-group">
+                    <label>商品名称：</label>
+                    <input type="text" name="varietyName" required>
+                </div>
+                <div class="form-group">
+                    <label>单价（元/斤）：</label>
+                    <input type="number" step="0.01" min="0" name="price" required>
+                </div>
+                <div class="form-group">
+                    <label>库存数量：</label>
+                    <input type="number" min="0" name="stock" required>
+                </div>
+                <div class="form-group">
+                    <label>商品描述：</label>
+                    <textarea name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group submit-group">
+                    <button type="submit" class="submit-btn">确认上架</button>
+                </div>
+            </form>
+        </div>
+    </div>
 <!--    查看弹出-->
     <div id="view-modal" class="modal">
         <div class="modal-content">

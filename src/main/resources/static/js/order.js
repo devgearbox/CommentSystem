@@ -149,6 +149,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
     const detailFields = {
         orderNo: document.getElementById('order-no'),
         orderRealName: document.getElementById('order-real-name'),
+        orderUserPhone: document.getElementById('order-user-phone'),
         orderPrice: document.getElementById('order-price'),
         orderQuantity: document.getElementById('order-quantity'),
         orderVariety: document.getElementById('order-variety'),
@@ -179,6 +180,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
                 // 填充弹窗数据
                 detailFields.orderNo.textContent = order.orderNo || '无';
                 detailFields.orderRealName.textContent = order.user?.real_name || '无';
+                detailFields.orderUserPhone.textContent = order.user?.phone || '无';
                 detailFields.orderPrice.textContent = order.litchiVariety?.price || '9.00';
                 detailFields.orderQuantity.textContent = order.purchase_quantity || '0';
                 detailFields.orderVariety.textContent = order.purchase_variety || '无';

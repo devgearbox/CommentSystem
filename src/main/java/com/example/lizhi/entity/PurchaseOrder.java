@@ -56,10 +56,10 @@ public class PurchaseOrder{
 
     //关联litchi_variety表
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "purchase_variety",
-            referencedColumnName = "variety_name",
-            insertable = false,  // 禁止通过此关联字段插入
-            updatable = false)    // 禁止通过此关联字段更新
+    @JoinColumn(name = "variety_id",  // 新增的外键字段
+            referencedColumnName = "id",  // 关联到LitchiVariety的主键
+            insertable = true,
+            updatable = true)
     private LitchiVariety litchiVariety;
 
     @Temporal(TemporalType.TIMESTAMP)

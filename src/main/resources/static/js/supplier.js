@@ -271,6 +271,95 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     }
 
+    // ====================== 6. 商品上架功能 ======================
+    const addProductModal = document.getElementById('add-product-modal');
+    const addProductClose = document.querySelector('.add-product-close');
+    const addProductForm = document.getElementById('add-product-form');
+    const productSupplierIdInput = document.getElementById('product-supplier-id');
+
+    // 点击"上架商品"按钮显示弹窗（事件委托，支持动态元素）
+    supplierTableBody.addEventListener('click', (e) => {
+        const addProductBtn = e.target.closest('.add-product-btn');
+        if (addProductBtn) {
+            const supplierId = addProductBtn.getAttribute('data-id');
+            if (supplierId) {
+                // 填充供应商ID到隐藏域
+                productSupplierIdInput.value = supplierId;
+                addProductModal.style.display = 'flex';
+            } else {
+                alert('未获取到供应商ID');
+            }
+        }
+    });
+
+    // 关闭商品上架弹窗
+    if (addProductClose) {
+        addProductClose.addEventListener('click', () => {
+            addProductModal.style.display = 'none';
+        });
+
+        // 点击弹窗外部关闭
+        addProductModal.addEventListener('click', (e) => {
+            if (e.target === addProductModal) {
+                addProductModal.style.display = 'none';
+            }
+        });
+    }
+
+    // 提交商品上架表单
+    if (addProductForm) {
+        addProductForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 收集表单数据
+            const formData = new FormData(addProductForm);
+            const productData = {
+                varietyName: formData.get('varietyName'),
+                price: formData.get('price'),
+                stock: formData.get('stock'),
+                description: formData.get('description'),
+                supplierId: formData.get('supplierId')
+            };
+
+            // 基础数据校验
+            if (!productData.varietyName) {
+                alert('请输入商品名称');
+                return;
+            }
+            if (!productData.price || isNaN(productData.price) || parseFloat(productData.price) < 0) {
+                alert('请输入有效的价格');
+                return;
+            }
+            if (!productData.stock || isNaN(productData.stock) || parseInt(productData.stock) < 0) {
+                alert('请输入有效的库存数量');
+                return;
+            }
+
+            try {
+                const response = await fetch('/products/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(productData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('商品上架成功！');
+                    addProductModal.style.display = 'none';
+                    addProductForm.reset(); // 重置表单
+                    // 可选：刷新供应商页面或更新供应品种类显示
+                } else {
+                    alert('上架失败：' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('商品上架请求失败:', error);
+                alert('网络错误，上架失败');
+            }
+        });
+    }
 
     // ====================== 5. 添加供应商 ======================
     const addBtn = document.getElementById('add-supplier');

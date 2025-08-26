@@ -207,7 +207,7 @@
                         <div class="mb-2"
                              th:if="${variety.supplier}">
                             <small class="text-muted">
-                                供应商：<span th:text="${#strings.substring(variety.supplier.address, 0, 6)}">灵山县灵城镇</span>...<br>
+                                供应商：<span th:text="${variety.supplier.supplier_name}">供应商名称</span>...<br>
                                 合作订单：<span th:text="${variety.supplier.order_count}">3000</span>单
                             </small>
                         </div>
@@ -218,7 +218,7 @@
                           th:text="'¥' + ${variety.price} + '/斤'"></span>
                             <button class="btn btn-success"
                                     th:data-variety-id="${variety.id}"
-                                    onclick="checkAddressAndRedirect(this)">
+                                    onclick="checkAddressAndRedirect(this)" th:if="${session.currentUser.role != 3}">
                                 采购
                             </button>
                         </div>
