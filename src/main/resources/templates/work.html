@@ -126,8 +126,16 @@
 
         <!-- 中间搜索框 + 按钮（占 8 份，居中） -->
         <div class="col-8 d-flex justify-content-center">
-            <input type="text" class="search-input" placeholder="搜索荔枝品种">
-            <button class="search-btn">搜索</button>
+            <form action="/work" method="GET" class="d-flex">
+                <!-- 搜索输入框：name="keyword" 用于后端接收参数 -->
+                <input type="text"
+                       name="keyword"
+                       class="search-input"
+                       placeholder="搜索荔枝品种（如：妃子笑、糯米糍）"
+                       th:value="${param.keyword != null ? param.keyword : ''}"> <!-- 回显搜索关键词 -->
+                <!-- 搜索按钮 -->
+                <button type="submit" class="search-btn">搜索</button>
+            </form>
         </div>
 
         <!-- 右侧用户信息（占 2 份，靠右） -->
@@ -135,7 +143,7 @@
             <img th:src="@{/img/defaultMan.png}" class="avatar" alt="用户头像">
             <div class="d-flex flex-column align-items-start">
                 <span th:text="${user.username}" class="fw-bold username">采购商</span>
-                <span th:text="${user.role eq 1 ? '管理员' : (user.role eq 2 ? '采购部' : '其他')}"></span>
+                <span th:text="${user.role eq 1 ? '管理员' : (user.role eq 2 ? '采购部' : '供应商')}"></span>
             </div>
         </div>
     </div>
@@ -174,7 +182,7 @@
 
     <div class="container py-5">
         <!-- 标题 -->
-        <h2 class="fw-bold mb-4">热门荔枝商品</h2>
+        <h2 class="fw-bold mb-4">荔枝商品</h2>
 
         <!-- 商品卡片容器：用 Bootstrap 网格系统实现响应式布局 -->
         <div class="row g-4">
@@ -224,6 +232,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <!-- 无搜索结果提示：当搜索无数据时显示 -->
+            <div class="col-12 text-center py-5" th:if="${param.keyword != null and #lists.isEmpty(varieties)}">
+                <p class="text-muted fs-5">未找到“<span th:text="${param.keyword}"></span>”相关的荔枝品种</p>
             </div>
         </div>
     </div>

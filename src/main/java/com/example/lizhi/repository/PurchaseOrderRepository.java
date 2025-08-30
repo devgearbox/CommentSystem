@@ -63,4 +63,12 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, In
     // （注：此方法也可放在SupplierRepository，此处为方便订单查询统一管理）
     @Query("select s.supplier_id from Supplier s where s.userId = :userId")
     List<Integer> findSupplierIdsByUserId(@Param("userId") Long userId);
+
+    // 新增：按订单编号模糊查询
+    @Query("select po from PurchaseOrder po " +
+            "left join fetch po.supplier " +
+            "left join fetch po.user " +
+            "where po.orderNo = :orderNo " +  // 精确匹配
+            "and po.isDeleted = false")
+    List<PurchaseOrder> findByOrderNoExact(@Param("orderNo") String orderNo);  // 方法名也可改为更清晰的名称
 }

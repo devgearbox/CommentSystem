@@ -51,4 +51,15 @@ public class LitchiVarietyServiceImpl implements LitchiVarietyService {
         }
         return repository.save(variety); // 保存商品
     }
+
+    // 新增：按品种名模糊搜索（关联供应商）
+    @Override
+    @Transactional(readOnly = true) // 只读事务优化性能
+    public List<LitchiVariety> searchByVarietyName(String keyword) {
+        // 关键词去空（避免无效查询）
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return findAll(); // 关键词为空时，返回所有品种
+        }
+        return repository.findByVarietyNameContainingWithSupplier(keyword.trim());
+    }
 }

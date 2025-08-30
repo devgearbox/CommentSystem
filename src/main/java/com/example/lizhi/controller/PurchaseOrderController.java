@@ -50,9 +50,10 @@ public class PurchaseOrderController {
         return "orders";
     }
 
+    // 修改搜索接口参数和逻辑
     @GetMapping("/orders/search")
     public String searchOrders(
-            @RequestParam String supplierName,
+            @RequestParam String orderNo,  // 参数名从supplierName改为orderNo
             Model model,
             HttpSession session
     ) {
@@ -60,15 +61,15 @@ public class PurchaseOrderController {
         List<PurchaseOrder> orders;
 
         if (currentUser != null && currentUser.getRole() == 3) {
-            // 供应商角色：搜索自己关联的供应商订单
-            orders = orderService.searchOrdersBySupplierNameAndUserId(supplierName, currentUser.getId());
+            // 供应商角色：搜索自己关联的订单（按订单编号）
+            orders = orderService.searchOrdersByOrderNoAndUserId(orderNo, currentUser.getId());
         } else {
-            // 其他角色：搜索全部订单（原有逻辑）
-            orders = orderService.searchBySupplierName(supplierName);
+            // 其他角色：按订单编号搜索全部订单
+            orders = orderService.searchByOrderNo(orderNo);
         }
 
         model.addAttribute("purchaseOrders", orders);
-        return "orders :: #order-table-body"; // 仅返回表格片段，保持前端渲染逻辑不变
+        return "orders :: #order-table-body";
     }
 
     // 与供应商的 /delete/batch 对齐，路径可根据前端调整

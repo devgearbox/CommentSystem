@@ -12,12 +12,13 @@ document.addEventListener('DOMContentLoaded', function () {
     searchButton.addEventListener('click', function () {
         const searchTerm = searchInput.value.trim();
         if (searchTerm) {
-            fetch('/orders/search?supplierName=' + encodeURIComponent(searchTerm))
+            // 将参数名从supplierName改为orderNo
+            fetch('/orders/search?orderNo=' + encodeURIComponent(searchTerm))
                 .then(response => response.text())
                 .then(html => {
-                    orderTableBody.innerHTML = html; // 动态替换表格内容
-                    resetBatchDeleteState(); // 搜索后重置批量删除状态
-                    updateOrderChecks(); // 重新绑定复选框事件
+                    orderTableBody.innerHTML = html;
+                    resetBatchDeleteState();
+                    updateOrderChecks();
                 })
                 .catch(error => {
                     console.error('搜索失败:', error);

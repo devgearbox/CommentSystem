@@ -148,4 +148,20 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
         return updatedOrder;
     }
+
+    @Override
+    public List<PurchaseOrder> searchByOrderNo(String orderNo) {
+        // 调用精确查询方法
+        return purchaseOrderRepository.findByOrderNoExact(orderNo);
+    }
+
+    @Override
+    public List<PurchaseOrder> searchOrdersByOrderNoAndUserId(String orderNo, Long userId) {
+        // 先获取当前用户关联的所有订单
+        List<PurchaseOrder> myOrders = getOrdersByUserId(userId);
+        // 筛选出订单编号完全匹配的订单（精确匹配）
+        return myOrders.stream()
+                .filter(po -> orderNo.equals(po.getOrderNo()))  // 从contains改为equals
+                .collect(Collectors.toList());
+    }
 }

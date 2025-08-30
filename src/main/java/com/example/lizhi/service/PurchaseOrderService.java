@@ -19,4 +19,9 @@ public interface PurchaseOrderService {
 
     // 新增：搜索当前用户关联供应商的订单（兼容搜索功能）
     List<PurchaseOrder> searchOrdersBySupplierNameAndUserId(String supplierName, Long userId);
+    // 新增：按订单编号搜索
+    List<PurchaseOrder> searchByOrderNo(String orderNo);
+
+    // 新增：按订单编号和用户ID搜索
+    List<PurchaseOrder> searchOrdersByOrderNoAndUserId(String orderNo, Long userId);
 }

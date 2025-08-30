@@ -26,20 +26,29 @@ public class WorkController {
     private AddressService addressService;
 
     @GetMapping("/work")
-    public String workPage(Model model, HttpSession session) {
-        // 模拟从Session获取当前登录用户（实际需结合登录逻辑）
+    public String workPage(Model model,
+                           HttpSession session,
+                           @RequestParam(required = false) String keyword) { // 接收搜索关键词
+        // 1. 登录校验（原有逻辑不变）
         User user = (User) session.getAttribute("currentUser");
         if (user == null) {
             return "redirect:/login";
         }
         model.addAttribute("user", user);
-        // 通过注入的 Service 查询数据库
-        List<LitchiVariety> varieties = litchiVarietyService.findAll();
+
+        // 2. 商品查询：根据是否有关键词，选择“搜索”或“查询全部”
+        List<LitchiVariety> varieties;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            varieties = litchiVarietyService.searchByVarietyName(keyword); // 搜索逻辑
+        } else {
+            varieties = litchiVarietyService.findAll(); // 原有：查询全部
+        }
         model.addAttribute("varieties", varieties);
 
-        // 新增：检查用户是否有默认地址
+        // 3. 默认地址校验（原有逻辑不变）
         Address defaultAddress = addressService.findDefaultAddressByUserId(user.getId());
         model.addAttribute("hasDefaultAddress", defaultAddress != null);
+
         return "work";
     }
 
