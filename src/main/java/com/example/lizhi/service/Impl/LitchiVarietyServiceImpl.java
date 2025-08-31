@@ -62,4 +62,42 @@ public class LitchiVarietyServiceImpl implements LitchiVarietyService {
         }
         return repository.findByVarietyNameContainingWithSupplier(keyword.trim());
     }
+
+    // 实现新增1：按供应商ID列表查询商品
+    @Override
+    @Transactional(readOnly = true)
+    public List<LitchiVariety> findBySupplierIds(List<Integer> supplierIds) {
+        if (supplierIds == null || supplierIds.isEmpty()) {
+            return List.of(); // 无关联供应商时，返回空列表
+        }
+        // 调用Repository新增的方法（需在LitchiVarietyRepository中定义）
+        return repository.findBySupplier_SupplierIdIn(supplierIds);
+    }
+
+    // 实现新增2：按“品种名+供应商ID列表”查询商品
+    @Override
+    @Transactional(readOnly = true)
+    public List<LitchiVariety> searchByVarietyNameAndSupplierIds(String keyword, List<Integer> supplierIds) {
+        if (keyword == null || keyword.trim().isEmpty() || supplierIds.isEmpty()) {
+            return findBySupplierIds(supplierIds); // 关键词为空时，按供应商ID列表查
+        }
+        // 调用Repository新增的方法（需在LitchiVarietyRepository中定义）
+        return repository.findByVarietyNameContainingAndSupplier_SupplierIdIn(keyword.trim(), supplierIds);
+    }
+
+    // 实现：根据商品ID删除商品
+    @Override
+    @Transactional // 事务管理，确保删除操作原子性
+    public void deleteById(Integer varietyId) {
+        // 1. 校验商品ID
+        if (varietyId == null || varietyId <= 0) {
+            throw new IllegalArgumentException("商品ID无效：" + varietyId);
+        }
+        // 2. 校验商品是否存在
+        if (!repository.existsById(varietyId)) {
+            throw new RuntimeException("商品不存在或已被删除！");
+        }
+        // 3. 执行删除
+        repository.deleteById(varietyId);
+    }
 }

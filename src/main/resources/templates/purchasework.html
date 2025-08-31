@@ -77,6 +77,7 @@
     $('#content-frame').attr('src', target);
 
     // 同步激活对应菜单
+    $('.menu-item').removeClass('active'); // 先清空
     $('.menu-item').each(function() {
         if ($(this).attr('data-url') === target) {
             $(this).addClass('active');

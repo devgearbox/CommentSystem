@@ -216,7 +216,7 @@
                              th:if="${variety.supplier}">
                             <small class="text-muted">
                                 供应商：<span th:text="${variety.supplier.supplier_name}">供应商名称</span>...<br>
-                                合作订单：<span th:text="${variety.supplier.order_count}">3000</span>单
+                                销量：<span th:text="${variety.supplier.order_count}"></span>0
                             </small>
                         </div>
 
@@ -229,8 +229,30 @@
                                     onclick="checkAddressAndRedirect(this)" th:if="${session.currentUser.role != 3}">
                                 采购
                             </button>
+                            <!-- 新增：下架按钮（权限控制） -->
+                            <!-- 权限判断：角色1（管理员）显示；角色3（供应商）需判断商品所属供应商是否为自己的 -->
+                            <button class="btn btn-danger"
+                                    th:data-variety-id="${variety.id}"
+                                    th:data-supplier-id="${variety.supplier.supplier_id}"
+                                    onclick="confirmDelete(this)"
+                                    th:if="${session.currentUser != null
+                and (session.currentUser.role == 1
+                or (session.currentUser.role == 3
+                and variety.supplier != null
+                and variety.supplier.user_id == session.currentUser.id))}">
+                                下架
+                            </button>
                         </div>
                     </div>
+                </div>
+            </div>
+<!--            供应商无商品卡片空值处理-->
+            <div class="col-12 text-center py-8" th:if="${session.currentUser.role == 3 and #lists.isEmpty(varieties)}">
+                <div style="max-width: 400px; margin: 0 auto;">
+                    <!-- 提示图标 -->
+                    <i class="fas fa-box-open" style="font-size: 48px; color: #ced4da;"></i>
+                    <!-- 提示标题 -->
+                    <h5 class="fw-bold mt-4 text-muted">暂无您的供应商商品</h5>
                 </div>
             </div>
             <!-- 无搜索结果提示：当搜索无数据时显示 -->
@@ -240,7 +262,7 @@
         </div>
     </div>
 </div>
-
+<script th:src="@{/js/jquery/jquery-3.6.0.min.js}"></script>
 <script>
     // 轮播逻辑（保持原有）
     const bannerContainer = document.getElementById('bannerContainer');
@@ -285,6 +307,46 @@
 
         // 存在默认地址则跳转
         window.location.href = '/commodity?varietyId=' + varietyId;
+    }
+
+        // 新增1：删除确认弹窗（使用原生JS弹窗，也可替换为Bootstrap模态框）
+    function confirmDelete(button) {
+        // 获取商品ID和商品名称（用于弹窗提示）
+        const varietyId = button.getAttribute('data-variety-id');
+        const varietyName = button.closest('.card').querySelector('.card-title').textContent;
+
+        // 确认弹窗
+        if (confirm(`确定要下架“${varietyName}”吗？此操作不可恢复！`)) {
+            // 确认后发送删除请求
+            deleteVariety(varietyId);
+        }
+    }
+
+    // 新增2：发送删除请求（异步）
+    function deleteVariety(varietyId) {
+        $.ajax({
+            url: '/variety/delete', // 后端删除接口（需后续定义）
+            type: 'POST',
+            data: { varietyId: varietyId }, // 传递商品ID
+            dataType: 'json',
+            headers: {
+                // 若项目有CSRF防护，需添加CSRF令牌（根据项目配置调整）
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(res) {
+                if (res.success) {
+                    alert('商品下架成功！');
+                    // 刷新页面，更新商品列表
+                    window.location.reload();
+                } else {
+                    alert('商品下架失败：' + res.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('请求失败，请稍后重试！');
+                console.error('删除错误：', error);
+            }
+        });
     }
 </script>
 </body>

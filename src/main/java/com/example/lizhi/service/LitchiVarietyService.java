@@ -9,4 +9,10 @@ public interface LitchiVarietyService {
     LitchiVariety addProduct(LitchiVariety variety); // 新增商品
     // 新增：按品种名模糊搜索
     List<LitchiVariety> searchByVarietyName(String keyword);
+    // 新增1：按供应商ID列表查询商品（关联供应商）
+    List<LitchiVariety> findBySupplierIds(List<Integer> supplierIds);
+    // 新增2：按“品种名+供应商ID列表”查询商品（关联供应商）
+    List<LitchiVariety> searchByVarietyNameAndSupplierIds(String keyword, List<Integer> supplierIds);
+    // 新增：根据商品ID删除商品
+    void deleteById(Integer varietyId);
 }
