@@ -72,30 +72,34 @@
         <div class="modal-content">
             <span class="close add-product-close">&times;</span>
             <h2>为供应商上架商品</h2>
-            <form id="add-product-form">
-                <!-- 隐藏域存储供应商ID（自动填充） -->
-                <input type="hidden" name="supplierId" id="product-supplier-id">
-
-                <div class="form-group">
-                    <label>商品名称：</label>
-                    <input type="text" name="varietyName" required>
-                </div>
-                <div class="form-group">
-                    <label>单价（元/斤）：</label>
-                    <input type="number" step="0.01" min="0" name="price" required>
-                </div>
-                <div class="form-group">
-                    <label>库存数量：</label>
-                    <input type="number" min="0" name="stock" required>
-                </div>
-                <div class="form-group">
-                    <label>商品描述：</label>
-                    <textarea name="description" rows="3"></textarea>
-                </div>
-                <div class="form-group submit-group">
-                    <button type="submit" class="submit-btn">确认上架</button>
-                </div>
-            </form>
+                <form id="add-product-form" enctype="multipart/form-data">
+                    <!-- 隐藏域存储供应商ID（自动填充） -->
+                    <input type="hidden" name="supplierId" id="product-supplier-id">
+                    <div class="form-group">
+                        <label>商品名称：</label>
+                        <input type="text" name="varietyName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>单价（元/斤）：</label>
+                        <input type="number" step="0.01" min="0" name="price" required>
+                    </div>
+                    <div class="form-group">
+                        <label>库存数量：</label>
+                        <input type="number" min="0" name="stock" required>
+                    </div>
+                    <div class="form-group">
+                        <label>商品图片：</label>
+                        <input type="file" name="productImage" accept="image/jpeg,image/png" required>
+                        <small class="text-muted">支持JPG、PNG格式，建议尺寸400x300</small>
+                    </div>
+                    <div class="form-group">
+                        <label>商品描述：</label>
+                        <textarea name="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group submit-group">
+                        <button type="submit" class="submit-btn">确认上架</button>
+                    </div>
+                </form>
         </div>
     </div>
 <!--    查看弹出-->

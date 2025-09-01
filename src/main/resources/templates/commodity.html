@@ -340,6 +340,12 @@
                 <span class="current-price" th:text="'¥' + ${variety.price} + '/斤'">¥39.24/斤</span>
                 <span class="original-price" th:text="'原价 ¥' + ${variety.price}">原价 ¥46.8/斤</span>
             </div>
+            <!-- 新增库存显示 -->
+            <div class="stock-info" style="margin-top: 8px;">
+                <span style="color: #666; font-size: 14px;">库存: </span>
+                <span th:text="${variety.stock}" style="color: #e60012; font-weight: 500;"></span>
+                <span style="color: #666; font-size: 14px;">斤</span>
+            </div>
             <div class="price-tags">
                 <span class="price-tag" th:text="'已售 ' + ${variety.stock} + '+'">已售 9000+</span>
                 <span class="price-tag">满1件9.9折</span>
@@ -545,41 +551,46 @@
     }
 
     // 提交订单
-    function submitOrder() {
-        const varietyName = document.getElementById('modalVarietyName').textContent;
-        const supplierName = document.getElementById('modalSupplierName').textContent;
-        const weight = document.getElementById('modalWeight').textContent.replace('斤', '');
+function submitOrder() {
+    const varietyName = document.getElementById('modalVarietyName').textContent;
+    const supplierName = document.getElementById('modalSupplierName').textContent;
+    const weight = document.getElementById('modalWeight').textContent.replace('斤', '');
 
-        const requestData = {
-            varietyName: varietyName,
-            supplierName: supplierName,
-            quantity: weight,
-            totalPrice: document.getElementById('totalPrice').textContent
-        };
+    const requestData = {
+        varietyName: varietyName,
+        supplierName: supplierName,
+        quantity: weight,
+        totalPrice: document.getElementById('totalPrice').textContent
+    };
 
-        fetch('/work/submit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestData)
-        })
-       .then(response => response.json())
-       .then(data => {
-            if (data.success) {
-                alert('订单提交成功！订单 ID：' + data.orderId);
-                document.getElementById('orderConfirmModal').classList.remove('show');
-                document.body.style.overflow = '';
-                window.location.href = '/work';
+    fetch('/work/submit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('订单提交成功！订单 ID：' + data.orderId);
+            document.getElementById('orderConfirmModal').classList.remove('show');
+            document.body.style.overflow = '';
+            window.location.href = '/work';
+        } else {
+            //新增：专门处理库存不足的提示
+            if (data.message && data.message.includes('库存不足')) {
+                alert('❌ ' + data.message + '\n\n请联系供应商：' + supplierName);
             } else {
                 alert('订单提交失败：' + data.message);
             }
-        })
-       .catch(error => {
-            console.error('提交订单失败：', error);
-            alert('订单提交失败，请稍后重试');
-        });
-    }
+        }
+    })
+    .catch(error => {
+        console.error('提交订单失败：', error);
+        alert('订单提交失败，请稍后重试');
+    });
+}
 </script>
 </body>
 </html>

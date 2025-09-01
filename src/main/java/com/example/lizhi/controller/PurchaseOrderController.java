@@ -1,9 +1,11 @@
 package com.example.lizhi.controller;
 
+import com.example.lizhi.entity.LitchiVariety;
 import com.example.lizhi.entity.PurchaseOrder;
 import com.example.lizhi.entity.Supplier;
 import com.example.lizhi.entity.User;
 import com.example.lizhi.repository.UserRepository;
+import com.example.lizhi.service.LitchiVarietyService;
 import com.example.lizhi.service.PurchaseOrderService;
 import com.example.lizhi.service.SupplierService;
 import jakarta.servlet.http.HttpSession;
@@ -29,6 +31,8 @@ public class PurchaseOrderController {
     private SupplierService supplierService;
     @Autowired
     private PurchaseOrderService orderService;
+    @Autowired
+    private LitchiVarietyService litchiVarietyService;
 
     @GetMapping("/orders")
     public String listPurchaseOrder(Model model, HttpSession session) {
@@ -109,29 +113,52 @@ public class PurchaseOrderController {
                 return ResponseEntity.badRequest().body("用户未登录");
             }
 
-            // 2. 查询用户（增加空值校验）
+            // 2. 查询用户
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("用户 ID 无效：" + userId));
 
-            // 3. 构建 PurchaseOrder 对象
-            PurchaseOrder order = new PurchaseOrder();
-            order.setPurchase_variety(request.getVarietyName());
-            order.setPurchase_quantity(new BigDecimal(request.getQuantity()));
-            // 在构建PurchaseOrder对象时添加
-            order.setTotalPrice(new BigDecimal(request.getTotalPrice()));
-
-            // 4. 查询供应商（增加空值校验）
+            // 3. 查询供应商
             Supplier supplier = supplierService.searchSuppliersByName(request.getSupplierName())
                     .stream()
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("未找到供应商：" + request.getSupplierName()));
-            order.setSupplier(supplier);
-            order.setUser(user); // 设置采购人
 
-            // 5. 调用 service 保存订单
+            // 4.新增：查询商品并检查库存
+            List<LitchiVariety> varieties = litchiVarietyService.searchByVarietyName(request.getVarietyName());
+            if (varieties.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "未找到商品：" + request.getVarietyName()
+                ));
+            }
+
+            LitchiVariety variety = varieties.get(0);
+            BigDecimal quantity = new BigDecimal(request.getQuantity());
+
+            // 检查库存是否充足
+            if (!purchaseOrderService.checkStock(variety.getId(), quantity)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "购买数量过大，库存不足。当前库存: " + variety.getStock() + "斤，请与供应商进行联系"
+                ));
+            }
+
+            // 5. 构建 PurchaseOrder 对象
+            PurchaseOrder order = new PurchaseOrder();
+            order.setPurchase_variety(request.getVarietyName());
+            order.setPurchase_quantity(quantity);
+            order.setTotalPrice(new BigDecimal(request.getTotalPrice()));
+            order.setSupplier(supplier);
+            order.setUser(user);
+            order.setLitchiVariety(variety); // 关联商品
+
+            // 6.扣减库存
+            purchaseOrderService.reduceStock(variety.getId(), quantity);
+
+            // 7. 保存订单
             PurchaseOrder savedOrder = purchaseOrderService.createPurchaseOrder(order);
 
-            // 6. 返回成功响应
+            // 8. 返回成功响应
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "订单提交成功",
@@ -139,13 +166,11 @@ public class PurchaseOrderController {
             ));
 
         } catch (IllegalArgumentException e) {
-            // 处理明确的业务异常（如用户/供应商不存在）
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "订单提交失败：" + e.getMessage()
             ));
         } catch (Exception e) {
-            // 处理其他未知异常
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "订单提交失败：" + e.getMessage()

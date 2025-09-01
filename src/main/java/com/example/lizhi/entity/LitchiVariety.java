@@ -10,10 +10,15 @@ public class LitchiVariety {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String variety_name;
-    // 将 Double 改为 BigDecimal
     private BigDecimal price;
     private Integer stock;
     private String description;
+
+    @Column(name = "order_count")
+    private Integer orderCount = 0;
+
+    @Column(name = "image_path")
+    private String imagePath;
 
     // 关联供应商（多对一）
     @ManyToOne(fetch = FetchType.EAGER) // EAGER 立即加载关联数据
@@ -68,4 +73,12 @@ public class LitchiVariety {
     public void setSupplier(Supplier supplier) {
         this.supplier = supplier;
     }
+
+    public String getImagePath() {return imagePath;}
+
+    public void setImagePath(String imagePath) {this.imagePath = imagePath;}
+
+    public Integer getOrderCount() {return orderCount;}
+
+    public void setOrderCount(Integer orderCount) {this.orderCount = orderCount;}
 }

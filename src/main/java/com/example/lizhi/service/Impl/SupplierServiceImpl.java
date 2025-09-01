@@ -5,6 +5,7 @@ import com.example.lizhi.entity.User;
 import com.example.lizhi.repository.SupplierRepository;
 import com.example.lizhi.service.SupplierService;
 import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -83,4 +84,26 @@ public class SupplierServiceImpl implements SupplierService{
         return supplierRepository.save(updated);
     }
 
+    @Override
+    @Transactional
+    public void incrementOrderCount(Integer supplierId) {
+        try {
+            Supplier supplier = supplierRepository.findById(supplierId)
+                    .orElseThrow(() -> new RuntimeException("供应商不存在：" + supplierId));
+
+            // 处理 null 值情况
+            Integer currentCount = supplier.getOrder_count();
+            if (currentCount == null) {
+                supplier.setOrder_count(1);
+            } else {
+                supplier.setOrder_count(currentCount + 1);
+            }
+
+            supplierRepository.save(supplier);
+            System.out.println("供应商 " + supplierId + " 订单数量已增加至: " + supplier.getOrder_count());
+        } catch (Exception e) {
+            System.err.println("增加供应商订单数量失败: " + e.getMessage());
+            throw e; // 重新抛出异常以确保事务回滚
+        }
+    }
 }

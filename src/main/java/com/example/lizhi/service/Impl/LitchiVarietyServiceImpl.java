@@ -100,4 +100,23 @@ public class LitchiVarietyServiceImpl implements LitchiVarietyService {
         // 3. 执行删除
         repository.deleteById(varietyId);
     }
+
+    @Override
+    @Transactional
+    public void incrementOrderCount(Integer varietyId) {
+        Optional<LitchiVariety> varietyOpt = repository.findById(varietyId);
+        if (varietyOpt.isPresent()) {
+            LitchiVariety variety = varietyOpt.get();
+            variety.setOrderCount(variety.getOrderCount() != null ? variety.getOrderCount() + 1 : 1);
+            repository.save(variety);
+            System.out.println("商品 " + varietyId + " 订单数量已增加至: " + variety.getOrderCount());
+        } else {
+            System.err.println("商品不存在: " + varietyId);
+        }
+    }
+
+    @Override
+    public Optional<LitchiVariety> findById(Integer varietyId) {
+        return repository.findById(varietyId);
+    }
 }

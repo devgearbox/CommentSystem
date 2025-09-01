@@ -1,6 +1,8 @@
 package com.example.lizhi.service;
 
 import com.example.lizhi.entity.PurchaseOrder;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,4 +26,9 @@ public interface PurchaseOrderService {
 
     // 新增：按订单编号和用户ID搜索
     List<PurchaseOrder> searchOrdersByOrderNoAndUserId(String orderNo, Long userId);
+    // 新增：检查库存是否充足
+    boolean checkStock(Integer varietyId, BigDecimal quantity);
+
+    // 新增：减少商品库存
+    void reduceStock(Integer varietyId, BigDecimal quantity);
 }

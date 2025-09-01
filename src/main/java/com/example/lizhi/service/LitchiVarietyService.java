@@ -2,6 +2,7 @@ package com.example.lizhi.service;
 
 import com.example.lizhi.entity.LitchiVariety;
 import java.util.List;
+import java.util.Optional;
 
 public interface LitchiVarietyService {
     List<LitchiVariety> findAll(); // 查询所有荔枝品种
@@ -15,4 +16,6 @@ public interface LitchiVarietyService {
     List<LitchiVariety> searchByVarietyNameAndSupplierIds(String keyword, List<Integer> supplierIds);
     // 新增：根据商品ID删除商品
     void deleteById(Integer varietyId);
+    void incrementOrderCount(Integer varietyId);
+    Optional<LitchiVariety> findById(Integer varietyId);
 }

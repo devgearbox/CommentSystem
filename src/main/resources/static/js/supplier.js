@@ -306,60 +306,58 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 提交商品上架表单
-    if (addProductForm) {
-        addProductForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+// 提交商品上架表单
+if (addProductForm) {
+    addProductForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(addProductForm);
 
-            // 收集表单数据
-            const formData = new FormData(addProductForm);
-            const productData = {
-                varietyName: formData.get('varietyName'),
-                price: formData.get('price'),
-                stock: formData.get('stock'),
-                description: formData.get('description'),
-                supplierId: formData.get('supplierId')
-            };
+        // 基础数据校验
+        if (!formData.get('varietyName')) {
+            alert('请输入商品名称');
+            return;
+        }
+        if (!formData.get('price') || isNaN(formData.get('price')) || parseFloat(formData.get('price')) < 0) {
+            alert('请输入有效的价格');
+            return;
+        }
+        if (!formData.get('stock') || isNaN(formData.get('stock')) || parseInt(formData.get('stock')) < 0) {
+            alert('请输入有效的库存数量');
+            return;
+        }
+        if (!formData.get('productImage').name) {
+            alert('请选择商品图片');
+            return;
+        }
 
-            // 基础数据校验
-            if (!productData.varietyName) {
-                alert('请输入商品名称');
-                return;
+        try {
+            const response = await fetch('/products/add', {
+                method: 'POST',
+                body: formData
+            });
+
+            // 检查响应状态
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
             }
-            if (!productData.price || isNaN(productData.price) || parseFloat(productData.price) < 0) {
-                alert('请输入有效的价格');
-                return;
-            }
-            if (!productData.stock || isNaN(productData.stock) || parseInt(productData.stock) < 0) {
-                alert('请输入有效的库存数量');
-                return;
-            }
 
-            try {
-                const response = await fetch('/products/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(productData)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert('商品上架成功！');
-                    addProductModal.style.display = 'none';
-                    addProductForm.reset(); // 重置表单
-                    // 可选：刷新供应商页面或更新供应品种类显示
-                } else {
-                    alert('上架失败：' + (result.message || '未知错误'));
-                }
-            } catch (error) {
-                console.error('商品上架请求失败:', error);
-                alert('网络错误，上架失败');
+            const result = await response.json();
+            if (result.success) {
+                alert('商品上架成功！');
+                addProductModal.style.display = 'none';
+                addProductForm.reset();
+                // 可选：刷新页面
+                window.location.reload();
+            } else {
+                alert('上架失败：' + (result.message || '未知错误'));
             }
-        });
-    }
+        } catch (error) {
+            console.error('商品上架请求失败:', error);
+            alert('上架失败: ' + error.message);
+        }
+    });
+}
 
     // ====================== 5. 添加供应商 ======================
     const addBtn = document.getElementById('add-supplier');

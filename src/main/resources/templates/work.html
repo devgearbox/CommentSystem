@@ -187,19 +187,16 @@
         <!-- 商品卡片容器：用 Bootstrap 网格系统实现响应式布局 -->
         <div class="row g-4">
             <!-- 循环渲染商品卡片 -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3"
-                 th:each="variety : ${varieties}">
-
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3" th:each="variety : ${varieties}">
                 <div class="card product-card h-100">
-
-                    <!-- 商品图片 -->
-                    <img th:src="@{/img/litchi01.png}"
-                         class="card-img-top"
-                         th:alt="${variety.varietyName}">
-                    <!-- 商品图片：动态关联品种名称对应的图片 -->
-<!--                    <img th:src="@{/img/{varietyName}.png(varietyName=${variety.varietyName})}"-->
-<!--                         class="card-img-top"-->
-<!--                         th:alt="${variety.varietyName}">-->
+                    <!-- 商品图片：根据imagePath动态显示 -->
+                    <img
+                    th:if="${variety != null and variety.imagePath != null and !variety.imagePath.isEmpty()}"
+                    th:src="@{${variety.imagePath}}"
+                    th:alt="${variety.varietyName != null ? variety.varietyName : '商品图片'}"
+                    class="product-image"
+                    onerror="this.src='/img/default-product.png';this.onerror=null;"
+                    />
 
                     <!-- 卡片内容 -->
                     <div class="card-body d-flex flex-column">
@@ -216,7 +213,7 @@
                              th:if="${variety.supplier}">
                             <small class="text-muted">
                                 供应商：<span th:text="${variety.supplier.supplier_name}">供应商名称</span>...<br>
-                                销量：<span th:text="${variety.supplier.order_count}"></span>0
+                                销量：<span th:text="${variety.orderCount}"></span>
                             </small>
                         </div>
 

@@ -12,4 +12,5 @@ public interface SupplierService {
     Optional<Supplier> getSupplierById(Integer id);
     Supplier updateSupplier(Supplier supplier);
     List<Supplier> getSuppliersByUserId(Long userId);  // 新增方法
+    void incrementOrderCount(Integer supplierId);
 }

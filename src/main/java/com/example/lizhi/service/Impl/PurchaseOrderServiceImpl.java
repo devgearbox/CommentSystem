@@ -1,46 +1,59 @@
 package com.example.lizhi.service.Impl;
 
+import com.example.lizhi.entity.LitchiVariety;
 import com.example.lizhi.entity.PurchaseOrder;
 import com.example.lizhi.entity.Supplier;
 import com.example.lizhi.repository.PurchaseOrderRepository;
-import com.example.lizhi.repository.StockInRepository;
+import com.example.lizhi.service.LitchiVarietyService;
 import com.example.lizhi.service.PurchaseOrderService;
 import com.example.lizhi.service.StockInService;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.lizhi.service.SupplierService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class PurchaseOrderServiceImpl implements PurchaseOrderService {
-    @Autowired
-    private PurchaseOrderRepository purchaseOrderRepository;
-    @Autowired
-    private PurchaseOrderRepository orderRepository;
-    @Autowired
-    private StockInRepository stockInRepo;
+    private final PurchaseOrderRepository purchaseOrderRepository;
+    private final PurchaseOrderRepository orderRepository;
+    private final StockInService stockInService;
+    private final SupplierService supplierService;
+    private final LitchiVarietyService litchiVarietyService;
+
+    // 使用构造注入所有依赖
+    public PurchaseOrderServiceImpl(
+            PurchaseOrderRepository purchaseOrderRepository,
+            StockInService stockInService,
+            SupplierService supplierService,
+            LitchiVarietyService litchiVarietyService
+    ) {
+        this.purchaseOrderRepository = purchaseOrderRepository;
+        this.orderRepository = purchaseOrderRepository; // 使用同一个repository实例
+        this.stockInService = stockInService;
+        this.supplierService = supplierService;
+        this.litchiVarietyService = litchiVarietyService;
+    }
 
     @Override
     public List<PurchaseOrder> getAllPurchaseOrdersSupplierUser() {
-        // 调用关联查询方法
         return purchaseOrderRepository.findAllWithSupplierAndUser();
     }
+
     @Override
     public List<PurchaseOrder> getValidPurchaseOrdersSupplierUser() {
         return orderRepository.findAllValidWithSupplierUser();
     }
 
-    // 搜索方法
     public List<PurchaseOrder> searchBySupplierName(String supplierName) {
         return purchaseOrderRepository.findBySupplierSupplierNameContaining(supplierName);
     }
 
     @Override
-    @Transactional // 事务保证：要么全成功，要么全失败
+    @Transactional
     public void batchDelete(List<Integer> ids) {
-        // 1. 校验订单是否存在且未被删除
         List<PurchaseOrder> orders = new ArrayList<>();
         for (Integer id : ids) {
             PurchaseOrder order = orderRepository.findByIdAndIsDeletedFalse(id)
@@ -48,34 +61,30 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             orders.add(order);
         }
 
-        // 2. 校验订单状态是否为received
         for (PurchaseOrder order : orders) {
             if (order.getOrderStatus() != PurchaseOrder.OrderStatus.received) {
                 throw new IllegalArgumentException("订单 [" + order.getOrderNo() + "] 状态非【已接收】，无法删除");
             }
         }
 
-        // 3. 执行软删除：标记isDeleted为true
         orders.forEach(order -> order.setDeleted(true));
-        orderRepository.saveAll(orders); // 批量更新
+        orderRepository.saveAll(orders);
     }
 
-    // 实现新增的创建订单方法
     @Override
     public PurchaseOrder createPurchaseOrder(PurchaseOrder order) {
-        // 可在此处补充业务逻辑，比如设置默认订单号、订单状态等
         if (order.getOrderNo() == null || order.getOrderNo().trim().isEmpty()) {
-            // 简单生成订单号示例，可根据实际需求调整（如 UUID、雪花算法等）
             order.setOrderNo(UUID.randomUUID().toString().replace("-", "").substring(0, 32));
         }
         if (order.getOrderStatus() == null) {
-            order.setOrderStatus(PurchaseOrder.OrderStatus.pending); // 设置默认待审核状态
+            order.setOrderStatus(PurchaseOrder.OrderStatus.pending);
         }
         if (order.getCreateTime() == null) {
             order.setCreateTime(new Date());
         }
         return purchaseOrderRepository.save(order);
     }
+
     @Override
     public Optional<PurchaseOrder> getOrderById(Integer orderId) {
         return orderRepository.findById(orderId);
@@ -83,47 +92,31 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     public List<PurchaseOrder> getOrdersByUserId(Long userId) {
-        // 1. 通过用户ID获取关联的所有供应商ID
         List<Integer> supplierIds = orderRepository.findSupplierIdsByUserId(userId);
         if (supplierIds.isEmpty()) {
-            return Collections.emptyList(); // 无关联供应商，返回空列表
+            return Collections.emptyList();
         }
-        // 2. 通过供应商ID列表查询所有未删除的订单
+
         List<PurchaseOrder> allOrders = new ArrayList<>();
         for (Integer supplierId : supplierIds) {
             List<PurchaseOrder> orders = orderRepository.findValidOrdersBySupplierId(supplierId);
             allOrders.addAll(orders);
         }
-        // 3. 按创建时间倒序（可选，优化展示体验）
+
         return allOrders.stream()
                 .sorted((o1, o2) -> o2.getCreateTime().compareTo(o1.getCreateTime()))
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 搜索当前用户关联供应商的订单（兼容搜索功能）
-     */
     @Override
     public List<PurchaseOrder> searchOrdersBySupplierNameAndUserId(String supplierName, Long userId) {
-        // 1. 先获取当前用户关联的所有供应商订单
         List<PurchaseOrder> myOrders = getOrdersByUserId(userId);
-        // 2. 叠加“供应商名称模糊匹配”筛选
         return myOrders.stream()
                 .filter(po -> po.getSupplier() != null
                         && po.getSupplier().getSupplier_name().contains(supplierName))
                 .collect(Collectors.toList());
     }
 
-    private final StockInService stockInService;
-
-    // 【手动添加构造函数】显式注入依赖
-    public PurchaseOrderServiceImpl(
-            PurchaseOrderRepository orderRepository,
-            StockInService stockInService
-    ) {
-        this.orderRepository = orderRepository;
-        this.stockInService = stockInService;
-    }
     @Override
     @Transactional
     public PurchaseOrder updateStatus(Integer orderId, String newStatus) {
@@ -142,6 +135,32 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         order.setOrderStatus(newStatusEnum);
         PurchaseOrder updatedOrder = orderRepository.save(order);
 
+        // 当状态变为 received 时，增加供应商和商品的 order_count
+        if (newStatusEnum == PurchaseOrder.OrderStatus.received) {
+            // 增加供应商订单数量
+            Supplier supplier = order.getSupplier();
+            if (supplier != null) {
+                try {
+                    supplierService.incrementOrderCount(supplier.getSupplier_id());
+                    System.out.println("供应商订单数量增加成功: " + supplier.getSupplier_id());
+                } catch (Exception e) {
+                    System.err.println("供应商订单数量增加失败: " + e.getMessage());
+                }
+            }
+
+            // 增加商品订单数量
+            if (order.getLitchiVariety() != null) {
+                try {
+                    litchiVarietyService.incrementOrderCount(order.getLitchiVariety().getId());
+                    System.out.println("商品订单数量增加成功: " + order.getLitchiVariety().getId());
+                } catch (Exception e) {
+                    System.err.println("商品订单数量增加失败: " + e.getMessage());
+                }
+            } else {
+                System.err.println("订单未关联商品: " + order.getOrderNo());
+            }
+        }
+
         if (newStatusEnum == PurchaseOrder.OrderStatus.shipped && oldStatus != PurchaseOrder.OrderStatus.shipped) {
             stockInService.createStockInFromOrder(updatedOrder);
         }
@@ -151,17 +170,52 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     public List<PurchaseOrder> searchByOrderNo(String orderNo) {
-        // 调用精确查询方法
         return purchaseOrderRepository.findByOrderNoExact(orderNo);
     }
 
     @Override
     public List<PurchaseOrder> searchOrdersByOrderNoAndUserId(String orderNo, Long userId) {
-        // 先获取当前用户关联的所有订单
         List<PurchaseOrder> myOrders = getOrdersByUserId(userId);
-        // 筛选出订单编号完全匹配的订单（精确匹配）
         return myOrders.stream()
-                .filter(po -> orderNo.equals(po.getOrderNo()))  // 从contains改为equals
+                .filter(po -> orderNo.equals(po.getOrderNo()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean checkStock(Integer varietyId, BigDecimal quantity) {
+        if (varietyId == null || quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            return false;
+        }
+
+        Optional<LitchiVariety> varietyOpt = litchiVarietyService.findById(varietyId);
+        if (varietyOpt.isPresent()) {
+            LitchiVariety variety = varietyOpt.get();
+            // 检查库存是否充足
+            return variety.getStock() != null && variety.getStock() >= quantity.intValue();
+        }
+        return false;
+    }
+
+    @Override
+    @Transactional
+    public void reduceStock(Integer varietyId, BigDecimal quantity) {
+        if (varietyId == null || quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("库存扣减参数无效");
+        }
+
+        Optional<LitchiVariety> varietyOpt = litchiVarietyService.findById(varietyId);
+        if (varietyOpt.isPresent()) {
+            LitchiVariety variety = varietyOpt.get();
+            if (variety.getStock() == null || variety.getStock() < quantity.intValue()) {
+                throw new RuntimeException("库存不足，无法扣减");
+            }
+
+            // 扣减库存
+            variety.setStock(variety.getStock() - quantity.intValue());
+            litchiVarietyService.addProduct(variety); // 使用已有的保存方法
+            System.out.println("商品库存扣减成功: " + varietyId + ", 扣减数量: " + quantity);
+        } else {
+            throw new RuntimeException("商品不存在: " + varietyId);
+        }
     }
 }
