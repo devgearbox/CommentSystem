@@ -52,8 +52,10 @@
           <!-- 补充 .close 类，确保关闭按钮样式 -->
           <span class="close status-close">&times;</span>
           <h2>修改状态</h2>
+
           <form id="status-form">
             <input type="hidden" id="status-stock-id">
+            <input type="hidden" id="status-order-no">
             <!-- 补充采购订单同款结构 -->
             <div class="form-group-status">
               <label>当前状态：</label>
@@ -64,6 +66,10 @@
               <select id="new-status" class="status-select" required>
               </select>
             </div>
+            <div id="rejection-reason-group" class="form-group-status" style="display: none;">
+              <label for="rejection-reason">拒收原因：</label>
+              <textarea id="rejection-reason" class="reason-textarea" placeholder="请输入拒收原因..." rows="3"></textarea>
+            </div>
             <div class="form-group submit-group">
               <button type="submit" class="submit-btn">确认修改</button>
             </div>
@@ -73,81 +79,125 @@
     </div>
     <!-- 前端交互逻辑（仿照订单，动态渲染状态） -->
     <script>
-      // 修正：与后端枚举完全对齐
       const STATUS_FLOW = [
-          { value: 'pending', label: '待入库' },
-          { value: 'checking', label: '验收中' },
-          { value: 'completed', label: '已入库' },
-          { value: 'rejected', label: '拒收' }
+        { value: 'pending', label: '待入库' },
+        { value: 'checking', label: '验收中' },
+        { value: 'completed', label: '已入库' },
+        { value: 'rejected', label: '拒收' }
       ];
 
       function renderStatusOptions(currentStatus) {
-          const select = document.getElementById('new-status');
-          select.innerHTML = '';
+        const select = document.getElementById('new-status');
+        select.innerHTML = '';
 
-          // 动态获取当前状态索引（兼容所有枚举）
-          const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
-          STATUS_FLOW.forEach((item, index) => {
-              // 仅允许向后流转（可根据业务调整规则）
-              if (index >= currentIndex) {
-                  const option = document.createElement('option');
-                  option.value = item.value;
-                  option.textContent = item.label;
-                  if (item.value === currentStatus) option.selected = true;
-                  select.appendChild(option);
-              }
-          });
+        const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
+        STATUS_FLOW.forEach((item, index) => {
+          if (index >= currentIndex) {
+            const option = document.createElement('option');
+            option.value = item.value;
+            option.textContent = item.label;
+            if (item.value === currentStatus) option.selected = true;
+            select.appendChild(option);
+          }
+        });
       }
 
-        // 绑定按钮点击事件
-        document.querySelectorAll('.status-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const stockId = this.getAttribute('data-id');
-                const currentStatus = this.getAttribute('data-status');
+      // 显示/隐藏拒收原因输入框
+      function toggleRejectionReason(selectedStatus) {
+        const reasonGroup = document.getElementById('rejection-reason-group');
+        const reasonInput = document.getElementById('rejection-reason');
 
-                renderStatusOptions(currentStatus);
-                document.getElementById('status-modal').style.display = 'block';
-                document.getElementById('status-stock-id').value = stockId;
-                document.getElementById('current-status').textContent = currentStatus;
-            });
+        if (selectedStatus === 'rejected') {
+          reasonGroup.style.display = 'block';
+          reasonInput.required = true;
+        } else {
+          reasonGroup.style.display = 'none';
+          reasonInput.required = false;
+          reasonInput.value = ''; // 清空输入
+        }
+      }
+
+      // 绑定按钮点击事件
+      document.querySelectorAll('.status-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const stockId = this.getAttribute('data-id');
+          const currentStatus = this.getAttribute('data-status');
+          const orderNo = this.closest('tr').querySelector('td:nth-child(2)').textContent;
+
+          renderStatusOptions(currentStatus);
+          document.getElementById('status-modal').style.display = 'block';
+          document.getElementById('status-stock-id').value = stockId;
+          document.getElementById('status-order-no').value = orderNo;
+          document.getElementById('current-status').textContent =
+            STATUS_FLOW.find(item => item.value === currentStatus)?.label || currentStatus;
+
+          // 初始化拒收原因输入框状态
+          toggleRejectionReason(currentStatus);
         });
+      });
 
-        // 表单提交（调用入库单状态修改接口）
-    document.getElementById('status-form').addEventListener('submit', function(e) {
+      // 监听状态选择变化
+      document.getElementById('new-status').addEventListener('change', function() {
+        toggleRejectionReason(this.value);
+      });
+
+      // 表单提交（调用入库单状态修改接口）
+      document.getElementById('status-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const stockId = document.getElementById('status-stock-id').value;
+        const orderNo = document.getElementById('status-order-no').value;
         const newStatus = document.getElementById('new-status').value;
+        const rejectionReason = document.getElementById('rejection-reason').value;
 
-        fetch(`/api/stock/${stockId}/status?newStatus=${newStatus}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' }
+        // 如果是拒收状态，必须填写原因
+        if (newStatus === 'rejected' && !rejectionReason.trim()) {
+          alert('请填写拒收原因');
+          return;
+        }
+
+        // 构建请求数据
+        const requestData = {
+          stockId: parseInt(stockId),
+          newStatus: newStatus,
+          rejectionReason: newStatus === 'rejected' ? rejectionReason.trim() : null
+        };
+
+        fetch(`/api/stock/${stockId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestData)
         })
-        // 修正 1：分离响应和数据解析
         .then(response => {
-            if (!response.ok) {
-                // 请求失败（如 4xx/5xx）直接抛出
-                return response.json().then(errData => {
-                    throw new Error(errData.message || '修改失败');
-                });
-            }
-            // 请求成功，解析响应数据
-            return response.json();
+          if (!response.ok) {
+            return response.json().then(errData => {
+              throw new Error(errData.message || '修改失败');
+            });
+          }
+          return response.json();
         })
         .then(data => {
-            // 修正 2：直接根据成功响应刷新页面
-            location.reload();
-            alert('修改成功！');
+          location.reload();
+          alert('修改成功！');
         })
         .catch(error => {
-            console.error('请求失败：', error);
-            alert('修改失败，请联系对应供应商申请售后');
+          console.error('请求失败：', error);
+          alert('修改失败，请联系对应供应商申请售后');
         });
-    });
+      });
 
-        // 关闭弹窗
-        document.querySelector('.status-close').addEventListener('click', function() {
-            document.getElementById('status-modal').style.display = 'none';
-        });
+      // 关闭弹窗
+      document.querySelector('.status-close').addEventListener('click', function() {
+        document.getElementById('status-modal').style.display = 'none';
+      });
+
+      // 点击模态框外部关闭
+      window.addEventListener('click', function(e) {
+        if (e.target === document.getElementById('status-modal')) {
+          document.getElementById('status-modal').style.display = 'none';
+        }
+      });
     </script>
   </body>
 </html>

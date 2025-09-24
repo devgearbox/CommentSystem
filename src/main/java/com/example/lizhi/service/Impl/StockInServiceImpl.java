@@ -7,6 +7,7 @@ import com.example.lizhi.entity.User;
 import com.example.lizhi.repository.PurchaseOrderRepository;
 import com.example.lizhi.repository.StockInRepository;
 import com.example.lizhi.service.LitchiVarietyService;
+import com.example.lizhi.service.ReturnOrderService;
 import com.example.lizhi.service.StockInService;
 import com.example.lizhi.service.SupplierService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class StockInServiceImpl implements StockInService {
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final SupplierService supplierService;
     private final LitchiVarietyService litchiVarietyService;
+    private final ReturnOrderService returnOrderService;
 
     @Override
     @Transactional
@@ -57,7 +59,7 @@ public class StockInServiceImpl implements StockInService {
 
     @Override
     @Transactional
-    public StockIn updateStatus(Integer stockId, String newStatus) {
+    public StockIn updateStatus(Integer stockId, String newStatus, String rejectionReason) {
         StockIn stockIn = stockInRepository.findById(stockId)
                 .orElseThrow(() -> new RuntimeException("入库单不存在：" + stockId));
 
@@ -111,6 +113,14 @@ public class StockInServiceImpl implements StockInService {
 
             } else if (newStatusEnum == StockIn.StockInStatus.rejected) {
                 order.setOrderStatus(PurchaseOrder.OrderStatus.rejected);
+                // 自动生成退货单
+                try {
+                    returnOrderService.createReturnFromStockRejection(orderNo,
+                            rejectionReason != null ? rejectionReason : "入库验收拒收");
+                    System.out.println("自动生成退货单成功，订单号：" + orderNo + "，原因：" + rejectionReason);
+                } catch (Exception e) {
+                    System.err.println("生成退货单失败：" + e.getMessage());
+                }
             }
             purchaseOrderRepository.save(order);
         } else {

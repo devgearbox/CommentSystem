@@ -1,6 +1,7 @@
 package com.example.lizhi.controller;
 
 import com.example.lizhi.entity.StockIn;
+import com.example.lizhi.service.ReturnOrderService;
 import com.example.lizhi.service.StockInService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -8,32 +9,39 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class StockInController {
 
     private final StockInService stockInService;
+    private final ReturnOrderService returnOrderService;
 
-    public StockInController(StockInService stockInService) {
+    public StockInController(StockInService stockInService, ReturnOrderService returnOrderService) {
         this.stockInService = stockInService;
+        this.returnOrderService = returnOrderService;
     }
 
     @GetMapping("/stock")
     public String getStockInPage(Model model) {
         List<StockIn> stockRecords = stockInService.findAllStockIn();
         model.addAttribute("stockRecords", stockRecords);
-        return "stock"; // 这里返回的视图名要和你的 stock.html 实际前缀等匹配，假设放在 templates 目录下直接返回 "stock"
+        return "stock";
     }
 
     @PutMapping("/api/stock/{stockId}/status")
     public ResponseEntity<?> updateStockStatus(
             @PathVariable Integer stockId,
-            @RequestParam String newStatus) {
+            @RequestBody Map<String, Object> request) {
         try {
-            StockIn updatedStock = stockInService.updateStatus(stockId, newStatus);
+            String newStatus = (String) request.get("newStatus");
+            String rejectionReason = (String) request.get("rejectionReason");
+
+            StockIn updatedStock = stockInService.updateStatus(stockId, newStatus, rejectionReason);
+
             return ResponseEntity.ok(updatedStock);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("修改失败：商品已接收");
+            return ResponseEntity.badRequest().body("修改失败：" + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(500).body("服务器错误：" + e.getMessage());
         }

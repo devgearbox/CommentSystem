@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>退货管理</title>
+  <link rel="stylesheet" th:href="@{/css/supplier.css}">
+</head>
+<body>
+<div class="section">
+  <div class="card-header">
+    <h2>退货管理</h2>
+  </div>
+
+  <div class="header">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="输入订单编号...">
+      <button id="search-button">搜索</button>
+    </div>
+    <button class="view-all" id="search-all">查看全部</button>
+  </div>
+
+  <table>
+    <thead>
+    <tr>
+      <th>退货单号</th>
+<!--      <th>订单编号</th>-->
+      <th>品种</th>
+      <th>数量(斤)</th>
+      <th>退款金额</th>
+      <th>供应商</th>
+      <th>采购人员</th>
+      <th>退货原因</th>
+      <th>创建时间</th>
+      <th>状态</th>
+      <th><div class="action-header" th:if="${session.currentUser.role != 2}">操作</div></th>
+    </tr>
+    </thead>
+    <tbody id="return-table-body">
+    <tr th:each="returnOrder : ${returnOrders}">
+      <td th:text="${returnOrder.returnNo}"></td>
+<!--      <td th:text="${returnOrder.orderNo}"></td>-->
+      <td th:text="${returnOrder.litchi_variety}"></td>
+      <td th:text="${returnOrder.quantity}"></td>
+      <td th:text="${returnOrder.refundAmount}"></td>
+      <td th:text="${returnOrder.supplierName}"></td>
+      <td th:text="${returnOrder.purchaserName}"></td>
+      <td th:text="${returnOrder.reason}"></td>
+      <td th:text="${returnOrder.createTime}"></td>
+      <td th:text="${returnOrder.return_status.label}"></td>
+      <td>
+        <button class="status-btn"
+                th:data-id="${returnOrder.return_id}"
+                th:data-status="${returnOrder.return_status}"
+                th:if="${session.currentUser.role != 2}">修改状态</button>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <!-- 状态修改弹窗 -->
+  <div id="status-modal" class="modal">
+    <div class="modal-content">
+      <span class="close status-close">&times;</span>
+      <h2>修改退货状态</h2>
+      <form id="status-form">
+        <input type="hidden" id="status-return-id">
+        <div class="form-group-status">
+          <label>当前状态：</label>
+          <span id="current-status" class="current-status-text"></span>
+        </div>
+        <div class="form-group-status">
+          <label>修改为：</label>
+          <select id="new-status" class="status-select" required>
+          </select>
+        </div>
+        <div class="form-group submit-group">
+          <button type="submit" class="submit-btn">确认修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const RETURN_STATUS_FLOW = [
+    { value: 'pending', label: '待审核' },
+    { value: 'approved', label: '已审核' },
+    { value: 'refunded', label: '已退款' },
+    { value: 'completed', label: '已完成' },
+    { value: 'rejected', label: '已拒绝' }
+  ];
+
+  function renderReturnStatusOptions(currentStatus) {
+    const select = document.getElementById('new-status');
+    select.innerHTML = '';
+
+    RETURN_STATUS_FLOW.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.value;
+      option.textContent = item.label;
+      if (item.value === currentStatus) option.selected = true;
+      select.appendChild(option);
+    });
+  }
+
+  // 绑定状态修改按钮
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('status-btn')) {
+      const returnId = e.target.getAttribute('data-id');
+      const currentStatus = e.target.getAttribute('data-status');
+
+      renderReturnStatusOptions(currentStatus);
+      document.getElementById('status-modal').style.display = 'block';
+      document.getElementById('status-return-id').value = returnId;
+      document.getElementById('current-status').textContent =
+        RETURN_STATUS_FLOW.find(item => item.value === currentStatus)?.label || currentStatus;
+    }
+  });
+
+  // 状态修改表单提交
+  document.getElementById('status-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const returnId = document.getElementById('status-return-id').value;
+    const newStatus = document.getElementById('new-status').value;
+
+    fetch(`/api/returns/${returnId}/status?newStatus=${newStatus}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errData => {
+          throw new Error(errData.message || '修改失败');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      location.reload();
+      alert('修改成功！');
+    })
+    .catch(error => {
+      console.error('请求失败：', error);
+      alert('修改失败：' + error.message);
+    });
+  });
+
+  // 搜索功能
+  document.getElementById('search-button').addEventListener('click', function() {
+    const searchTerm = document.getElementById('search-input').value.trim();
+    if (searchTerm) {
+      fetch('/returns/search?orderNo=' + encodeURIComponent(searchTerm))
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('return-table-body').innerHTML = html;
+        })
+        .catch(error => {
+          console.error('搜索失败:', error);
+        });
+    }
+  });
+
+  // 查看全部
+  document.getElementById('search-all').addEventListener('click', function() {
+    window.location.href = '/returns';
+  });
+
+  // 关闭弹窗
+  document.querySelector('.status-close').addEventListener('click', function() {
+    document.getElementById('status-modal').style.display = 'none';
+  });
+
+  window.addEventListener('click', function(e) {
+    if (e.target === document.getElementById('status-modal')) {
+      document.getElementById('status-modal').style.display = 'none';
+    }
+  });
+</script>
+</body>
+</html>
