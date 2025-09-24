@@ -21,7 +21,8 @@
           <th>入库品种</th>
           <th>重量(斤)</th>
           <th>经办人</th>
-          <th>创建时间</th>
+          <th>入库单创建时间</th>
+          <th>入库时间</th>
           <th>状态</th>
           <th><div class="action-header" th:if="${session.currentUser.role != 3}">操作</div></th>
         </tr>
@@ -36,6 +37,7 @@
           <td th:text="${stock.quantity}"></td>
           <td th:text="${stock.operator_name}"></td>
           <td th:text="${stock.create_time}"></td>
+          <td th:text="${stock.update_time}"></td>
           <td th:text="${stock.stock_in_status.label}"></td>
           <td>
             <button class="status-btn" th:data-id="${stock.stock_id}" th:data-status="${stock.stock_in_status}" th:if="${session.currentUser.role != 3}">修改状态</button>
@@ -138,7 +140,7 @@
         })
         .catch(error => {
             console.error('请求失败：', error);
-            alert('修改失败：' + error.message);
+            alert('修改失败，请联系对应供应商申请售后');
         });
     });
 

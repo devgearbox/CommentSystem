@@ -24,7 +24,7 @@
             <i class="fas fa-file-alt"></i>
             <span>采购订单</span>
         </div>
-        <div class="menu-item" data-url="/stock">
+        <div class="menu-item" data-url="/stock" th:if="${session.currentUser.role != 3}">
             <i class="fas fa-truck"></i>
             <span>荔枝入库</span>
         </div>

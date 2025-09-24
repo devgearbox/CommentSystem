@@ -25,12 +25,14 @@ public class StockIn {
     private StockInStatus stock_in_status;
 
     private LocalDateTime create_time;
+    private LocalDateTime update_time;
     private String operator_name;
     private Integer operator_id;
 
     @PrePersist
     public void prePersist() {
         this.create_time = LocalDateTime.now();
+        this.update_time = LocalDateTime.now();
         this.stock_in_status = StockInStatus.pending;
     }
 

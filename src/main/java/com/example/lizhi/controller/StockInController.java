@@ -33,7 +33,7 @@ public class StockInController {
             StockIn updatedStock = stockInService.updateStatus(stockId, newStatus);
             return ResponseEntity.ok(updatedStock);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("修改失败：" + e.getMessage());
+            return ResponseEntity.badRequest().body("修改失败：商品已接收");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("服务器错误：" + e.getMessage());
         }

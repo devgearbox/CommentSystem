@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>支付成功 - 荔即批发</title>
+  <link rel="stylesheet" th:href="@{/css/font-awesome/all.min.css}">
+  <style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    .success-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        text-align: center;
+        max-width: 500px;
+        width: 100%;
+    }
+    .success-icon {
+        color: #28a745;
+        font-size: 64px;
+        margin-bottom: 20px;
+    }
+    h1 {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 28px;
+    }
+    .success-message {
+        color: #666;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+    .order-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 25px 0;
+        text-align: left;
+    }
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .info-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    .info-label {
+        color: #666;
+        font-weight: 500;
+    }
+    .info-value {
+        color: #333;
+        font-weight: 600;
+    }
+    .total-price {
+        font-size: 24px;
+        color: #e60012;
+        font-weight: 700;
+        margin: 15px 0;
+    }
+    .back-button {
+        background: #288352;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 20px;
+    }
+    .back-button:hover {
+        background: #1f6e45;
+    }
+    .payment-method-icon {
+        font-size: 20px;
+        margin-right: 8px;
+    }
+    .wechat-icon {
+        color: #07C160;
+    }
+    .alipay-icon {
+        color: #1677FF;
+    }
+  </style>
+</head>
+<body>
+<div class="success-container">
+  <i class="fas fa-check-circle success-icon"></i>
+  <h1>支付成功！</h1>
+  <p class="success-message">您的订单已支付成功，供应商将尽快为您安排发货</p>
+
+  <div class="order-info">
+    <div class="info-item">
+      <span class="info-label">订单编号：</span>
+      <span class="info-value" id="orderId"></span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">支付方式：</span>
+      <span class="info-value" id="paymentMethod"></span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">支付时间：</span>
+      <span class="info-value" id="paymentTime"></span>
+    </div>
+  </div>
+
+  <div class="total-price" id="totalPriceDisplay"></div>
+
+  <button class="back-button" onclick="goBackToWork()">
+    <i class="fas fa-arrow-left" style="margin-right: 8px;"></i>返回采购工作台
+  </button>
+</div>
+
+<script>
+  // 从URL参数中获取订单信息
+  function getQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+          orderId: params.get('orderId') || '202409050001',
+          totalPrice: params.get('totalPrice') || '0.00',
+          paymentMethod: params.get('paymentMethod') || '微信支付'
+      };
+  }
+
+  // 显示订单信息
+  function displayOrderInfo() {
+      const params = getQueryParams();
+
+      document.getElementById('orderId').textContent = params.orderId;
+      document.getElementById('totalPriceDisplay').textContent = `¥${params.totalPrice}`;
+
+      // 设置支付方式图标
+      const paymentMethodEl = document.getElementById('paymentMethod');
+      if (params.paymentMethod === '微信支付') {
+          paymentMethodEl.innerHTML = '<i class="fab fa-weixin payment-method-icon wechat-icon"></i> 微信支付';
+      } else {
+          paymentMethodEl.innerHTML = '<i class="fab fa-alipay payment-method-icon alipay-icon"></i> 支付宝支付';
+      }
+
+      // 显示当前时间作为支付时间
+      const now = new Date();
+      document.getElementById('paymentTime').textContent = now.toLocaleString('zh-CN');
+  }
+
+  // 返回工作台
+  function goBackToWork() {
+      window.location.href = '/work';
+  }
+
+  // 页面加载时显示订单信息
+  window.onload = displayOrderInfo;
+</script>
+</body>
+</html>

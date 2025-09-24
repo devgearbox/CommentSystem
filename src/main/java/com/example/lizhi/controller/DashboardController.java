@@ -25,4 +25,9 @@ public class DashboardController {
     public String introduction() {
         return "forward:/otherHtml/introduction.html";
     }
+
+    @GetMapping("/payment-success")
+    public String paymentSuccess() {
+        return "forward:/otherHtml/payment-success.html";
+    }
 }

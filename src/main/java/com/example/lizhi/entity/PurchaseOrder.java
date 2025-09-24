@@ -2,6 +2,8 @@ package com.example.lizhi.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -64,7 +66,13 @@ public class PurchaseOrder{
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_time")
+    @CreationTimestamp
     private Date createTime;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "update_time")
+    @UpdateTimestamp
+    private Date updateTime;
 
     @Column(name = "total_price")
     private BigDecimal totalPrice;
