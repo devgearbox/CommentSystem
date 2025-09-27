@@ -59,6 +59,11 @@
             <version>1.18.24</version> <!-- 版本可根据需求调整，建议使用最新稳定版 -->
             <scope>provided</scope> <!-- 编译时生效，运行时不需要 -->
         </dependency>
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-easysdk</artifactId>
+            <version>2.2.3</version>
+        </dependency>
     </dependencies>
 
     <build>

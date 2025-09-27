@@ -137,9 +137,9 @@
   function getQueryParams() {
       const params = new URLSearchParams(window.location.search);
       return {
-          orderId: params.get('orderId') || '202409050001',
-          totalPrice: params.get('totalPrice') || '0.00',
-          paymentMethod: params.get('paymentMethod') || '微信支付'
+          orderId: params.get('out_trade_no') || params.get('orderId') || '202409050001',
+          totalPrice: params.get('total_amount') || params.get('totalPrice') || '0.00',
+          paymentMethod: '支付宝支付' // 固定为支付宝支付
       };
   }
 

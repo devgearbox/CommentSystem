@@ -595,9 +595,6 @@
                         <div class="mb-3">
                             <div class="spec-title">支付方式</div>
                             <div class="spec-options">
-                                <div class="spec-option payment-option selected" data-payment="wechat">
-                                    <i class="fab fa-weixin" style="margin-right: 5px;"></i> 微信支付
-                                </div>
                                 <div class="spec-option payment-option" data-payment="alipay">
                                     <i class="fab fa-alipay" style="margin-right: 5px;"></i> 支付宝支付
                                 </div>
@@ -739,22 +736,17 @@ document.querySelectorAll('.payment-option').forEach(option => {
         document.getElementById('totalPrice').textContent = subtotal.toFixed(2);
     }
 
-    // 提交订单
     function submitOrder() {
         const varietyName = document.getElementById('modalVarietyName').textContent;
         const supplierName = document.getElementById('modalSupplierName').textContent;
         const weight = document.getElementById('modalWeight').textContent.replace('斤', '');
-
-        // 获取选中的支付方式
-        const selectedPayment = document.querySelector('.payment-option.selected').dataset.payment;
-        const paymentMethodName = selectedPayment === 'wechat' ? '微信支付' : '支付宝支付';
+        const totalPrice = document.getElementById('totalPrice').textContent;
 
         const requestData = {
             varietyName: varietyName,
             supplierName: supplierName,
             quantity: weight,
-            totalPrice: document.getElementById('totalPrice').textContent,
-            paymentMethod: selectedPayment
+            totalPrice: totalPrice
         };
 
         fetch('/work/submit', {
@@ -771,16 +763,9 @@ document.querySelectorAll('.payment-option').forEach(option => {
                 document.getElementById('orderConfirmModal').classList.remove('show');
                 document.body.style.overflow = '';
 
-                // 跳转到支付成功页面，传递订单信息
-                const queryParams = new URLSearchParams({
-                    orderId: data.orderId,
-                    totalPrice: document.getElementById('totalPrice').textContent,
-                    paymentMethod: paymentMethodName
-                }).toString();
-
-                window.location.href = `/payment-success?${queryParams}`;
+                // 发起支付宝支付
+                initiateAlipayPayment(data.orderId, totalPrice);
             } else {
-                // 处理错误情况
                 if (data.message && data.message.includes('库存不足')) {
                     alert('❌ ' + data.message + '\n\n请联系供应商：' + supplierName);
                 } else {
@@ -791,6 +776,69 @@ document.querySelectorAll('.payment-option').forEach(option => {
         .catch(error => {
             console.error('提交订单失败：', error);
             alert('订单提交失败，请稍后重试');
+        });
+    }
+
+        // 发起支付宝支付
+    function initiateAlipayPayment(orderId, totalAmount) {
+        console.log('=== 开始支付宝支付流程 ===');
+        console.log('订单ID:', orderId, '金额:', totalAmount);
+
+        const paymentRequest = {
+            orderId: orderId,
+            totalAmount: totalAmount
+        };
+
+        fetch('/payment/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(paymentRequest)
+        })
+        .then(response => {
+            console.log('响应状态:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP错误: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(htmlContent => {
+            console.log('收到响应内容, 长度:', htmlContent.length);
+
+            if (htmlContent.includes('alert(') || htmlContent.includes('错误')) {
+                // 显示错误信息
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                document.body.appendChild(tempDiv);
+            } else if (htmlContent.includes('punchout_form')) {
+                console.log('检测到支付宝支付表单');
+
+                // 使用新窗口打开支付页面
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(htmlContent);
+                newWindow.document.close();
+
+                // 同时也在当前页面尝试提交（兼容性）
+                try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = htmlContent;
+                    document.body.appendChild(tempDiv);
+                    const form = tempDiv.querySelector('form');
+                    if (form) {
+                        form.submit();
+                    }
+                } catch (e) {
+                    console.log('当前页面提交失败，已在新窗口打开:', e);
+                }
+            } else {
+                console.error('未知响应类型:', htmlContent.substring(0, 200));
+                alert('支付请求返回未知格式，请查看控制台');
+            }
+        })
+        .catch(error => {
+            console.error('支付请求异常:', error);
+            alert('支付请求失败: ' + error.message);
         });
     }
 </script>

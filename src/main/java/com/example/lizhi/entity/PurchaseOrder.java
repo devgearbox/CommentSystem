@@ -28,6 +28,7 @@ public class PurchaseOrder{
     private OrderStatus orderStatus;
     public enum OrderStatus {
         pending("待审核"),
+        paid("已支付"),
         shipping("待发货"),
         shipped("已发货"),
         received("已接收"),
@@ -79,5 +80,14 @@ public class PurchaseOrder{
 
     // 构造方法
     public PurchaseOrder() {
+    }
+    // 根据枚举值获取中文标签的静态方法
+    public static String getLabelByValue(String value) {
+        for (OrderStatus status : OrderStatus.values()) {
+            if (status.name().equals(value)) {
+                return status.getLabel();
+            }
+        }
+        return "未知状态";
     }
 }

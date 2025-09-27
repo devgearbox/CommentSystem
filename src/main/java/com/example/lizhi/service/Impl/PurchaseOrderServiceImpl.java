@@ -218,4 +218,58 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             throw new RuntimeException("商品不存在: " + varietyId);
         }
     }
+
+    // 验证订单是否可以进行支付
+
+    @Override
+    public boolean validateOrderForPayment(String orderId) {
+        try {
+            Integer id = Integer.parseInt(orderId);
+            Optional<PurchaseOrder> orderOpt = purchaseOrderRepository.findById(id);
+
+            if (orderOpt.isPresent()) {
+                PurchaseOrder order = orderOpt.get();
+                // 检查订单状态是否为待审核状态（允许支付）
+                return order.getOrderStatus() == PurchaseOrder.OrderStatus.pending;
+            }
+            return false;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    // 更新订单状态
+    @Override
+    public void updateOrderStatus(String orderId, String status) {
+        try {
+            Integer id = Integer.parseInt(orderId);
+            Optional<PurchaseOrder> orderOpt = purchaseOrderRepository.findById(id);
+
+            if (orderOpt.isPresent()) {
+                PurchaseOrder order = orderOpt.get();
+
+                // 将字符串状态转换为枚举
+                PurchaseOrder.OrderStatus newStatus = convertStringToOrderStatus(status);
+                order.setOrderStatus(newStatus);
+                purchaseOrderRepository.save(order);
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("无效的订单ID: " + orderId);
+        }
+    }
+
+    // 辅助方法：将字符串状态转换为枚举
+    private PurchaseOrder.OrderStatus convertStringToOrderStatus(String status) {
+        switch (status) {
+            case "已支付": return PurchaseOrder.OrderStatus.paid;
+            case "待审核": return PurchaseOrder.OrderStatus.pending;
+            case "待发货": return PurchaseOrder.OrderStatus.shipping;
+            case "已发货": return PurchaseOrder.OrderStatus.shipped;
+            case "已接收": return PurchaseOrder.OrderStatus.received;
+            case "已取消": return PurchaseOrder.OrderStatus.cancelled;
+            case "拒收": return PurchaseOrder.OrderStatus.rejected;
+            default: throw new IllegalArgumentException("未知的订单状态: " + status);
+        }
+    }
+
 }

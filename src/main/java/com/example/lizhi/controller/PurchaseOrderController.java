@@ -151,6 +151,7 @@ public class PurchaseOrderController {
             order.setSupplier(supplier);
             order.setUser(user);
             order.setLitchiVariety(variety); // 关联商品
+            order.setOrderStatus(PurchaseOrder.OrderStatus.pending); // 设置初始状态为待支付
 
             // 6.扣减库存
             purchaseOrderService.reduceStock(variety.getId(), quantity);

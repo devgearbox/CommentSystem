@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PurchaseOrderService {
-//    List<PurchaseOrder> getAllPurchaseOrders();
     List<PurchaseOrder> getAllPurchaseOrdersSupplierUser();
     List<PurchaseOrder> searchBySupplierName(String supplierName);
     void batchDelete(List<Integer> ids);
@@ -31,4 +30,8 @@ public interface PurchaseOrderService {
 
     // 新增：减少商品库存
     void reduceStock(Integer varietyId, BigDecimal quantity);
+
+    // 新增支付相关方法
+    boolean validateOrderForPayment(String orderId);
+    void updateOrderStatus(String orderId, String status);
 }
