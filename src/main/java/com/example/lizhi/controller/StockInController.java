@@ -3,6 +3,7 @@ package com.example.lizhi.controller;
 import com.example.lizhi.entity.StockIn;
 import com.example.lizhi.service.ReturnOrderService;
 import com.example.lizhi.service.StockInService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,9 +24,19 @@ public class StockInController {
     }
 
     @GetMapping("/stock")
-    public String getStockInPage(Model model) {
-        List<StockIn> stockRecords = stockInService.findAllStockIn();
-        model.addAttribute("stockRecords", stockRecords);
+    public String getStockInPage(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
+        Page<StockIn> stockRecordPage = stockInService.findAllStockIn(page, size);
+
+        model.addAttribute("stockRecords", stockRecordPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", stockRecordPage.getTotalPages());
+        model.addAttribute("totalItems", stockRecordPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
         return "stock";
     }
 

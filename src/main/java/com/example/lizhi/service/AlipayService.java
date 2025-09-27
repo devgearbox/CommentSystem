@@ -65,7 +65,7 @@ public class AlipayService {
     public boolean verifySignature(Map<String, String> params) throws Exception {
         Config config = new Config();
         config.protocol = "https";
-        config.gatewayHost = "openapi.alipaydev.com";
+        config.gatewayHost = "openapi-sandbox.dl.alipaydev.com";
         config.signType = "RSA2";
         config.appId = alipayConfig.getAppId();
         config.merchantPrivateKey = alipayConfig.getPrivateKey();

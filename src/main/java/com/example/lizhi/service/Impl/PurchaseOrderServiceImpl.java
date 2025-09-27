@@ -8,6 +8,9 @@ import com.example.lizhi.service.LitchiVarietyService;
 import com.example.lizhi.service.PurchaseOrderService;
 import com.example.lizhi.service.StockInService;
 import com.example.lizhi.service.SupplierService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -270,6 +273,43 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             case "拒收": return PurchaseOrder.OrderStatus.rejected;
             default: throw new IllegalArgumentException("未知的订单状态: " + status);
         }
+    }
+
+    @Override
+    public Page<PurchaseOrder> getValidPurchaseOrdersSupplierUser(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        // 需要创建对应的分页查询方法
+        return purchaseOrderRepository.findAllValidWithSupplierUser(pageable);
+    }
+
+    @Override
+    public Page<PurchaseOrder> getOrdersByUserId(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        List<Integer> supplierIds = orderRepository.findSupplierIdsByUserId(userId);
+
+        if (supplierIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        return purchaseOrderRepository.findValidOrdersBySupplierIds(supplierIds, pageable);
+    }
+
+    @Override
+    public Page<PurchaseOrder> searchByOrderNo(String orderNo, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return purchaseOrderRepository.findByOrderNoContaining(orderNo, pageable);
+    }
+
+    @Override
+    public Page<PurchaseOrder> searchOrdersByOrderNoAndUserId(String orderNo, Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        List<Integer> supplierIds = orderRepository.findSupplierIdsByUserId(userId);
+
+        if (supplierIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        return purchaseOrderRepository.findByOrderNoAndSupplierIds(orderNo, supplierIds, pageable);
     }
 
 }

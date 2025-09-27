@@ -10,6 +10,7 @@ import com.example.lizhi.service.PurchaseOrderService;
 import com.example.lizhi.service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // 修正：使用 Spring Data 的 Page
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -35,44 +36,61 @@ public class PurchaseOrderController {
     private LitchiVarietyService litchiVarietyService;
 
     @GetMapping("/orders")
-    public String listPurchaseOrder(Model model, HttpSession session) {
+    public String listPurchaseOrder(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model,
+            HttpSession session) {
+
         // 1. 获取当前登录用户
         User currentUser = (User) session.getAttribute("currentUser");
-        List<PurchaseOrder> purchaseOrders;
+        Page<PurchaseOrder> purchaseOrderPage;
 
         // 2. 按角色筛选数据
         if (currentUser != null && currentUser.getRole() == 3) {
-            // 供应商角色：只显示自己关联的供应商订单
-            purchaseOrders = orderService.getOrdersByUserId(currentUser.getId());
+            // 供应商角色：只显示自己关联的供应商订单（分页）
+            purchaseOrderPage = orderService.getOrdersByUserId(currentUser.getId(), page, size);
         } else {
-            // 其他角色：显示全部未删除的订单（原有逻辑）
-            purchaseOrders = orderService.getValidPurchaseOrdersSupplierUser();
+            // 其他角色：显示全部未删除的订单（分页）
+            purchaseOrderPage = orderService.getValidPurchaseOrdersSupplierUser(page, size);
         }
 
         // 3. 传递数据到前端
-        model.addAttribute("purchaseOrders", purchaseOrders);
+        model.addAttribute("purchaseOrders", purchaseOrderPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", purchaseOrderPage.getTotalPages());
+        model.addAttribute("totalItems", purchaseOrderPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
         return "orders";
     }
 
     // 修改搜索接口参数和逻辑
     @GetMapping("/orders/search")
     public String searchOrders(
-            @RequestParam String orderNo,  // 参数名从supplierName改为orderNo
+            @RequestParam String orderNo,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
             Model model,
             HttpSession session
     ) {
         User currentUser = (User) session.getAttribute("currentUser");
-        List<PurchaseOrder> orders;
+        Page<PurchaseOrder> ordersPage;
 
         if (currentUser != null && currentUser.getRole() == 3) {
-            // 供应商角色：搜索自己关联的订单（按订单编号）
-            orders = orderService.searchOrdersByOrderNoAndUserId(orderNo, currentUser.getId());
+            // 供应商角色：搜索自己关联的订单（按订单编号，分页）
+            ordersPage = orderService.searchOrdersByOrderNoAndUserId(orderNo, currentUser.getId(), page, size);
         } else {
-            // 其他角色：按订单编号搜索全部订单
-            orders = orderService.searchByOrderNo(orderNo);
+            // 其他角色：按订单编号搜索全部订单（分页）
+            ordersPage = orderService.searchByOrderNo(orderNo, page, size);
         }
 
-        model.addAttribute("purchaseOrders", orders);
+        model.addAttribute("purchaseOrders", ordersPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", ordersPage.getTotalPages());
+        model.addAttribute("totalItems", ordersPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
         return "orders :: #order-table-body";
     }
 

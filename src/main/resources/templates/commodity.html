@@ -759,12 +759,11 @@ document.querySelectorAll('.payment-option').forEach(option => {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // 关闭弹窗
-                document.getElementById('orderConfirmModal').classList.remove('show');
-                document.body.style.overflow = '';
+                console.log('订单提交成功，开始支付流程');
 
-                // 发起支付宝支付
+                // 发起支付宝支付（在新窗口）
                 initiateAlipayPayment(data.orderId, totalPrice);
+
             } else {
                 if (data.message && data.message.includes('库存不足')) {
                     alert('❌ ' + data.message + '\n\n请联系供应商：' + supplierName);
@@ -780,13 +779,15 @@ document.querySelectorAll('.payment-option').forEach(option => {
     }
 
         // 发起支付宝支付
+    // 发起支付宝支付（修复版）- 在新窗口打开支付页面
     function initiateAlipayPayment(orderId, totalAmount) {
         console.log('=== 开始支付宝支付流程 ===');
         console.log('订单ID:', orderId, '金额:', totalAmount);
 
         const paymentRequest = {
             orderId: orderId,
-            totalAmount: totalAmount
+            totalAmount: totalAmount,
+            subject: '荔枝批发订单-' + orderId
         };
 
         fetch('/payment/create', {
@@ -808,29 +809,29 @@ document.querySelectorAll('.payment-option').forEach(option => {
 
             if (htmlContent.includes('alert(') || htmlContent.includes('错误')) {
                 // 显示错误信息
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = htmlContent;
-                document.body.appendChild(tempDiv);
-            } else if (htmlContent.includes('punchout_form')) {
-                console.log('检测到支付宝支付表单');
+                alert('支付请求失败，请查看控制台信息');
+                console.error('支付错误:', htmlContent);
+            } else if (htmlContent.includes('punchout_form') || htmlContent.includes('alipay')) {
+                console.log('检测到支付宝支付表单，在新窗口打开');
 
-                // 使用新窗口打开支付页面
-                const newWindow = window.open('', '_blank');
+                // 在新窗口打开支付页面
+                const newWindow = window.open('', '_blank', 'width=800,height=600');
+
+                // 写入支付宝支付表单
                 newWindow.document.write(htmlContent);
                 newWindow.document.close();
 
-                // 同时也在当前页面尝试提交（兼容性）
-                try {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = htmlContent;
-                    document.body.appendChild(tempDiv);
-                    const form = tempDiv.querySelector('form');
+                // 自动提交表单（支付宝要求）
+                setTimeout(() => {
+                    const form = newWindow.document.querySelector('form');
                     if (form) {
                         form.submit();
                     }
-                } catch (e) {
-                    console.log('当前页面提交失败，已在新窗口打开:', e);
-                }
+                }, 100);
+
+                // 关闭当前页面的弹窗并刷新页面
+                closeModalAndRefresh();
+
             } else {
                 console.error('未知响应类型:', htmlContent.substring(0, 200));
                 alert('支付请求返回未知格式，请查看控制台');
@@ -839,7 +840,24 @@ document.querySelectorAll('.payment-option').forEach(option => {
         .catch(error => {
             console.error('支付请求异常:', error);
             alert('支付请求失败: ' + error.message);
+            // 即使失败也要关闭弹窗
+            closeModalAndRefresh();
         });
+    }
+
+    // 关闭弹窗并刷新页面
+    function closeModalAndRefresh() {
+        // 关闭订单确认弹窗
+        const modal = document.getElementById('orderConfirmModal');
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // 延迟2秒后刷新页面，确保用户看到操作完成
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
     }
 </script>
 </body>

@@ -2,6 +2,7 @@ package com.example.lizhi.controller;
 
 import com.example.lizhi.entity.ReturnOrder;
 import com.example.lizhi.service.ReturnOrderService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,9 +21,19 @@ public class ReturnOrderController {
     }
 
     @GetMapping("/returns")
-    public String getReturnOrdersPage(Model model) {
-        List<ReturnOrder> returnOrders = returnOrderService.getAllReturnOrders();
-        model.addAttribute("returnOrders", returnOrders);
+    public String getReturnOrdersPage(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
+        Page<ReturnOrder> returnOrderPage = returnOrderService.getAllReturnOrders(page, size);
+
+        model.addAttribute("returnOrders", returnOrderPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", returnOrderPage.getTotalPages());
+        model.addAttribute("totalItems", returnOrderPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
         return "returns";
     }
 
@@ -60,9 +71,20 @@ public class ReturnOrderController {
     }
 
     @GetMapping("/returns/search")
-    public String searchReturns(@RequestParam String orderNo, Model model) {
-        List<ReturnOrder> returnOrders = returnOrderService.searchByOrderNo(orderNo);
-        model.addAttribute("returnOrders", returnOrders);
+    public String searchReturns(
+            @RequestParam String orderNo,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
+        Page<ReturnOrder> returnOrderPage = returnOrderService.searchByOrderNo(orderNo, page, size);
+
+        model.addAttribute("returnOrders", returnOrderPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", returnOrderPage.getTotalPages());
+        model.addAttribute("totalItems", returnOrderPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
         return "returns :: #return-table-body";
     }
 }

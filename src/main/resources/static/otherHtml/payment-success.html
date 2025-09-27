@@ -41,7 +41,7 @@
     }
     .success-message {
         color: #666;
-        margin-bottom: 25px;
+        margin-bottom: 5px;
         line-height: 1.6;
     }
     .order-info {
@@ -109,6 +109,7 @@
   <i class="fas fa-check-circle success-icon"></i>
   <h1>支付成功！</h1>
   <p class="success-message">您的订单已支付成功，供应商将尽快为您安排发货</p>
+  <p class="success-message">可关闭当前页面，继续您的采购之旅！</p>
 
   <div class="order-info">
     <div class="info-item">
@@ -126,10 +127,6 @@
   </div>
 
   <div class="total-price" id="totalPriceDisplay"></div>
-
-  <button class="back-button" onclick="goBackToWork()">
-    <i class="fas fa-arrow-left" style="margin-right: 8px;"></i>返回采购工作台
-  </button>
 </div>
 
 <script>
@@ -139,7 +136,7 @@
       return {
           orderId: params.get('out_trade_no') || params.get('orderId') || '202409050001',
           totalPrice: params.get('total_amount') || params.get('totalPrice') || '0.00',
-          paymentMethod: '支付宝支付' // 固定为支付宝支付
+          paymentMethod: '支付宝' // 固定为支付宝支付
       };
   }
 

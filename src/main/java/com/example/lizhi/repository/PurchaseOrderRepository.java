@@ -1,6 +1,8 @@
 package com.example.lizhi.repository;
 
 import com.example.lizhi.entity.PurchaseOrder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -71,4 +73,17 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, In
             "where po.orderNo = :orderNo " +  // 精确匹配
             "and po.isDeleted = false")
     List<PurchaseOrder> findByOrderNoExact(@Param("orderNo") String orderNo);  // 方法名也可改为更清晰的名称
+
+    // 添加分页查询方法
+    @Query("select po from PurchaseOrder po left join fetch po.supplier left join fetch po.user where po.isDeleted = false")
+    Page<PurchaseOrder> findAllValidWithSupplierUser(Pageable pageable);
+
+    @Query("select po from PurchaseOrder po left join fetch po.supplier left join fetch po.user where po.isDeleted = false and po.supplier.supplier_id in :supplierIds")
+    Page<PurchaseOrder> findValidOrdersBySupplierIds(@Param("supplierIds") List<Integer> supplierIds, Pageable pageable);
+
+    @Query("select po from PurchaseOrder po left join fetch po.supplier left join fetch po.user where po.orderNo like %:orderNo% and po.isDeleted = false")
+    Page<PurchaseOrder> findByOrderNoContaining(@Param("orderNo") String orderNo, Pageable pageable);
+
+    @Query("select po from PurchaseOrder po left join fetch po.supplier left join fetch po.user where po.orderNo like %:orderNo% and po.isDeleted = false and po.supplier.supplier_id in :supplierIds")
+    Page<PurchaseOrder> findByOrderNoAndSupplierIds(@Param("orderNo") String orderNo, @Param("supplierIds") List<Integer> supplierIds, Pageable pageable);
 }

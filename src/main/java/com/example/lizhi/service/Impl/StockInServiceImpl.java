@@ -11,6 +11,9 @@ import com.example.lizhi.service.ReturnOrderService;
 import com.example.lizhi.service.StockInService;
 import com.example.lizhi.service.SupplierService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -128,5 +131,11 @@ public class StockInServiceImpl implements StockInService {
         }
 
         return updatedStock;
+    }
+
+    @Override
+    public Page<StockIn> findAllStockIn(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return stockInRepository.findAll(pageable);
     }
 }

@@ -5,6 +5,9 @@ import com.example.lizhi.entity.ReturnOrder;
 import com.example.lizhi.repository.PurchaseOrderRepository;
 import com.example.lizhi.repository.ReturnOrderRepository;
 import com.example.lizhi.service.ReturnOrderService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,5 +86,19 @@ public class ReturnOrderServiceImpl implements ReturnOrderService {
     @Override
     public List<ReturnOrder> searchByOrderNo(String orderNo) {
         return returnOrderRepository.findByOrderNo(orderNo);
+    }
+
+    @Override
+    public Page<ReturnOrder> getAllReturnOrders(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        // 需要创建对应的分页查询方法（需在ReturnOrderRepository中添加）
+        return returnOrderRepository.findAllByOrderByCreateTimeDesc(pageable);
+    }
+
+    @Override
+    public Page<ReturnOrder> searchByOrderNo(String orderNo, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        // 需要创建对应的分页查询方法（需在ReturnOrderRepository中添加）
+        return returnOrderRepository.findByOrderNoContaining(orderNo, pageable);
     }
 }

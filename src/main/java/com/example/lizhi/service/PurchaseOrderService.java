@@ -1,6 +1,8 @@
 package com.example.lizhi.service;
 
 import com.example.lizhi.entity.PurchaseOrder;
+import org.springframework.data.domain.Page;
+
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -34,4 +36,9 @@ public interface PurchaseOrderService {
     // 新增支付相关方法
     boolean validateOrderForPayment(String orderId);
     void updateOrderStatus(String orderId, String status);
+
+    Page<PurchaseOrder> getValidPurchaseOrdersSupplierUser(int page, int size);
+    Page<PurchaseOrder> getOrdersByUserId(Long userId, int page, int size);
+    Page<PurchaseOrder> searchByOrderNo(String orderNo, int page, int size);
+    Page<PurchaseOrder> searchOrdersByOrderNoAndUserId(String orderNo, Long userId, int page, int size);
 }
