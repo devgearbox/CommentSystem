@@ -138,4 +138,33 @@ public class StockInServiceImpl implements StockInService {
         Pageable pageable = PageRequest.of(page - 1, size);
         return stockInRepository.findAll(pageable);
     }
+
+    @Override
+    public List<StockIn> searchByOrderNo(String orderNo) {
+        return stockInRepository.findByOrderNoContaining(orderNo);
+    }
+
+    @Override
+    public Page<StockIn> searchByOrderNo(String orderNo, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return stockInRepository.findByOrderNoContaining(orderNo, pageable);
+    }
+
+    @Override
+    @Transactional
+    public void batchDelete(List<Integer> ids) {
+        List<StockIn> stockRecords = stockInRepository.findAllById(ids);
+
+        // 检查状态，只有特定状态可以删除
+        for (StockIn stock : stockRecords) {
+            if (stock.getStock_in_status() == StockIn.StockInStatus.completed) {
+                throw new IllegalArgumentException("入库单 [" + stock.getOrderNo() + "] 状态为【已入库】，无法删除");
+            }
+            if (stock.getStock_in_status() == StockIn.StockInStatus.rejected) {
+                throw new IllegalArgumentException("入库单 [" + stock.getOrderNo() + "] 状态为【拒收】，无法删除");
+            }
+        }
+
+        stockInRepository.deleteAll(stockRecords);
+    }
 }

@@ -595,7 +595,7 @@
                         <div class="mb-3">
                             <div class="spec-title">支付方式</div>
                             <div class="spec-options">
-                                <div class="spec-option payment-option" data-payment="alipay">
+                                <div class="spec-option payment-option selected" data-payment="alipay">
                                     <i class="fab fa-alipay" style="margin-right: 5px;"></i> 支付宝支付
                                 </div>
                             </div>
@@ -616,16 +616,6 @@
 </div>
 
 <script>
-    // 监听支付方式选择
-document.querySelectorAll('.payment-option').forEach(option => {
-    option.addEventListener('click', function() {
-        document.querySelectorAll('.payment-option').forEach(opt => {
-            opt.classList.remove('selected');
-        });
-        this.classList.add('selected');
-    });
-});
-
     // 本地弹窗实现
     document.addEventListener('DOMContentLoaded', function() {
         // 打开弹窗
@@ -779,7 +769,6 @@ document.querySelectorAll('.payment-option').forEach(option => {
     }
 
         // 发起支付宝支付
-    // 发起支付宝支付（修复版）- 在新窗口打开支付页面
     function initiateAlipayPayment(orderId, totalAmount) {
         console.log('=== 开始支付宝支付流程 ===');
         console.log('订单ID:', orderId, '金额:', totalAmount);

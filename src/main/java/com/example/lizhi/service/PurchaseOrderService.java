@@ -41,4 +41,10 @@ public interface PurchaseOrderService {
     Page<PurchaseOrder> getOrdersByUserId(Long userId, int page, int size);
     Page<PurchaseOrder> searchByOrderNo(String orderNo, int page, int size);
     Page<PurchaseOrder> searchOrdersByOrderNoAndUserId(String orderNo, Long userId, int page, int size);
+    Page<PurchaseOrder> getOrdersByPurchaserId(Long purchaserId, int page, int size);
+    // 新增：按订单编号和采购人ID搜索（分页）
+    Page<PurchaseOrder> searchOrdersByOrderNoAndPurchaserId(String orderNo, Long purchaserId, int page, int size);
+
+    // 新增：按订单编号和采购人ID搜索（非分页）
+    List<PurchaseOrder> searchOrdersByOrderNoAndPurchaserId(String orderNo, Long purchaserId);
 }

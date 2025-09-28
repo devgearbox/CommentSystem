@@ -101,4 +101,22 @@ public class ReturnOrderServiceImpl implements ReturnOrderService {
         // 需要创建对应的分页查询方法（需在ReturnOrderRepository中添加）
         return returnOrderRepository.findByOrderNoContaining(orderNo, pageable);
     }
+
+    @Override
+    @Transactional
+    public void batchDelete(List<Integer> ids) {
+        List<ReturnOrder> returnOrders = returnOrderRepository.findAllById(ids);
+
+        // 检查状态，只有特定状态可以删除
+        for (ReturnOrder returnOrder : returnOrders) {
+            if (returnOrder.getReturn_status() == ReturnOrder.ReturnStatus.completed) {
+                throw new IllegalArgumentException("退货单 [" + returnOrder.getReturnNo() + "] 状态为【已完成】，无法删除");
+            }
+            if (returnOrder.getReturn_status() == ReturnOrder.ReturnStatus.refunded) {
+                throw new IllegalArgumentException("退货单 [" + returnOrder.getReturnNo() + "] 状态为【已退款】，无法删除");
+            }
+        }
+
+        returnOrderRepository.deleteAll(returnOrders);
+    }
 }

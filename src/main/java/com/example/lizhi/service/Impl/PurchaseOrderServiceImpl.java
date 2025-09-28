@@ -131,7 +131,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         int oldIndex = Arrays.asList(PurchaseOrder.OrderStatus.values()).indexOf(oldStatus);
         int newIndex = Arrays.asList(PurchaseOrder.OrderStatus.values()).indexOf(newStatusEnum);
 
-        if (newIndex < oldIndex || newIndex >= 3) {
+        if (newIndex < oldIndex) {
             throw new RuntimeException("非法状态流转：" + oldStatus.getLabel() + " -> " + newStatusEnum.getLabel());
         }
 
@@ -310,6 +310,22 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         }
 
         return purchaseOrderRepository.findByOrderNoAndSupplierIds(orderNo, supplierIds, pageable);
+    }
+    @Override
+    public Page<PurchaseOrder> getOrdersByPurchaserId(Long purchaserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return purchaseOrderRepository.findByUserIdAndIsDeletedFalse(purchaserId, pageable);
+    }
+
+    @Override
+    public Page<PurchaseOrder> searchOrdersByOrderNoAndPurchaserId(String orderNo, Long purchaserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return purchaseOrderRepository.findByOrderNoAndUserId(orderNo, purchaserId, pageable);
+    }
+
+    @Override
+    public List<PurchaseOrder> searchOrdersByOrderNoAndPurchaserId(String orderNo, Long purchaserId) {
+        return purchaseOrderRepository.findByOrderNoAndUserId(orderNo, purchaserId);
     }
 
 }

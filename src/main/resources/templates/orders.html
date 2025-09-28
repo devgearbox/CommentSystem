@@ -81,27 +81,27 @@
 
             <!-- 上一页 -->
             <button th:if="${currentPage > 1}"
-                    onclick="goToPage([[${currentPage - 1}]])"
+                    th:onclick="'goToPage(' + (${currentPage - 1}) + ')'"
                     class="page-btn prev-page">上一页</button>
 
             <!-- 页码 -->
             <span th:each="page : ${#numbers.sequence(1, totalPages)}">
-            <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
-                    th:classappend="${page == currentPage} ? 'active' : ''"
-                    onclick="goToPage([[${page}]])"
-                    class="page-btn">
-                [[${page}]]
-            </button>
-        </span>
+        <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
+                th:classappend="${page == currentPage} ? 'active' : ''"
+                th:onclick="'goToPage(' + ${page} + ')'"
+                class="page-btn">
+            [[${page}]]
+        </button>
+    </span>
 
             <!-- 下一页 -->
             <button th:if="${currentPage < totalPages}"
-                    onclick="goToPage([[${currentPage + 1}]])"
+                    th:onclick="'goToPage(' + (${currentPage + 1}) + ')'"
                     class="page-btn next-page">下一页</button>
 
             <!-- 末页 -->
             <button th:if="${currentPage < totalPages}"
-                    onclick="goToPage([[${totalPages}]])"
+                    th:onclick="'goToPage(' + ${totalPages} + ')'"
                     class="page-btn last-page">末页</button>
 
             <!-- 页面大小选择 -->

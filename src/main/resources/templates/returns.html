@@ -16,14 +16,19 @@
       <input type="text" id="search-input" placeholder="输入订单编号...">
       <button id="search-button">搜索</button>
     </div>
+    <button id="confirm-delete-return" style="display: none;" class="view-del">确认删除</button>
+    <button id="cancel-delete-return" style="display: none;" class="view-all">取消</button>
+    <button id="del-return" class="view-del" th:if="${session.currentUser.role != 2}">删除退货记录</button>
     <button class="view-all" id="search-all">查看全部</button>
   </div>
 
   <table>
     <thead>
     <tr>
+      <th style="display: none">
+        <input type="checkbox" id="select-all-return">
+      </th>
       <th>退货单号</th>
-<!--      <th>订单编号</th>-->
       <th>品种</th>
       <th>数量(斤)</th>
       <th>退款金额</th>
@@ -37,8 +42,10 @@
     </thead>
     <tbody id="return-table-body">
     <tr th:each="returnOrder : ${returnOrders}">
+      <td style="display: none">
+        <input type="checkbox" class="return-check" th:data-id="${returnOrder.return_id}">
+      </td>
       <td th:text="${returnOrder.returnNo}"></td>
-<!--      <td th:text="${returnOrder.orderNo}"></td>-->
       <td th:text="${returnOrder.litchi_variety}"></td>
       <td th:text="${returnOrder.quantity}"></td>
       <td th:text="${returnOrder.refundAmount}"></td>
@@ -57,7 +64,7 @@
     </tbody>
   </table>
 
-  <!--  分页功能-->
+  <!-- 分页功能 -->
   <div class="pagination-container">
     <div class="pagination-info">
       共 <span th:text="${totalItems}">0</span> 条记录，
@@ -72,27 +79,27 @@
 
       <!-- 上一页 -->
       <button th:if="${currentPage > 1}"
-              onclick="goToPage([[${currentPage - 1}]])"
+              th:onclick="'goToPage(' + (${currentPage - 1}) + ')'"
               class="page-btn prev-page">上一页</button>
 
       <!-- 页码 -->
       <span th:each="page : ${#numbers.sequence(1, totalPages)}">
-            <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
-                    th:classappend="${page == currentPage} ? 'active' : ''"
-                    onclick="goToPage([[${page}]])"
-                    class="page-btn">
-                [[${page}]]
-            </button>
-        </span>
+        <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
+                th:classappend="${page == currentPage} ? 'active' : ''"
+                th:onclick="'goToPage(' + ${page} + ')'"
+                class="page-btn">
+            [[${page}]]
+        </button>
+      </span>
 
       <!-- 下一页 -->
       <button th:if="${currentPage < totalPages}"
-              onclick="goToPage([[${currentPage + 1}]])"
+              th:onclick="'goToPage(' + (${currentPage + 1}) + ')'"
               class="page-btn next-page">下一页</button>
 
       <!-- 末页 -->
       <button th:if="${currentPage < totalPages}"
-              onclick="goToPage([[${totalPages}]])"
+              th:onclick="'goToPage(' + ${totalPages} + ')'"
               class="page-btn last-page">末页</button>
 
       <!-- 页面大小选择 -->
@@ -138,6 +145,132 @@
     { value: 'rejected', label: '已拒绝' }
   ];
 
+  // 批量删除功能
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchButton = document.getElementById('search-button');
+    const searchAllButton = document.getElementById('search-all');
+    const searchInput = document.getElementById('search-input');
+
+    const batchDeleteBtn = document.getElementById('del-return');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-return');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-return');
+    const selectAllReturn = document.getElementById('select-all-return');
+
+    let isSelectVisible = false;
+
+    // 搜索功能
+    searchButton.addEventListener('click', function () {
+      const searchTerm = searchInput.value.trim();
+      if (searchTerm) {
+        fetch('/returns/search?orderNo=' + encodeURIComponent(searchTerm))
+          .then(response => response.text())
+          .then(html => {
+            document.getElementById('return-table-body').innerHTML = html;
+            resetBatchDeleteState();
+            bindStatusButtons();
+          })
+          .catch(error => {
+            console.error('搜索失败:', error);
+          });
+      }
+    });
+
+    // 查看全部
+    searchAllButton.addEventListener('click', function () {
+      window.location.href = '/returns';
+    });
+
+    // 批量删除功能
+    if (batchDeleteBtn) {
+      batchDeleteBtn.addEventListener('click', () => {
+        if (!isSelectVisible) {
+          isSelectVisible = true;
+          const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
+          selectColumns.forEach(column => {
+            column.style.display = 'table-cell';
+          });
+          if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'inline-block';
+          if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'inline-block';
+          updateReturnChecks();
+        }
+      });
+    }
+
+    if (cancelDeleteBtn) {
+      cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);
+    }
+
+    if (selectAllReturn) {
+      selectAllReturn.addEventListener('change', () => {
+        const returnChecks = document.querySelectorAll('.return-check');
+        returnChecks.forEach(check => check.checked = selectAllReturn.checked);
+      });
+    }
+
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.addEventListener('click', async function () {
+        const selectedIds = [];
+        document.querySelectorAll('.return-check').forEach(check => {
+          if (check.checked) selectedIds.push(parseInt(check.dataset.id));
+        });
+
+        if (selectedIds.length === 0) {
+          alert('请选择要删除的退货记录');
+          return;
+        }
+
+        try {
+          const response = await fetch('/returns/delete/batch', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: selectedIds })
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            alert('批量删除退货记录成功');
+            window.location.reload();
+          } else {
+            alert('删除失败: ' + (result.message || '未知错误'));
+          }
+        } catch (error) {
+          console.error('删除请求失败:', error);
+          alert('网络错误，删除失败');
+        }
+      });
+    }
+
+    function updateReturnChecks() {
+      const returnChecks = document.querySelectorAll('.return-check');
+      returnChecks.forEach(check => {
+        check.removeEventListener('change', handleReturnCheckChange);
+        check.addEventListener('change', handleReturnCheckChange);
+      });
+    }
+
+    function handleReturnCheckChange() {
+      const allChecks = document.querySelectorAll('.return-check');
+      if (selectAllReturn) {
+        selectAllReturn.checked = Array.from(allChecks).every(cb => cb.checked);
+      }
+    }
+
+    function resetBatchDeleteState() {
+      isSelectVisible = false;
+      const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
+      selectColumns.forEach(column => {
+        column.style.display = 'none';
+      });
+      if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'none';
+      if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'none';
+      if (selectAllReturn) selectAllReturn.checked = false;
+      document.querySelectorAll('.return-check').forEach(check => check.checked = false);
+    }
+
+    // 初始绑定状态按钮事件
+    bindStatusButtons();
+  });
+
   function renderReturnStatusOptions(currentStatus) {
     const select = document.getElementById('new-status');
     select.innerHTML = '';
@@ -151,19 +284,20 @@
     });
   }
 
-  // 绑定状态修改按钮
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('status-btn')) {
-      const returnId = e.target.getAttribute('data-id');
-      const currentStatus = e.target.getAttribute('data-status');
+  function bindStatusButtons() {
+    document.querySelectorAll('.status-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const returnId = this.getAttribute('data-id');
+        const currentStatus = this.getAttribute('data-status');
 
-      renderReturnStatusOptions(currentStatus);
-      document.getElementById('status-modal').style.display = 'block';
-      document.getElementById('status-return-id').value = returnId;
-      document.getElementById('current-status').textContent =
-        RETURN_STATUS_FLOW.find(item => item.value === currentStatus)?.label || currentStatus;
-    }
-  });
+        renderReturnStatusOptions(currentStatus);
+        document.getElementById('status-modal').style.display = 'block';
+        document.getElementById('status-return-id').value = returnId;
+        document.getElementById('current-status').textContent =
+          RETURN_STATUS_FLOW.find(item => item.value === currentStatus)?.label || currentStatus;
+      });
+    });
+  }
 
   // 状态修改表单提交
   document.getElementById('status-form').addEventListener('submit', function(e) {
@@ -193,26 +327,6 @@
     });
   });
 
-  // 搜索功能
-  document.getElementById('search-button').addEventListener('click', function() {
-    const searchTerm = document.getElementById('search-input').value.trim();
-    if (searchTerm) {
-      fetch('/returns/search?orderNo=' + encodeURIComponent(searchTerm))
-        .then(response => response.text())
-        .then(html => {
-          document.getElementById('return-table-body').innerHTML = html;
-        })
-        .catch(error => {
-          console.error('搜索失败:', error);
-        });
-    }
-  });
-
-  // 查看全部
-  document.getElementById('search-all').addEventListener('click', function() {
-    window.location.href = '/returns';
-  });
-
   // 关闭弹窗
   document.querySelector('.status-close').addEventListener('click', function() {
     document.getElementById('status-modal').style.display = 'none';
@@ -225,18 +339,18 @@
   });
 
   // 分页功能
-function goToPage(page) {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('page', page);
-    window.location.href = window.location.pathname + '?' + urlParams.toString();
-}
+  function goToPage(page) {
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.set('page', page);
+      window.location.href = window.location.pathname + '?' + urlParams.toString();
+  }
 
-function changePageSize(size) {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('size', size);
-    urlParams.set('page', '1'); // 重置到第一页
-    window.location.href = window.location.pathname + '?' + urlParams.toString();
-}
+  function changePageSize(size) {
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.set('size', size);
+      urlParams.set('page', '1'); // 重置到第一页
+      window.location.href = window.location.pathname + '?' + urlParams.toString();
+  }
 </script>
 </body>
 </html>

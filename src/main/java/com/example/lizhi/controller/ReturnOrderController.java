@@ -87,4 +87,27 @@ public class ReturnOrderController {
 
         return "returns :: #return-table-body";
     }
+
+    //批量删除退货单
+    @DeleteMapping("/returns/delete/batch")
+    public ResponseEntity<Map<String, Object>> batchDeleteReturns(@RequestBody Map<String, List<Integer>> request) {
+        List<Integer> ids = request.get("ids");
+        try {
+            returnOrderService.batchDelete(ids);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "批量删除成功"
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "系统错误：" + e.getMessage()
+            ));
+        }
+    }
 }

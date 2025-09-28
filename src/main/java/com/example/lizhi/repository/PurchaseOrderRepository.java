@@ -86,4 +86,32 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, In
 
     @Query("select po from PurchaseOrder po left join fetch po.supplier left join fetch po.user where po.orderNo like %:orderNo% and po.isDeleted = false and po.supplier.supplier_id in :supplierIds")
     Page<PurchaseOrder> findByOrderNoAndSupplierIds(@Param("orderNo") String orderNo, @Param("supplierIds") List<Integer> supplierIds, Pageable pageable);
+
+    @Query("select po from PurchaseOrder po " +
+            "left join fetch po.supplier " +
+            "left join fetch po.user " +
+            "where po.isDeleted = false " +
+            "and po.user.id = :userId")
+    Page<PurchaseOrder> findByUserIdAndIsDeletedFalse(@Param("userId") Long userId, Pageable pageable);
+
+    // 新增：按订单编号和用户ID搜索（分页）
+    @Query("select po from PurchaseOrder po " +
+            "left join fetch po.supplier " +
+            "left join fetch po.user " +
+            "where po.orderNo like %:orderNo% " +
+            "and po.isDeleted = false " +
+            "and po.user.id = :userId")
+    Page<PurchaseOrder> findByOrderNoAndUserId(@Param("orderNo") String orderNo,
+                                               @Param("userId") Long userId,
+                                               Pageable pageable);
+
+    // 新增：按订单编号和用户ID搜索（非分页）
+    @Query("select po from PurchaseOrder po " +
+            "left join fetch po.supplier " +
+            "left join fetch po.user " +
+            "where po.orderNo like %:orderNo% " +
+            "and po.isDeleted = false " +
+            "and po.user.id = :userId")
+    List<PurchaseOrder> findByOrderNoAndUserId(@Param("orderNo") String orderNo,
+                                               @Param("userId") Long userId);
 }

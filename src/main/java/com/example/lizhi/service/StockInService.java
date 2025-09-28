@@ -12,4 +12,8 @@ public interface StockInService {
     List<StockIn> findAllStockIn();
     StockIn updateStatus(Integer stockId, String newStatus, String rejectionReason);
     Page<StockIn> findAllStockIn(int page, int size);
+
+    List<StockIn> searchByOrderNo(String orderNo);
+    Page<StockIn> searchByOrderNo(String orderNo, int page, int size);
+    void batchDelete(List<Integer> ids);
 }

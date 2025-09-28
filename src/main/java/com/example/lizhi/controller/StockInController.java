@@ -40,6 +40,47 @@ public class StockInController {
         return "stock";
     }
 
+    @GetMapping("/stock/search")
+    public String searchStock(
+            @RequestParam String orderNo,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
+        Page<StockIn> stockRecordPage = stockInService.searchByOrderNo(orderNo, page, size);
+
+        model.addAttribute("stockRecords", stockRecordPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", stockRecordPage.getTotalPages());
+        model.addAttribute("totalItems", stockRecordPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
+        return "stock :: #stock-table-body";
+    }
+
+    // 新增：批量删除入库单
+    @DeleteMapping("/stock/delete/batch")
+    public ResponseEntity<Map<String, Object>> batchDeleteStock(@RequestBody Map<String, List<Integer>> request) {
+        List<Integer> ids = request.get("ids");
+        try {
+            stockInService.batchDelete(ids);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "批量删除成功"
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "系统错误：" + e.getMessage()
+            ));
+        }
+    }
+
     @PutMapping("/api/stock/{stockId}/status")
     public ResponseEntity<?> updateStockStatus(
             @PathVariable Integer stockId,

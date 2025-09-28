@@ -13,4 +13,5 @@ public interface ReturnOrderService {
     List<ReturnOrder> searchByOrderNo(String orderNo);
     Page<ReturnOrder> getAllReturnOrders(int page, int size);
     Page<ReturnOrder> searchByOrderNo(String orderNo, int page, int size);
+    void batchDelete(List<Integer> ids);
 }

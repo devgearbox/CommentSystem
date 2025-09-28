@@ -11,6 +11,17 @@
         <h2>入库管理</h2>
       </div>
 
+      <div class="header">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="输入订单编号...">
+          <button id="search-button">搜索</button>
+        </div>
+        <button id="confirm-delete-stock" style="display: none;" class="view-del">确认删除</button>
+        <button id="cancel-delete-stock" style="display: none;" class="view-all">取消</button>
+        <button id="del-stock" class="view-del" th:if="${session.currentUser.role == 1}">删除入库记录</button>
+        <button class="view-all" id="search-all">查看全部</button>
+      </div>
+
       <table>
         <thead>
         <tr>
@@ -60,27 +71,27 @@
 
           <!-- 上一页 -->
           <button th:if="${currentPage > 1}"
-                  onclick="goToPage([[${currentPage - 1}]])"
+                  th:onclick="'goToPage(' + (${currentPage - 1}) + ')'"
                   class="page-btn prev-page">上一页</button>
 
           <!-- 页码 -->
           <span th:each="page : ${#numbers.sequence(1, totalPages)}">
-            <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
-                    th:classappend="${page == currentPage} ? 'active' : ''"
-                    onclick="goToPage([[${page}]])"
-                    class="page-btn">
-                [[${page}]]
-            </button>
-        </span>
+        <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
+                th:classappend="${page == currentPage} ? 'active' : ''"
+                th:onclick="'goToPage(' + ${page} + ')'"
+                class="page-btn">
+            [[${page}]]
+        </button>
+    </span>
 
           <!-- 下一页 -->
           <button th:if="${currentPage < totalPages}"
-                  onclick="goToPage([[${currentPage + 1}]])"
+                  th:onclick="'goToPage(' + (${currentPage + 1}) + ')'"
                   class="page-btn next-page">下一页</button>
 
           <!-- 末页 -->
           <button th:if="${currentPage < totalPages}"
-                  onclick="goToPage([[${totalPages}]])"
+                  th:onclick="'goToPage(' + ${totalPages} + ')'"
                   class="page-btn last-page">末页</button>
 
           <!-- 页面大小选择 -->
@@ -124,140 +135,265 @@
         </div>
       </div>
     </div>
-    <!-- 前端交互逻辑（仿照订单，动态渲染状态） -->
     <script>
-      const STATUS_FLOW = [
-        { value: 'pending', label: '待入库' },
-        { value: 'checking', label: '验收中' },
-        { value: 'completed', label: '已入库' },
-        { value: 'rejected', label: '拒收' }
-      ];
 
-      function renderStatusOptions(currentStatus) {
-        const select = document.getElementById('new-status');
-        select.innerHTML = '';
+      // 搜索、批量删除功能
+document.addEventListener('DOMContentLoaded', function () {
+  const searchButton = document.getElementById('search-button');
+  const searchAllButton = document.getElementById('search-all');
+  const searchInput = document.getElementById('search-input');
 
-        const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
-        STATUS_FLOW.forEach((item, index) => {
-          if (index >= currentIndex) {
-            const option = document.createElement('option');
-            option.value = item.value;
-            option.textContent = item.label;
-            if (item.value === currentStatus) option.selected = true;
-            select.appendChild(option);
-          }
-        });
-      }
+  const batchDeleteBtn = document.getElementById('del-stock');
+  const confirmDeleteBtn = document.getElementById('confirm-delete-stock');
+  const cancelDeleteBtn = document.getElementById('cancel-delete-stock');
+  const selectAllStock = document.getElementById('select-all-stock');
 
-      // 显示/隐藏拒收原因输入框
-      function toggleRejectionReason(selectedStatus) {
-        const reasonGroup = document.getElementById('rejection-reason-group');
-        const reasonInput = document.getElementById('rejection-reason');
+  let isSelectVisible = false;
 
-        if (selectedStatus === 'rejected') {
-          reasonGroup.style.display = 'block';
-          reasonInput.required = true;
-        } else {
-          reasonGroup.style.display = 'none';
-          reasonInput.required = false;
-          reasonInput.value = ''; // 清空输入
-        }
-      }
-
-      // 绑定按钮点击事件
-      document.querySelectorAll('.status-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const stockId = this.getAttribute('data-id');
-          const currentStatus = this.getAttribute('data-status');
-          const orderNo = this.closest('tr').querySelector('td:nth-child(2)').textContent;
-
-          renderStatusOptions(currentStatus);
-          document.getElementById('status-modal').style.display = 'block';
-          document.getElementById('status-stock-id').value = stockId;
-          document.getElementById('status-order-no').value = orderNo;
-          document.getElementById('current-status').textContent =
-            STATUS_FLOW.find(item => item.value === currentStatus)?.label || currentStatus;
-
-          // 初始化拒收原因输入框状态
-          toggleRejectionReason(currentStatus);
-        });
-      });
-
-      // 监听状态选择变化
-      document.getElementById('new-status').addEventListener('change', function() {
-        toggleRejectionReason(this.value);
-      });
-
-      // 表单提交（调用入库单状态修改接口）
-      document.getElementById('status-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const stockId = document.getElementById('status-stock-id').value;
-        const orderNo = document.getElementById('status-order-no').value;
-        const newStatus = document.getElementById('new-status').value;
-        const rejectionReason = document.getElementById('rejection-reason').value;
-
-        // 如果是拒收状态，必须填写原因
-        if (newStatus === 'rejected' && !rejectionReason.trim()) {
-          alert('请填写拒收原因');
-          return;
-        }
-
-        // 构建请求数据
-        const requestData = {
-          stockId: parseInt(stockId),
-          newStatus: newStatus,
-          rejectionReason: newStatus === 'rejected' ? rejectionReason.trim() : null
-        };
-
-        fetch(`/api/stock/${stockId}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestData)
-        })
-        .then(response => {
-          if (!response.ok) {
-            return response.json().then(errData => {
-              throw new Error(errData.message || '修改失败');
-            });
-          }
-          return response.json();
-        })
-        .then(data => {
-          location.reload();
-          alert('修改成功！');
+  // 搜索功能
+  searchButton.addEventListener('click', function () {
+    const searchTerm = searchInput.value.trim();
+    if (searchTerm) {
+      fetch('/stock/search?orderNo=' + encodeURIComponent(searchTerm))
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('stock-table-body').innerHTML = html;
+          resetBatchDeleteState();
+          bindStatusButtons();
         })
         .catch(error => {
-          console.error('请求失败：', error);
-          alert('修改失败，请联系对应供应商申请售后');
+          console.error('搜索失败:', error);
         });
+    }
+  });
+
+  // 查看全部
+  searchAllButton.addEventListener('click', function () {
+    window.location.href = '/stock';
+  });
+
+  // 批量删除功能
+  if (batchDeleteBtn) {
+    batchDeleteBtn.addEventListener('click', () => {
+      if (!isSelectVisible) {
+        isSelectVisible = true;
+        const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
+        selectColumns.forEach(column => {
+          column.style.display = 'table-cell';
+        });
+        if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'inline-block';
+        if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'inline-block';
+        updateStockChecks();
+      }
+    });
+  }
+
+  if (cancelDeleteBtn) {
+    cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);
+  }
+
+  if (selectAllStock) {
+    selectAllStock.addEventListener('change', () => {
+      const stockChecks = document.querySelectorAll('.stock-check');
+      stockChecks.forEach(check => check.checked = selectAllStock.checked);
+    });
+  }
+
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', async function () {
+      const selectedIds = [];
+      document.querySelectorAll('.stock-check').forEach(check => {
+        if (check.checked) selectedIds.push(parseInt(check.dataset.id));
       });
 
-      // 关闭弹窗
-      document.querySelector('.status-close').addEventListener('click', function() {
-        document.getElementById('status-modal').style.display = 'none';
-      });
+      if (selectedIds.length === 0) {
+        alert('请选择要删除的入库记录');
+        return;
+      }
 
-      // 点击模态框外部关闭
-      window.addEventListener('click', function(e) {
-        if (e.target === document.getElementById('status-modal')) {
-          document.getElementById('status-modal').style.display = 'none';
+      try {
+        const response = await fetch('/stock/delete/batch', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: selectedIds })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          alert('批量删除入库记录成功');
+          window.location.reload();
+        } else {
+          alert('删除失败: ' + (result.message || '未知错误'));
         }
-      });
+      } catch (error) {
+        console.error('删除请求失败:', error);
+        alert('网络错误，删除失败');
+      }
+    });
+  }
 
-      // 分页功能
+  function updateStockChecks() {
+    const stockChecks = document.querySelectorAll('.stock-check');
+    stockChecks.forEach(check => {
+      check.removeEventListener('change', handleStockCheckChange);
+      check.addEventListener('change', handleStockCheckChange);
+    });
+  }
+
+  function handleStockCheckChange() {
+    const allChecks = document.querySelectorAll('.stock-check');
+    if (selectAllStock) {
+      selectAllStock.checked = Array.from(allChecks).every(cb => cb.checked);
+    }
+  }
+
+  function resetBatchDeleteState() {
+    isSelectVisible = false;
+    const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
+    selectColumns.forEach(column => {
+      column.style.display = 'none';
+    });
+    if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'none';
+    if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'none';
+    if (selectAllStock) selectAllStock.checked = false;
+    document.querySelectorAll('.stock-check').forEach(check => check.checked = false);
+  }
+
+  // 初始绑定状态按钮事件
+  bindStatusButtons();
+});
+const STATUS_FLOW = [
+  { value: 'pending', label: '待入库' },
+  { value: 'checking', label: '验收中' },
+  { value: 'completed', label: '已入库' },
+  { value: 'rejected', label: '拒收' }
+];
+
+function renderStatusOptions(currentStatus) {
+  const select = document.getElementById('new-status');
+  select.innerHTML = '';
+
+  const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
+  STATUS_FLOW.forEach((item, index) => {
+    if (index >= currentIndex) {
+      const option = document.createElement('option');
+      option.value = item.value;
+      option.textContent = item.label;
+      if (item.value === currentStatus) option.selected = true;
+      select.appendChild(option);
+    }
+  });
+}
+
+// 显示/隐藏拒收原因输入框
+function toggleRejectionReason(selectedStatus) {
+  const reasonGroup = document.getElementById('rejection-reason-group');
+  const reasonInput = document.getElementById('rejection-reason');
+
+  if (selectedStatus === 'rejected') {
+    reasonGroup.style.display = 'block';
+    reasonInput.required = true;
+  } else {
+    reasonGroup.style.display = 'none';
+    reasonInput.required = false;
+    reasonInput.value = ''; // 清空输入
+  }
+}
+
+// 绑定按钮点击事件
+document.querySelectorAll('.status-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const stockId = this.getAttribute('data-id');
+    const currentStatus = this.getAttribute('data-status');
+    const orderNo = this.closest('tr').querySelector('td:nth-child(2)').textContent;
+
+    renderStatusOptions(currentStatus);
+    document.getElementById('status-modal').style.display = 'block';
+    document.getElementById('status-stock-id').value = stockId;
+    document.getElementById('status-order-no').value = orderNo;
+    document.getElementById('current-status').textContent =
+      STATUS_FLOW.find(item => item.value === currentStatus)?.label || currentStatus;
+
+    // 初始化拒收原因输入框状态
+    toggleRejectionReason(currentStatus);
+  });
+});
+
+// 监听状态选择变化
+document.getElementById('new-status').addEventListener('change', function() {
+  toggleRejectionReason(this.value);
+});
+
+// 表单提交（调用入库单状态修改接口）
+document.getElementById('status-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const stockId = document.getElementById('status-stock-id').value;
+  const orderNo = document.getElementById('status-order-no').value;
+  const newStatus = document.getElementById('new-status').value;
+  const rejectionReason = document.getElementById('rejection-reason').value;
+
+  // 如果是拒收状态，必须填写原因
+  if (newStatus === 'rejected' && !rejectionReason.trim()) {
+    alert('请填写拒收原因');
+    return;
+  }
+
+  // 构建请求数据
+  const requestData = {
+    stockId: parseInt(stockId),
+    newStatus: newStatus,
+    rejectionReason: newStatus === 'rejected' ? rejectionReason.trim() : null
+  };
+
+  fetch(`/api/stock/${stockId}/status`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestData)
+  })
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(errData => {
+        throw new Error(errData.message || '修改失败');
+      });
+    }
+    return response.json();
+  })
+  .then(data => {
+    location.reload();
+    alert('修改成功！');
+  })
+  .catch(error => {
+    console.error('请求失败：', error);
+    alert('修改失败，请联系对应供应商申请售后');
+  });
+});
+
+// 关闭弹窗
+document.querySelector('.status-close').addEventListener('click', function() {
+  document.getElementById('status-modal').style.display = 'none';
+});
+
+// 点击模态框外部关闭
+window.addEventListener('click', function(e) {
+  if (e.target === document.getElementById('status-modal')) {
+    document.getElementById('status-modal').style.display = 'none';
+  }
+});
+
+// 分页功能
 function goToPage(page) {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('page', page);
-    window.location.href = window.location.pathname + '?' + urlParams.toString();
+const urlParams = new URLSearchParams(window.location.search);
+urlParams.set('page', page);
+window.location.href = window.location.pathname + '?' + urlParams.toString();
 }
 
 function changePageSize(size) {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('size', size);
-    urlParams.set('page', '1'); // 重置到第一页
-    window.location.href = window.location.pathname + '?' + urlParams.toString();
+const urlParams = new URLSearchParams(window.location.search);
+urlParams.set('size', size);
+urlParams.set('page', '1'); // 重置到第一页
+window.location.href = window.location.pathname + '?' + urlParams.toString();
 }
     </script>
   </body>

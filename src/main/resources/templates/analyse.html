@@ -239,7 +239,6 @@ document.getElementById('purchaseTrendChart').parentNode.innerHTML =
 
 function renderTrendChart(rawData, timeUnit) {
 const ctx = document.getElementById('purchaseTrendChart').getContext('2d');
-// 销毁旧实例（若存在）
 if (chartInstances['trendChart']) {
 chartInstances['trendChart'].destroy();
 }
@@ -283,24 +282,44 @@ document.getElementById('purchaseTrendChart').parentNode.innerHTML =
 return;
 }
 } else if (timeUnit === 'year') {
-const evenMonths = [2, 4, 6, 8, 10, 12];
-const yearlyData = Array(6).fill(null).map(() => ({ total: 0, days: 0 }));
+        const monthlyData = Array(12).fill(null).map(() => ({ total: 0, count: 0 }));
 
-rawData.forEach(item => {
-const month = new Date(item.time).getMonth() + 1;
-const monthIndex = evenMonths.indexOf(month);
+        // 按月份聚合数据
+        rawData.forEach(item => {
+            const date = new Date(item.time);
+            const month = date.getMonth(); // 0-11
+            monthlyData[month].total += parseFloat(item.amount);
+            monthlyData[month].count += 1;
+        });
 
-if (monthIndex !== -1) {
-  yearlyData[monthIndex].total += parseFloat(item.amount);
-  yearlyData[monthIndex].days += 1;
-}
-});
+        // 每两个月合并计算平均值，显示在偶数月
+        const evenMonths = [1, 3, 5, 7, 9, 11]; // 对应的偶数月显示节点：2月、4月、6月、8月、10月、12月
+        labels = [];
+        amounts = [];
 
-labels = evenMonths.map(month => `${month}月`);
-amounts = yearlyData.map(item =>
-item.days === 0 ? 0 : (item.total / item.days).toFixed(2)
-);
-}
+        for (let i = 0; i < evenMonths.length; i++) {
+            const currentMonth = evenMonths[i] - 1; // 转为0-based
+            const prevMonth = currentMonth - 1;
+
+            let totalAmount = 0;
+            let totalCount = 0;
+
+            // 合并当前月和前一月的数据
+            if (prevMonth >= 0) {
+                totalAmount += monthlyData[prevMonth].total;
+                totalCount += monthlyData[prevMonth].count;
+            }
+
+            totalAmount += monthlyData[currentMonth].total;
+            totalCount += monthlyData[currentMonth].count;
+
+            // 计算两个月合并的平均值
+            const averageAmount = totalCount > 0 ? (totalAmount / totalCount) : 0;
+
+            labels.push(`${evenMonths[i] + 1}月`); // 显示在偶数月节点上（2月、4月...12月）
+            amounts.push(averageAmount.toFixed(2));
+        }
+    }
 
 // 渲染新图表
 const newChart = new Chart(ctx, {
@@ -309,8 +328,8 @@ data: {
 labels: labels,
 datasets: [
   {
-    label: timeUnit === 'week' ? '日均采购金额（万元）' :
-      timeUnit === 'month' ? '周均采购金额（万元）' : '月均采购金额（万元）',
+    label: timeUnit === 'year' ? '月均采购金额（万元）' :
+      timeUnit === 'month' ? '周均采购金额（万元）' : '日均采购金额（万元）',
     data: amounts,
     borderColor: timeUnit === 'week' ? '#28a745' :
       timeUnit === 'month' ? '#20c997' : '#66b1ff',
@@ -336,8 +355,10 @@ plugins: {
   tooltip: {
     callbacks: {
       label: ctx => {
-        const unit = timeUnit === 'week' ? '日均' :
-          timeUnit === 'month' ? '周均' : '月均';
+                            let unitText = '';
+                            if (timeUnit === 'week') unitText = '日均金额';
+                            else if (timeUnit === 'month') unitText = '周均金额';
+                            else if (timeUnit === 'year') unitText = '双月均金额';
         return `${unit}金额: ${ctx.raw} 万元`;
       }
     }

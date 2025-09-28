@@ -47,12 +47,20 @@ public class PurchaseOrderController {
         Page<PurchaseOrder> purchaseOrderPage;
 
         // 2. 按角色筛选数据
-        if (currentUser != null && currentUser.getRole() == 3) {
-            // 供应商角色：只显示自己关联的供应商订单（分页）
-            purchaseOrderPage = orderService.getOrdersByUserId(currentUser.getId(), page, size);
+        if (currentUser != null) {
+            if (currentUser.getRole() == 3) {
+                // 供应商角色：只显示自己关联的供应商订单（分页）
+                purchaseOrderPage = orderService.getOrdersByUserId(currentUser.getId(), page, size);
+            } else if (currentUser.getRole() == 2) {
+                // 新增：普通用户角色：只显示自己创建的订单（分页）
+                purchaseOrderPage = orderService.getOrdersByPurchaserId(currentUser.getId(), page, size);
+            } else {
+                // 管理员角色：显示全部未删除的订单（分页）
+                purchaseOrderPage = orderService.getValidPurchaseOrdersSupplierUser(page, size);
+            }
         } else {
-            // 其他角色：显示全部未删除的订单（分页）
-            purchaseOrderPage = orderService.getValidPurchaseOrdersSupplierUser(page, size);
+            // 未登录用户：显示空列表
+            purchaseOrderPage = Page.empty();
         }
 
         // 3. 传递数据到前端
@@ -77,12 +85,19 @@ public class PurchaseOrderController {
         User currentUser = (User) session.getAttribute("currentUser");
         Page<PurchaseOrder> ordersPage;
 
-        if (currentUser != null && currentUser.getRole() == 3) {
-            // 供应商角色：搜索自己关联的订单（按订单编号，分页）
-            ordersPage = orderService.searchOrdersByOrderNoAndUserId(orderNo, currentUser.getId(), page, size);
+        if (currentUser != null) {
+            if (currentUser.getRole() == 3) {
+                // 供应商角色：搜索自己关联的订单
+                ordersPage = orderService.searchOrdersByOrderNoAndUserId(orderNo, currentUser.getId(), page, size);
+            } else if (currentUser.getRole() == 2) {
+                // 普通用户角色：搜索自己创建的订单
+                ordersPage = orderService.searchOrdersByOrderNoAndPurchaserId(orderNo, currentUser.getId(), page, size);
+            } else {
+                // 管理员角色：搜索全部订单
+                ordersPage = orderService.searchByOrderNo(orderNo, page, size);
+            }
         } else {
-            // 其他角色：按订单编号搜索全部订单（分页）
-            ordersPage = orderService.searchByOrderNo(orderNo, page, size);
+            ordersPage = Page.empty();
         }
 
         model.addAttribute("purchaseOrders", ordersPage.getContent());
