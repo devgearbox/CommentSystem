@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -114,4 +115,10 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, In
             "and po.user.id = :userId")
     List<PurchaseOrder> findByOrderNoAndUserId(@Param("orderNo") String orderNo,
                                                @Param("userId") Long userId);
+
+//    销售数量总和
+    @Query("SELECT COALESCE(SUM(po.purchase_quantity), 0) FROM PurchaseOrder po " +
+            "WHERE po.litchiVariety.id = :varietyId " +
+            "AND po.isDeleted = false")
+    BigDecimal sumPurchaseQuantityByVarietyId(@Param("varietyId") Integer varietyId);
 }

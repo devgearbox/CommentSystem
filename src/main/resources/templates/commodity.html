@@ -503,15 +503,15 @@
                     </div>
 
                     <div class="price-tags">
-                        <span class="price-tag" th:text="'已售 ' + ${variety.stock}">已售 9990</span>
-                        <span class="price-tag">满1件9.9折</span>
+                        <span class="price-tag">热销品种</span>
+                        <span class="price-tag">满1000斤9.8折</span>
                         <span class="price-tag">广西区内免运费</span>
                     </div>
                 </div>
 
                 <!-- 规格选择部分 -->
                 <div class="specs-section">
-                    <h2 class="section-title">规格选择</h2>
+                    <h2 class="section-title">重量与规格（必选）</h2>
                     <div class="spec-group">
                         <div class="spec-title">重量选择</div>
                         <div class="spec-options">
@@ -526,7 +526,7 @@
                         </div>
                     </div>
                     <div class="spec-group">
-                        <div class="spec-title">品质选择</div>
+                        <div class="spec-title">规格选择</div>
                         <div class="spec-options">
                             <div class="spec-option selected" data-quality="1">头茬鲜果（原价）</div>
                             <div class="spec-option" data-quality="1.1">商超大果（+10%）</div>
@@ -582,7 +582,7 @@
                             <span id="modalWeight">0斤</span>
                         </div>
                         <div class="mb-3">
-                            <label><strong>品质：</strong></label>
+                            <label><strong>规格：</strong></label>
                             <span id="modalQuality">头茬鲜果（原价）</span>
                         </div>
 
@@ -725,18 +725,26 @@
         }
         document.getElementById('totalPrice').textContent = subtotal.toFixed(2);
     }
+    // 获取规格信息
+    function getSpecification() {
+        const quality = document.getElementById('modalQuality').textContent;
+
+        return `${quality}`;
+    }
 
     function submitOrder() {
         const varietyName = document.getElementById('modalVarietyName').textContent;
         const supplierName = document.getElementById('modalSupplierName').textContent;
         const weight = document.getElementById('modalWeight').textContent.replace('斤', '');
         const totalPrice = document.getElementById('totalPrice').textContent;
+        const specification = getSpecification(); // 获取规格
 
         const requestData = {
             varietyName: varietyName,
             supplierName: supplierName,
             quantity: weight,
-            totalPrice: totalPrice
+            totalPrice: totalPrice,
+            specification: specification
         };
 
         fetch('/work/submit', {

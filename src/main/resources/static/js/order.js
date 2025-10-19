@@ -138,7 +138,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
     const viewModal = document.getElementById('order-view-modal');
     const closeViewBtn = document.querySelector('#order-view-modal .close');
     const STATUS_MAP = {
-        pending: "待审核",
+        pending: "未支付",
         shipping: "待发货",
         shipped: "已发货",
         received: "已接收",
@@ -146,7 +146,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
         cancelled: "已取消"
     };
 
-    // 详情字段DOM映射
+    // 详情字段DOM映射specification
     const detailFields = {
         orderNo: document.getElementById('order-no'),
         orderRealName: document.getElementById('order-real-name'),
@@ -154,6 +154,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
         orderPrice: document.getElementById('order-price'),
         orderQuantity: document.getElementById('order-quantity'),
         orderVariety: document.getElementById('order-variety'),
+        orderspecification: document.getElementById('order-specification'),
         orderTotalPrice: document.getElementById('order-total-price'),
         orderSupplierName: document.getElementById('order-supplier-name'),
         orderSupplierPhone: document.getElementById('order-supplier-phone'),
@@ -185,6 +186,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
                 detailFields.orderPrice.textContent = order.litchiVariety?.price || '9.00';
                 detailFields.orderQuantity.textContent = order.purchase_quantity || '0';
                 detailFields.orderVariety.textContent = order.purchase_variety || '无';
+                detailFields.orderspecification.textContent = order.specification || '无';
                 detailFields.orderTotalPrice.textContent = order.totalPrice || '0.00';
                 detailFields.orderSupplierName.textContent = order.supplier?.supplier_name || '无';
                 detailFields.orderSupplierPhone.textContent = order.supplier?.phone || '无';
@@ -219,7 +221,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
     const currentStatusSpan = document.getElementById('current-status');
     const newStatusSelect = document.getElementById('new-status');
     const STATUS_FLOW = [
-        { value: 'pending', label: '待审核' },
+        { value: 'pending', label: '未支付' },
         { value: 'shipping', label: '待发货' },
         { value: 'shipped', label: '已发货' }
         // { value: 'received', label: '已接收' },

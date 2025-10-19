@@ -265,7 +265,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     private PurchaseOrder.OrderStatus convertStringToOrderStatus(String status) {
         switch (status) {
             case "已支付": return PurchaseOrder.OrderStatus.paid;
-            case "待审核": return PurchaseOrder.OrderStatus.pending;
+            case "未支付": return PurchaseOrder.OrderStatus.pending;
             case "待发货": return PurchaseOrder.OrderStatus.shipping;
             case "已发货": return PurchaseOrder.OrderStatus.shipped;
             case "已接收": return PurchaseOrder.OrderStatus.received;
@@ -328,4 +328,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         return purchaseOrderRepository.findByOrderNoAndUserId(orderNo, purchaserId);
     }
 
+    @Override
+    public BigDecimal getTotalSalesQuantityByVarietyId(Integer varietyId) {
+        if (varietyId == null) {
+            return BigDecimal.ZERO;
+        }
+        // 统计所有订单状态（或特定状态）的销售数量总和
+        BigDecimal result = purchaseOrderRepository.sumPurchaseQuantityByVarietyId(varietyId);
+        return result != null ? result : BigDecimal.ZERO;
+    }
 }

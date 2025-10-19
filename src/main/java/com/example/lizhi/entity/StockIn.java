@@ -29,6 +29,11 @@ public class StockIn {
     private String operator_name;
     private Integer operator_id;
 
+    // 新增：关联订单实体
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "order_no", referencedColumnName = "order_no", insertable = false, updatable = false)
+    private PurchaseOrder order;
+
     @PrePersist
     public void prePersist() {
         this.create_time = LocalDateTime.now();

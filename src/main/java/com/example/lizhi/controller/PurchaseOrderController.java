@@ -185,6 +185,7 @@ public class PurchaseOrderController {
             order.setUser(user);
             order.setLitchiVariety(variety); // 关联商品
             order.setOrderStatus(PurchaseOrder.OrderStatus.pending); // 设置初始状态为待支付
+            order.setSpecification(request.getSpecification()); // 设置规格信息
 
             // 6.扣减库存
             purchaseOrderService.reduceStock(variety.getId(), quantity);
@@ -245,6 +246,7 @@ public class PurchaseOrderController {
         private String supplierName;
         private String quantity;
         private String totalPrice;
+        private String specification;
 
         public String getTotalPrice() {
             return totalPrice;
@@ -277,5 +279,9 @@ public class PurchaseOrderController {
         public void setQuantity(String quantity) {
             this.quantity = quantity;
         }
+
+        public String getSpecification() {return specification;}
+
+        public void setSpecification(String specification) {this.specification = specification;}
     }
 }

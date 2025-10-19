@@ -19,10 +19,10 @@
         <button id="cancel-delete" style="display: none;" class="view-all">取消</button>
         <button class="view-del" id="confirm-delete" style="display: none;">确认</button>
         <button class="view-all" id="search-all">查看全部</button>
-        <button class="view-all" id="add-supplier" th:if="${session.currentUser.role != 2}">添加供应商</button>
+        <button class="view-all" id="add-supplier" th:if="${session.currentUser.role != 3}">添加供应商</button>
         <!-- 修改：添加按钮容器 -->
         <div class="delete-controls">
-            <button class="view-del" id="del-supplier" th:if="${session.currentUser.role != 2}">删除供应商</button>
+            <button class="view-del" id="del-supplier" th:if="${session.currentUser.role != 3}">删除供应商</button>
         </div>
     </div>
     <table>

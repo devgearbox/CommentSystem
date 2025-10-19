@@ -13,6 +13,7 @@ public class LitchiVariety {
     private BigDecimal price;
     private Integer stock;
     private String description;
+    private String specification;
 
     @Column(name = "order_count")
     private Integer orderCount = 0;
@@ -81,4 +82,8 @@ public class LitchiVariety {
     public Integer getOrderCount() {return orderCount;}
 
     public void setOrderCount(Integer orderCount) {this.orderCount = orderCount;}
+
+    public String getSpecification() {return specification;}
+
+    public void setSpecification(String specification) {this.specification = specification;}
 }

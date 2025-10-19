@@ -213,7 +213,16 @@
                              th:if="${variety.supplier}">
                             <small class="text-muted">
                                 供应商：<span th:text="${variety.supplier.supplier_name}">供应商名称</span>...<br>
-                                销量：<span th:text="${variety.orderCount}"></span>
+                                销量：<span  th:text="${formattedSalesMap.get(variety.id)}"></span>
+                                <div th:if="${session.currentUser.role != 2}" style="color: green;">
+                                    成交订单量：<span th:text="${variety.orderCount}"></span>
+                                </div>
+                                <div th:if="${session.currentUser.role != 2}" style="color: blue;">
+                                具体销量：<span th:text="${#numbers.formatInteger(salesQuantityMap.get(variety.id), 0)} + '（斤）'"></span>
+                                </div>
+                                <div th:if="${session.currentUser.role != 2}" style="color: red;">
+                                库存：<span th:text="${variety.stock} + '（斤）'"></span>
+                                    </div>
                             </small>
                         </div>
 

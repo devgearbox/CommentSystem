@@ -28,10 +28,10 @@
             <th style="display: none">
                 <input type="checkbox" id="select-all-order">
             </th>
-            <th>订单编号</th>
             <th>采购人员</th>
             <th>供应商</th>
-            <th>采购品种</th>
+            <th>荔枝品种</th>
+            <th>荔枝规格</th>
             <th>数量(斤）</th>
             <th>总价</th>
             <th>下单日期</th>
@@ -40,15 +40,15 @@
         </tr>
         </thead>
         <tbody id="order-table-body">
-        <!-- 原 Thymeleaf 渲染逻辑 -->
+        <!--  Thymeleaf 渲染逻辑 -->
         <tr th:each="order : ${purchaseOrders}" th:fragment="orderRow">
             <td style="display: none">
                 <input type="checkbox" class="order-check" th:data-id="${order.order_id}">
             </td>
-            <td th:text="${order.orderNo}"></td>
             <td th:text="${order.user.username}"></td>
             <td th:text="${order.supplier.supplier_name}"></td>
             <td th:text="${order.purchase_variety}"></td>
+            <td th:text="${order.specification}"></td>
             <td th:text="${order.purchase_quantity}"></td>
             <td th:text="${order.totalPrice}"></td>
             <td th:text="${#dates.format(order.createTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
@@ -149,7 +149,8 @@
             <p>采购人电话：<span id="order-user-phone"></span></p>
             <p>采购单价：<span id="order-price"></span></p>
             <p>数量：<span id="order-quantity"></span> 斤</p>
-            <p>采购品种：<span id="order-variety"></span></p>
+            <p>荔枝品种：<span id="order-variety"></span></p>
+            <p>荔枝规格：<span id="order-specification"></span></p>
             <p>订单总价：<span id="order-total-price"></span></p>
             <p>供应商：<span id="order-supplier-name"></span></p>
             <p>供应商电话：<span id="order-supplier-phone"></span></p>

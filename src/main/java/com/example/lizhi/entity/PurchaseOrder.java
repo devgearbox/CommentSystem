@@ -19,6 +19,7 @@ public class PurchaseOrder{
     private String orderNo;
 
     private BigDecimal purchase_quantity;
+    private String specification;
     // 新增软删除字段
     @Column(name = "is_deleted")
     private boolean isDeleted = false; // 默认未删除
@@ -27,7 +28,7 @@ public class PurchaseOrder{
     @Column(name = "order_status")
     private OrderStatus orderStatus;
     public enum OrderStatus {
-        pending("待审核"),
+        pending("未支付"),
         paid("已支付"),
         shipping("待发货"),
         shipped("已发货"),

@@ -30,7 +30,8 @@
           </th>
           <th>订单编号</th>
           <th>入库品种</th>
-          <th>重量(斤)</th>
+          <th>荔枝规格</th>
+          <th>数量(斤)</th>
           <th>经办人</th>
           <th>入库单创建时间</th>
           <th>入库时间</th>
@@ -45,6 +46,7 @@
           </td>
           <td th:text="${stock.orderNo}"></td>
           <td th:text="${stock.litchi_variety}"></td>
+          <td th:text="${stock.order.specification}"></td>
           <td th:text="${stock.quantity}"></td>
           <td th:text="${stock.operator_name}"></td>
           <td th:text="${stock.create_time}"></td>

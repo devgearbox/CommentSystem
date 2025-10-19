@@ -47,4 +47,6 @@ public interface PurchaseOrderService {
 
     // 新增：按订单编号和采购人ID搜索（非分页）
     List<PurchaseOrder> searchOrdersByOrderNoAndPurchaserId(String orderNo, Long purchaserId);
+
+    BigDecimal getTotalSalesQuantityByVarietyId(Integer varietyId);
 }
