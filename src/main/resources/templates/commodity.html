@@ -526,7 +526,7 @@
                         </div>
                     </div>
                     <div class="spec-group">
-                        <div class="spec-title">规格选择</div>
+                        <div class="spec-title">品质选择</div>
                         <div class="spec-options">
                             <div class="spec-option selected" data-quality="1">头茬鲜果（原价）</div>
                             <div class="spec-option" data-quality="1.1">商超大果（+10%）</div>
@@ -582,7 +582,7 @@
                             <span id="modalWeight">0斤</span>
                         </div>
                         <div class="mb-3">
-                            <label><strong>规格：</strong></label>
+                            <label><strong>品质：</strong></label>
                             <span id="modalQuality">头茬鲜果（原价）</span>
                         </div>
 
@@ -811,8 +811,8 @@
             } else if (htmlContent.includes('punchout_form') || htmlContent.includes('alipay')) {
                 console.log('检测到支付宝支付表单，在新窗口打开');
 
-                // 在新窗口打开支付页面
-                const newWindow = window.open('', '_blank', 'width=800,height=600');
+                // 在新标签页打开支付页面
+                const newWindow = window.open('', '_blank');
 
                 // 写入支付宝支付表单
                 newWindow.document.write(htmlContent);

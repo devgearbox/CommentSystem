@@ -7,6 +7,9 @@ import com.example.lizhi.service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -25,9 +28,23 @@ public class SupplierServiceImpl implements SupplierService{
         return supplierRepository.findAll();
     }
 
+    // 新增分页实现
+    @Override
+    public Page<Supplier> getAllSuppliers(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return supplierRepository.findAll(pageable);
+    }
+
     @Override
     public List<Supplier> searchSuppliersByName(String name){
         return supplierRepository.findBySupplierNameContaining(name);
+    }
+
+    // 新增分页搜索实现
+    @Override
+    public Page<Supplier> searchSuppliersByName(String name, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return supplierRepository.findBySupplierNameContaining(name, pageable);
     }
 
     public Supplier addSupplier(Supplier supplier) {
@@ -50,10 +67,25 @@ public class SupplierServiceImpl implements SupplierService{
         return supplierRepository.findByUserId(userId);
     }
 
+    // 新增分页实现
+    @Override
+    public Page<Supplier> getSuppliersByUserId(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return supplierRepository.findByUserId(userId, pageable);
+    }
+
+    // 新增：按用户ID和名称搜索（分页）
+    @Override
+    public Page<Supplier> searchSuppliersByNameAndUserId(String name, Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return supplierRepository.findByUserIdAndSupplierNameContaining(userId, name, pageable);
+    }
+
     public void batchDelete(List<Integer> ids) {
         // JPA 批量删除（推荐：避免逐条删除的性能问题）
         supplierRepository.deleteAllById(ids);
     }
+
     @Override
     public Optional<Supplier> getSupplierById(Integer id) {
         return supplierRepository.findById(id);

@@ -71,6 +71,53 @@
         </tr>
         </tbody>
     </table>
+    <!--      分页功能-->
+    <div class="pagination-container">
+        <div class="pagination-info">
+            共 <span th:text="${totalItems}">0</span> 条记录，
+            第 <span th:text="${currentPage}">1</span> 页 / 共 <span th:text="${totalPages}">1</span> 页
+        </div>
+
+        <div class="pagination-controls">
+            <!-- 首页 -->
+            <button th:if="${currentPage > 1}"
+                    onclick="goToPage(1)"
+                    class="page-btn first-page">首页</button>
+
+            <!-- 上一页 -->
+            <button th:if="${currentPage > 1}"
+                    th:onclick="'goToPage(' + (${currentPage - 1}) + ')'"
+                    class="page-btn prev-page">上一页</button>
+
+            <!-- 页码 -->
+            <span th:each="page : ${#numbers.sequence(1, totalPages)}">
+        <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
+                th:classappend="${page == currentPage} ? 'active' : ''"
+                th:onclick="'goToPage(' + ${page} + ')'"
+                class="page-btn">
+            [[${page}]]
+        </button>
+    </span>
+
+            <!-- 下一页 -->
+            <button th:if="${currentPage < totalPages}"
+                    th:onclick="'goToPage(' + (${currentPage + 1}) + ')'"
+                    class="page-btn next-page">下一页</button>
+
+            <!-- 末页 -->
+            <button th:if="${currentPage < totalPages}"
+                    th:onclick="'goToPage(' + ${totalPages} + ')'"
+                    class="page-btn last-page">末页</button>
+
+            <!-- 页面大小选择 -->
+            <select onchange="changePageSize(this.value)" class="page-size-select">
+                <option value="5" th:selected="${pageSize == 5}">5条/页</option>
+                <option value="10" th:selected="${pageSize == 10}">10条/页</option>
+                <option value="20" th:selected="${pageSize == 20}">20条/页</option>
+                <option value="50" th:selected="${pageSize == 50}">50条/页</option>
+            </select>
+        </div>
+    </div>
     <!-- 商品上架弹窗 -->
     <div id="add-product-modal" class="modal">
         <div class="modal-content">
@@ -247,5 +294,20 @@
 </div>
 
 <script th:src="@{/js/supplier.js}"></script>
+<script>
+    // 分页功能
+    function goToPage(page) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('page', page);
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+
+    function changePageSize(size) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('size', size);
+        urlParams.set('page', '1'); // 重置到第一页
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+</script>
 </body>
 </html>

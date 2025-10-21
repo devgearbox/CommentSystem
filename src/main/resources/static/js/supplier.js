@@ -8,20 +8,28 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('search-button').addEventListener('click', function() {
         const searchTerm = searchInput.value.trim();
         if (searchTerm) {
-            fetch('/suppliers/search?name=' + encodeURIComponent(searchTerm))
+            // 获取当前分页参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const page = urlParams.get('page') || 1;
+            const size = urlParams.get('size') || 10;
+
+            fetch(`/suppliers/search?name=${encodeURIComponent(searchTerm)}&page=${page}&size=${size}`)
                 .then(response => response.text())
                 .then(html => {
                     supplierTableBody.innerHTML = html;
-                    // 搜索后重置批量删除状态（关键修复）
                     resetBatchDeleteState();
-                    updateSupplierChecks(); // 重新绑定复选框事件
+                    updateSupplierChecks();
                 })
                 .catch(error => console.error('搜索失败:', error));
         }
     });
 
+    // 查看全部也要支持分页
     document.getElementById('search-all').addEventListener('click', () => {
-        window.location.href = '/suppliers';
+        const urlParams = new URLSearchParams(window.location.search);
+        // 保留分页参数
+        urlParams.set('page', '1');
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
     });
 
 

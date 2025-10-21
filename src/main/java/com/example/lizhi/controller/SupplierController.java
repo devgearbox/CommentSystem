@@ -5,6 +5,7 @@ import com.example.lizhi.entity.User;
 import com.example.lizhi.service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // 新增导入
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,44 +22,66 @@ public class SupplierController {
     @Autowired
     private SupplierService supplierService;
 
+    // 修改：添加分页参数
     @GetMapping("/suppliers")
-    public String listSuppliers(Model model, HttpSession session) {
+    public String listSuppliers(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model,
+            HttpSession session) {
+
         // 获取当前登录用户
         User currentUser = (User) session.getAttribute("currentUser");
-        List<Supplier> suppliers;
+        Page<Supplier> supplierPage;
 
         // 根据角色筛选数据：角色为3（供应商）只看自己的，其他角色看全部
         if (currentUser != null && currentUser.getRole() == 3) {
-            suppliers = supplierService.getSuppliersByUserId(currentUser.getId());
+            supplierPage = supplierService.getSuppliersByUserId(currentUser.getId(), page, size);
         } else {
-            suppliers = supplierService.getAllSuppliers();
+            supplierPage = supplierService.getAllSuppliers(page, size);
         }
 
-        model.addAttribute("suppliers", suppliers);
+        model.addAttribute("suppliers", supplierPage.getContent());
+        // 新增分页信息
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", supplierPage.getTotalPages());
+        model.addAttribute("totalItems", supplierPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
         return "supplier";
     }
 
+    // 修改：添加分页参数
     @GetMapping("/suppliers/search")
-    public String searchSuppliers(@RequestParam String name, Model model, HttpSession session) {
+    public String searchSuppliers(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model,
+            HttpSession session) {
+
         User currentUser = (User) session.getAttribute("currentUser");
-        List<Supplier> suppliers;
+        Page<Supplier> supplierPage;
 
         if (currentUser != null && currentUser.getRole() == 3) {
-            // 供应商角色：搜索自己名下的供应商
-            List<Supplier> mySuppliers = supplierService.getSuppliersByUserId(currentUser.getId());
-            // 从自己的供应商中筛选名称匹配的
-            suppliers = mySuppliers.stream()
-                    .filter(s -> s.getSupplier_name().contains(name))
-                    .toList();
+            // 供应商角色：搜索自己名下的供应商（分页）
+            supplierPage = supplierService.searchSuppliersByNameAndUserId(name, currentUser.getId(), page, size);
         } else {
-            // 其他角色：搜索全部
-            suppliers = supplierService.searchSuppliersByName(name);
+            // 其他角色：搜索全部（分页）
+            supplierPage = supplierService.searchSuppliersByName(name, page, size);
         }
 
-        model.addAttribute("suppliers", suppliers);
+        model.addAttribute("suppliers", supplierPage.getContent());
+        // 新增分页信息
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", supplierPage.getTotalPages());
+        model.addAttribute("totalItems", supplierPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
         return "supplier :: #supplier-table-body";
     }
 
+    // 以下方法保持不变...
     @PostMapping("/suppliers/add")
     public ResponseEntity<?> addSupplier(@RequestBody Supplier supplier) {
         try {
