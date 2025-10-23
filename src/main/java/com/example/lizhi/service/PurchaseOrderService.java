@@ -49,4 +49,5 @@ public interface PurchaseOrderService {
     List<PurchaseOrder> searchOrdersByOrderNoAndPurchaserId(String orderNo, Long purchaserId);
 
     BigDecimal getTotalSalesQuantityByVarietyId(Integer varietyId);
+    boolean isOrderPaid(String orderId);
 }

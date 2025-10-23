@@ -139,6 +139,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
     const closeViewBtn = document.querySelector('#order-view-modal .close');
     const STATUS_MAP = {
         pending: "未支付",
+        paid: "已支付",
         shipping: "待发货",
         shipped: "已发货",
         received: "已接收",
@@ -222,16 +223,18 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
     const newStatusSelect = document.getElementById('new-status');
     const STATUS_FLOW = [
         { value: 'pending', label: '未支付' },
+        { value: 'paid', label: '已支付' },
         { value: 'shipping', label: '待发货' },
-        { value: 'shipped', label: '已发货' }
-        // { value: 'received', label: '已接收' },
-        // { value: 'cancelled', label: '已取消' }
+        { value: 'shipped', label: '已发货' },
+        { value: 'received', label: '已接收' }
     ];
 
     // 动态渲染状态下拉框
     function renderStatusOptions(currentStatus) {
         newStatusSelect.innerHTML = '';
         const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
+
+        // 只能向后流转，不能向前
         STATUS_FLOW.forEach((item, index) => {
             if (index >= currentIndex) {
                 const option = document.createElement('option');
@@ -243,17 +246,22 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
         });
     }
 
-    // 事件委托：支持按钮内部元素点击（如<i>标签）
+    // 更新状态修改的事件处理
     orderTableBody.addEventListener('click', function (event) {
-        // 找到最近的.status-btn（解决按钮内有图标时的点击穿透）
         const statusBtn = event.target.closest('.status-btn');
         if (statusBtn) {
             const orderId = statusBtn.getAttribute('data-id');
             const currentStatus = statusBtn.getAttribute('data-status');
 
-            // 已接收/已拒收状态不允许修改
-            if (currentStatus === 'received' || currentStatus === 'rejected') {
-                alert(`该订单状态为【${currentStatus === 'received' ? '已接收' : '已拒收'}】，请联系采购人协商`);
+            // 已接收/已拒收/已取消状态不允许修改
+            if (currentStatus === 'received' || currentStatus === 'rejected' || currentStatus === 'cancelled') {
+                let statusText = '';
+                switch(currentStatus) {
+                    case 'received': statusText = '已接收'; break;
+                    case 'rejected': statusText = '已拒收'; break;
+                    case 'cancelled': statusText = '已取消'; break;
+                }
+                alert(`该订单状态为【${statusText}】，无法修改`);
                 return;
             }
 

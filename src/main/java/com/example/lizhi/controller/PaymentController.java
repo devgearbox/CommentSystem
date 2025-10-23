@@ -1,5 +1,6 @@
 package com.example.lizhi.controller;
 
+import com.example.lizhi.entity.PurchaseOrder;
 import com.example.lizhi.service.AlipayService;
 import com.example.lizhi.service.PurchaseOrderService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -62,7 +64,24 @@ public class PaymentController {
         // 更新订单状态为已支付
         purchaseOrderService.updateOrderStatus(out_trade_no, "已支付");
 
+        // 获取订单编号 orderNo
+        String orderNo = out_trade_no; // 默认使用订单ID
+
+        try {
+            // 根据订单ID查询订单信息获取 orderNo
+            Integer orderId = Integer.parseInt(out_trade_no);
+            Optional<PurchaseOrder> orderOpt = purchaseOrderService.getOrderById(orderId);
+            if (orderOpt.isPresent()) {
+                PurchaseOrder order = orderOpt.get();
+                orderNo = order.getOrderNo(); // 获取业务订单编号
+            }
+        } catch (Exception e) {
+            // 如果查询失败，继续使用 out_trade_no
+            System.err.println("获取订单信息失败: " + e.getMessage());
+        }
+
         model.addAttribute("orderId", out_trade_no);
+        model.addAttribute("orderNo", orderNo);
         model.addAttribute("totalPrice", total_amount);
         model.addAttribute("paymentMethod", "支付宝支付");
 

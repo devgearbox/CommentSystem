@@ -128,10 +128,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         PurchaseOrder.OrderStatus oldStatus = order.getOrderStatus();
 
         PurchaseOrder.OrderStatus newStatusEnum = PurchaseOrder.OrderStatus.valueOf(newStatus);
-        int oldIndex = Arrays.asList(PurchaseOrder.OrderStatus.values()).indexOf(oldStatus);
-        int newIndex = Arrays.asList(PurchaseOrder.OrderStatus.values()).indexOf(newStatusEnum);
 
-        if (newIndex < oldIndex) {
+        // 定义允许的状态流转
+        Map<PurchaseOrder.OrderStatus, List<PurchaseOrder.OrderStatus>> allowedTransitions = Map.of(
+                PurchaseOrder.OrderStatus.pending, Arrays.asList(PurchaseOrder.OrderStatus.paid, PurchaseOrder.OrderStatus.cancelled),
+                PurchaseOrder.OrderStatus.paid, Arrays.asList(PurchaseOrder.OrderStatus.shipping, PurchaseOrder.OrderStatus.cancelled),
+                PurchaseOrder.OrderStatus.shipping, Arrays.asList(PurchaseOrder.OrderStatus.shipped, PurchaseOrder.OrderStatus.cancelled),
+                PurchaseOrder.OrderStatus.shipped, Arrays.asList(PurchaseOrder.OrderStatus.received, PurchaseOrder.OrderStatus.rejected)
+        );
+
+        // 检查状态流转是否允许
+        if (!allowedTransitions.getOrDefault(oldStatus, Collections.emptyList()).contains(newStatusEnum)) {
             throw new RuntimeException("非法状态流转：" + oldStatus.getLabel() + " -> " + newStatusEnum.getLabel());
         }
 
@@ -164,6 +171,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             }
         }
 
+        // 当状态变为 shipped 时，创建入库记录
         if (newStatusEnum == PurchaseOrder.OrderStatus.shipped && oldStatus != PurchaseOrder.OrderStatus.shipped) {
             stockInService.createStockInFromOrder(updatedOrder);
         }
@@ -336,5 +344,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         // 统计所有订单状态（或特定状态）的销售数量总和
         BigDecimal result = purchaseOrderRepository.sumPurchaseQuantityByVarietyId(varietyId);
         return result != null ? result : BigDecimal.ZERO;
+    }
+    @Override
+    public boolean isOrderPaid(String orderId) {
+        try {
+            Integer id = Integer.parseInt(orderId);
+            Optional<PurchaseOrder> orderOpt = purchaseOrderRepository.findById(id);
+            return orderOpt.isPresent() &&
+                    orderOpt.get().getOrderStatus() == PurchaseOrder.OrderStatus.paid;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }

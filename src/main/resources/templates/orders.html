@@ -3,7 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>采购订单管理</title>
-    <link rel="stylesheet" th:href="@{/css/supplier.css}"> <!-- 复用样式表 -->
+    <link rel="stylesheet" th:href="@{/css/supplier.css}">
+    <style>
+        /* 添加支付链接样式 */
+        .pay-link {
+            color: #1890ff;
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .pay-link:hover {
+            color: #40a9ff;
+            text-decoration: none;
+        }
+
+        .status-paid { color: #52c41a; }
+    </style>
 </head>
 <body>
 <div class="section">
@@ -52,7 +67,20 @@
             <td th:text="${order.purchase_quantity}"></td>
             <td th:text="${order.totalPrice}"></td>
             <td th:text="${#dates.format(order.createTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-            <td th:text="${order.orderStatus.label}"></td>
+            <td>
+                <!-- 为未支付状态添加支付链接 -->
+                <span th:if="${order.orderStatus.name() == 'pending'}"
+                      class="pay-link"
+                      th:data-order-id="${order.order_id}"
+                      th:data-total-amount="${order.totalPrice}"
+                      th:text="${order.orderStatus.label}">
+                </span>
+                <!-- 其他状态正常显示 -->
+                <span th:unless="${order.orderStatus.name() == 'pending'}"
+                      th:classappend="'status-' + ${order.orderStatus.name()}"
+                      th:text="${order.orderStatus.label}">
+                </span>
+            </td>
             <td>
                 <button class="view-btn" th:data-id="${order.order_id}">查看详情</button>
                 <button class="status-btn"
@@ -248,6 +276,22 @@
             </form>
         </div>
     </div>
+    <!-- 支付确认弹窗 -->
+    <div id="payment-confirm-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="payment-close">&times;</span>
+            <h2>确认支付</h2>
+            <div class="payment-info">
+                <p>订单号: <span id="payment-order-id"></span></p>
+                <p>支付金额: ¥<span id="payment-amount"></span></p>
+                <p>商品: <span id="payment-product">荔枝批发订单</span></p>
+            </div>
+            <div class="modal-actions">
+                <button id="confirm-payment" class="btn-primary">立即支付</button>
+                <button id="cancel-payment" class="btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
 </div>
 <script th:src="@{/js/order.js}"></script>
 <script>
@@ -263,6 +307,118 @@
         urlParams.set('size', size);
         urlParams.set('page', '1'); // 重置到第一页
         window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+        // 支付功能
+    document.addEventListener('DOMContentLoaded', function() {
+        const paymentModal = document.getElementById('payment-confirm-modal');
+        const paymentClose = document.getElementById('payment-close');
+        const cancelPayment = document.getElementById('cancel-payment');
+        const confirmPayment = document.getElementById('confirm-payment');
+
+        let currentOrderId = '';
+        let currentAmount = '';
+
+        // 点击支付链接
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('pay-link')) {
+                currentOrderId = event.target.dataset.orderId;
+                currentAmount = event.target.dataset.totalAmount;
+
+                document.getElementById('payment-order-id').textContent = currentOrderId;
+                document.getElementById('payment-amount').textContent = currentAmount;
+
+                paymentModal.style.display = 'block';
+            }
+        });
+
+        // 关闭支付弹窗
+        function closePaymentModal() {
+            paymentModal.style.display = 'none';
+        }
+
+        paymentClose.addEventListener('click', closePaymentModal);
+        cancelPayment.addEventListener('click', closePaymentModal);
+
+        // 确认支付
+        confirmPayment.addEventListener('click', function() {
+            if (!currentOrderId || !currentAmount) {
+                alert('支付信息不完整');
+                return;
+            }
+
+            initiatePayment(currentOrderId, currentAmount);
+            closePaymentModal();
+        });
+
+        // 点击弹窗外部关闭
+        window.addEventListener('click', function(event) {
+            if (event.target === paymentModal) {
+                closePaymentModal();
+            }
+        });
+    });
+
+    // 发起支付请求
+    function initiatePayment(orderId, totalAmount) {
+        console.log('发起支付，订单ID:', orderId, '金额:', totalAmount);
+
+        const paymentRequest = {
+            orderId: orderId,
+            totalAmount: totalAmount,
+            subject: '荔枝批发订单-' + orderId
+        };
+
+        fetch('/payment/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(paymentRequest)
+        })
+        .then(response => {
+            console.log('响应状态:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP错误: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(htmlContent => {
+            console.log('收到支付表单响应, 长度:', htmlContent.length);
+
+            if (htmlContent.includes('alert(') || htmlContent.includes('错误')) {
+                // 显示错误信息
+                alert('支付请求失败，请查看控制台信息');
+                console.error('支付错误:', htmlContent);
+            } else if (htmlContent.includes('punchout_form') || htmlContent.includes('alipay')) {
+                console.log('检测到支付宝支付表单，在新窗口打开');
+
+                // 在新标签页打开支付页面
+                const newWindow = window.open('', '_blank');
+
+                // 写入支付宝支付表单
+                newWindow.document.write(htmlContent);
+                newWindow.document.close();
+
+                // 自动提交表单（支付宝要求）
+                setTimeout(() => {
+                    const form = newWindow.document.querySelector('form');
+                    if (form) {
+                        form.submit();
+                    } else {
+                        console.error('未找到支付表单');
+                        alert('支付表单加载失败，请重试');
+                    }
+                }, 100);
+
+            } else {
+                console.error('未知响应类型:', htmlContent.substring(0, 200));
+                alert('支付请求返回未知格式，请查看控制台');
+            }
+        })
+        .catch(error => {
+            console.error('支付请求异常:', error);
+            alert('支付请求失败: ' + error.message);
+        });
     }
 </script>
 </body>
