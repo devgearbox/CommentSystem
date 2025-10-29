@@ -1,0 +1,740 @@
+<!-- feedback-manage.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>反馈信息管理 - 荔枝批发管理系统</title>
+    <link rel="stylesheet" th:href="@{/css/font-awesome/beta3/all.min.css}">
+    <style>
+        /* 页面样式 */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card-header {
+            margin-bottom: 20px;
+        }
+
+        .card-header h2 {
+            color: #2d8659;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        /* 统计卡片 */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid #2d8659;
+        }
+
+        .stat-card.pending {
+            border-left-color: #dc3545;
+        }
+
+        .stat-card.read {
+            border-left-color: #ffc107;
+        }
+
+        .stat-card.processed {
+            border-left-color: #28a745;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* 搜索和筛选区域 */
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .status-filter select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: #2d8659;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f9faf9;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background-color: #ffe6e6;
+            color: #dc3545;
+        }
+
+        .status-read {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .action-buttons-cell {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-view {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .btn-process {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* 分页样式 */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .page-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .page-size-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            margin-left: 10px;
+        }
+
+        /* 弹窗样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-content .close:hover {
+            color: #333;
+        }
+
+        .detail-group {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .detail-group label {
+            display: inline-block;
+            width: 100px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .detail-group span {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="section">
+    <div class="card-header">
+        <h2>反馈信息管理</h2>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-number" th:text="${stats.total}">0</div>
+            <div class="stat-label">总反馈数</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-number" th:text="${stats.pending}">0</div>
+            <div class="stat-label">未处理</div>
+        </div>
+        <div class="stat-card read">
+            <div class="stat-number" th:text="${stats.read}">0</div>
+            <div class="stat-label">已读</div>
+        </div>
+        <div class="stat-card processed">
+            <div class="stat-number" th:text="${stats.processed}">0</div>
+            <div class="stat-label">已处理</div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选 -->
+    <div class="filter-container">
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="搜索反馈内容或联系方式..." th:value="${currentKeyword}">
+        </div>
+        <div class="status-filter">
+            <select id="status-filter">
+                <option value="">全部状态</option>
+                <option value="0" th:selected="${currentStatus == 0}">未处理</option>
+                <option value="1" th:selected="${currentStatus == 1}">已读</option>
+                <option value="2" th:selected="${currentStatus == 2}">已处理</option>
+            </select>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="search-btn">搜索</button>
+            <button class="btn btn-secondary" id="reset-btn">重置</button>
+        </div>
+    </div>
+
+    <!-- 反馈列表 -->
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>反馈类型</th>
+            <th>反馈内容</th>
+            <th>联系方式</th>
+            <th>提交者</th>
+            <th>状态</th>
+            <th>提交时间</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="feedback-table-body">
+        <tr th:each="feedback : ${feedbacks}">
+            <td th:text="${feedback.id}"></td>
+            <td>
+                <span class="type-badge" th:text="${feedback.typeText}"></span>
+            </td>
+            <td>
+                <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                     th:text="${feedback.content}"></div>
+            </td>
+            <td th:text="${feedback.contactInfo} ?: '无'"></td>
+            <td th:text="${feedback.submitterName} ?: '匿名'"></td>
+            <td>
+                <span th:classappend="'status-badge status-' + ${feedback.status == 0 ? 'pending' : feedback.status == 1 ? 'read' : 'processed'}"
+                      th:text="${feedback.statusText}"></span>
+            </td>
+            <td th:text="${#temporals.format(feedback.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+            <td class="action-buttons-cell">
+                <button class="action-btn btn-view" th:data-id="${feedback.id}">查看</button>
+                <button class="action-btn btn-process" th:data-id="${feedback.id}"
+                        th:if="${feedback.status != 2}">处理</button>
+                <button class="action-btn btn-delete" th:data-id="${feedback.id}">删除</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- 分页 -->
+    <div class="pagination-container">
+        <div class="pagination-info">
+            共 <span th:text="${totalItems}">0</span> 条记录，
+            第 <span th:text="${currentPage}">1</span> 页 / 共 <span th:text="${totalPages}">1</span> 页
+        </div>
+        <div class="pagination-controls">
+            <button th:if="${currentPage > 1}" onclick="goToPage(1)" class="page-btn first-page">首页</button>
+            <button th:if="${currentPage > 1}" th:onclick="'goToPage(' + (${currentPage - 1}) + ')'" class="page-btn prev-page">上一页</button>
+
+            <span th:each="page : ${#numbers.sequence(1, totalPages)}">
+                <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
+                        th:classappend="${page == currentPage} ? 'active' : ''"
+                        th:onclick="'goToPage(' + ${page} + ')'"
+                        class="page-btn">
+                    [[${page}]]
+                </button>
+            </span>
+
+            <button th:if="${currentPage < totalPages}" th:onclick="'goToPage(' + (${currentPage + 1}) + ')'" class="page-btn next-page">下一页</button>
+            <button th:if="${currentPage < totalPages}" th:onclick="'goToPage(' + ${totalPages} + ')'" class="page-btn last-page">末页</button>
+
+            <select onchange="changePageSize(this.value)" class="page-size-select">
+                <option value="5" th:selected="${pageSize == 5}">5条/页</option>
+                <option value="10" th:selected="${pageSize == 10}">10条/页</option>
+                <option value="20" th:selected="${pageSize == 20}">20条/页</option>
+                <option value="50" th:selected="${pageSize == 50}">50条/页</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- 查看详情弹窗 -->
+<div id="view-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>反馈详情</h2>
+        <div class="detail-group">
+            <label>反馈ID：</label>
+            <span id="detail-id"></span>
+        </div>
+        <div class="detail-group">
+            <label>反馈类型：</label>
+            <span id="detail-type"></span>
+        </div>
+        <div class="detail-group">
+            <label>反馈内容：</label>
+            <span id="detail-content" style="white-space: pre-wrap;"></span>
+        </div>
+        <div class="detail-group">
+            <label>联系方式：</label>
+            <span id="detail-contact"></span>
+        </div>
+        <div class="detail-group">
+            <label>提交者：</label>
+            <span id="detail-submitter"></span>
+        </div>
+        <div class="detail-group">
+            <label>当前状态：</label>
+            <span id="detail-status"></span>
+        </div>
+        <div class="detail-group">
+            <label>处理者：</label>
+            <span id="detail-processor"></span>
+        </div>
+        <div class="detail-group">
+            <label>处理备注：</label>
+            <span id="detail-remark"></span>
+        </div>
+        <div class="detail-group">
+            <label>提交时间：</label>
+            <span id="detail-create-time"></span>
+        </div>
+        <div class="detail-group">
+            <label>处理时间：</label>
+            <span id="detail-process-time"></span>
+        </div>
+    </div>
+</div>
+
+<!-- 处理反馈弹窗 -->
+<div id="process-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>处理反馈</h2>
+        <input type="hidden" id="process-feedback-id">
+        <div class="form-group">
+            <label>当前状态：</label>
+            <span id="current-status" class="status-badge"></span>
+        </div>
+        <div class="form-group">
+            <label for="process-status">更新状态：</label>
+            <select id="process-status">
+                <option value="0">未处理</option>
+                <option value="1">已读</option>
+                <option value="2">已处理</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="process-remark">处理备注：</label>
+            <textarea id="process-remark" rows="4" placeholder="请输入处理备注..."></textarea>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-secondary" id="cancel-process">取消</button>
+            <button class="btn btn-primary" id="confirm-process">确认</button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/jquery/jquery-3.6.0.min.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 搜索功能
+        document.getElementById('search-btn').addEventListener('click', function() {
+            performSearch();
+        });
+
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // 重置搜索
+        document.getElementById('reset-btn').addEventListener('click', function() {
+            window.location.href = '/feedback/manage';
+        });
+
+        // 查看详情
+        document.getElementById('feedback-table-body').addEventListener('click', function(e) {
+            const viewBtn = e.target.closest('.btn-view');
+            if (viewBtn) {
+                const feedbackId = viewBtn.getAttribute('data-id');
+                showFeedbackDetail(feedbackId);
+            }
+        });
+
+        // 处理反馈
+        document.getElementById('feedback-table-body').addEventListener('click', function(e) {
+            const processBtn = e.target.closest('.btn-process');
+            if (processBtn) {
+                const feedbackId = processBtn.getAttribute('data-id');
+                showProcessModal(feedbackId);
+            }
+        });
+
+        // 删除反馈
+        document.getElementById('feedback-table-body').addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('.btn-delete');
+            if (deleteBtn) {
+                const feedbackId = deleteBtn.getAttribute('data-id');
+                if (confirm('确定要删除这条反馈吗？')) {
+                    deleteFeedback(feedbackId);
+                }
+            }
+        });
+
+        // 确认处理
+        document.getElementById('confirm-process').addEventListener('click', function() {
+            processFeedback();
+        });
+
+        // 取消处理
+        document.getElementById('cancel-process').addEventListener('click', function() {
+            document.getElementById('process-modal').style.display = 'none';
+        });
+
+        // 关闭弹窗
+        document.querySelectorAll('.modal .close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', function() {
+                this.closest('.modal').style.display = 'none';
+            });
+        });
+
+        // 点击模态框外部关闭
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    function performSearch() {
+        const keyword = document.getElementById('search-input').value.trim();
+        const status = document.getElementById('status-filter').value;
+
+        let url = '/feedback/manage?';
+        if (status) url += 'status=' + status + '&';
+        if (keyword) url += 'keyword=' + encodeURIComponent(keyword);
+
+        window.location.href = url;
+    }
+
+    function goToPage(page) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('page', page);
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+
+    function changePageSize(size) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('size', size);
+        urlParams.set('page', '1');
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+
+    async function showFeedbackDetail(feedbackId) {
+        try {
+            const response = await fetch('/feedback/detail/' + feedbackId);
+            if (!response.ok) throw new Error('获取详情失败');
+
+            const feedback = await response.json();
+
+            // 填充详情数据
+            document.getElementById('detail-id').textContent = feedback.id;
+            document.getElementById('detail-type').textContent = feedback.typeText;
+            document.getElementById('detail-content').textContent = feedback.content;
+            document.getElementById('detail-contact').textContent = feedback.contactInfo || '无';
+            document.getElementById('detail-submitter').textContent = feedback.submitterName || '匿名';
+            document.getElementById('detail-status').textContent = feedback.statusText;
+            document.getElementById('detail-processor').textContent = feedback.processorName || '未处理';
+            document.getElementById('detail-remark').textContent = feedback.processRemark || '无';
+            document.getElementById('detail-create-time').textContent =
+                new Date(feedback.createTime).toLocaleString();
+            document.getElementById('detail-process-time').textContent =
+                feedback.processTime ? new Date(feedback.processTime).toLocaleString() : '未处理';
+
+            document.getElementById('view-modal').style.display = 'flex';
+        } catch (error) {
+            console.error('获取反馈详情失败:', error);
+            alert('加载详情失败，请重试');
+        }
+    }
+
+    async function showProcessModal(feedbackId) {
+        try {
+            const response = await fetch('/feedback/detail/' + feedbackId);
+            if (!response.ok) throw new Error('获取反馈信息失败');
+
+            const feedback = await response.json();
+
+            document.getElementById('process-feedback-id').value = feedbackId;
+            document.getElementById('current-status').textContent = feedback.statusText;
+            document.getElementById('current-status').className =
+                'status-badge status-' + (feedback.status === 0 ? 'pending' : feedback.status === 1 ? 'read' : 'processed');
+            document.getElementById('process-status').value = feedback.status;
+            document.getElementById('process-remark').value = feedback.processRemark || '';
+
+            document.getElementById('process-modal').style.display = 'flex';
+        } catch (error) {
+            console.error('加载处理弹窗失败:', error);
+            alert('加载失败，请重试');
+        }
+    }
+
+    async function processFeedback() {
+        const feedbackId = document.getElementById('process-feedback-id').value;
+        const status = document.getElementById('process-status').value;
+        const processRemark = document.getElementById('process-remark').value.trim();
+
+        try {
+            const response = await fetch('/feedback/update-status', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: feedbackId,
+                    status: parseInt(status),
+                    processRemark: processRemark
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('处理成功');
+                document.getElementById('process-modal').style.display = 'none';
+                window.location.reload();
+            } else {
+                alert('处理失败: ' + result.message);
+            }
+        } catch (error) {
+            console.error('处理反馈失败:', error);
+            alert('处理失败，请重试');
+        }
+    }
+
+    async function deleteFeedback(feedbackId) {
+        try {
+            const response = await fetch('/feedback/delete/' + feedbackId, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('删除成功');
+                window.location.reload();
+            } else {
+                alert('删除失败: ' + result.message);
+            }
+        } catch (error) {
+            console.error('删除反馈失败:', error);
+            alert('删除失败，请重试');
+        }
+    }
+</script>
+</body>
+</html>

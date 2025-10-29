@@ -275,9 +275,6 @@
             <label for="password">密码</label>
             <input type="password" id="password" name="password" autocomplete="password" placeholder="请输入密码" required value="123456">
         </div>
-<!--        <div class="forgot-password">-->
-<!--            <a href="#">忘记密码?</a>-->
-<!--        </div>-->
         <button type="submit">登录</button>
     </form>
     <a th:href="@{/register}">
@@ -314,6 +311,10 @@
 
 
 <script th:inline="javascript">
+    let successMsg = /*[[${success}]]*/ '';
+    if (successMsg !== null && successMsg.trim() !== "") {
+        alert(successMsg);
+    }
     // 从 Thymeleaf 变量取 error
     let errorMsg = /*[[${error}]]*/ '';
     if (errorMsg !== null && errorMsg.trim() !== "") {

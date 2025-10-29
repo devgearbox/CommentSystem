@@ -50,6 +50,10 @@
             <i class="fas fa-comments"></i>
             <span>反馈</span>
         </div>
+        <div class="menu-item" data-url="/feedback/manage" th:if="${session.currentUser.role == 1}">
+            <i class="fas fa-list-check"></i>
+            <span>反馈管理</span>
+        </div>
         <div class="menu-item" data-url="/help">
             <i class="fas fa-question-circle"></i>
             <span>帮助</span>

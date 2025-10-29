@@ -18,4 +18,7 @@ public interface LitchiVarietyService {
     void deleteById(Integer varietyId);
     void incrementOrderCount(Integer varietyId);
     Optional<LitchiVariety> findById(Integer varietyId);
+    //筛选封禁中的供应商
+    List<LitchiVariety> findBySupplierStatus(Integer status);
+    List<LitchiVariety> searchByVarietyNameAndSupplierStatus(String keyword, Integer status);
 }

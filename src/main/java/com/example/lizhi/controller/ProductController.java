@@ -43,7 +43,10 @@ public class ProductController {
             // 关联供应商
             Supplier supplier = supplierService.getSupplierById(supplierId)
                     .orElseThrow(() -> new IllegalArgumentException("供应商不存在"));
-
+            // 2. 检查供应商状态：1=正常，0=封禁中
+            if (supplier.getStatus() != 1) {
+                throw new IllegalArgumentException("您已被封禁，无法上架商品");
+            }
             // 构建商品对象
             LitchiVariety variety = new LitchiVariety();
             variety.setVarietyName(varietyName);
@@ -68,7 +71,7 @@ public class ProductController {
         }
     }
 
-    // 修改后的图片保存方法
+    //图片保存方法
     private String saveProductImage(MultipartFile productImage) throws IOException {
         // 获取项目根目录的绝对路径
         String rootPath = System.getProperty("user.dir");
@@ -88,7 +91,7 @@ public class ProductController {
         Path filePath = uploadPath.resolve(uniqueFilename);
         productImage.transferTo(filePath.toFile());
 
-        // 返回前端可访问的路径（重要修改）
+        // 返回前端可访问的路径
         return "/uploads/img/" + uniqueFilename;
     }
 }

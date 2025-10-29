@@ -119,4 +119,19 @@ public class LitchiVarietyServiceImpl implements LitchiVarietyService {
     public Optional<LitchiVariety> findById(Integer varietyId) {
         return repository.findById(varietyId);
     }
+    //筛选封禁中的供应商
+    @Override
+    @Transactional(readOnly = true)
+    public List<LitchiVariety> findBySupplierStatus(Integer status) {
+        return repository.findBySupplierStatus(status);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<LitchiVariety> searchByVarietyNameAndSupplierStatus(String keyword, Integer status) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return findBySupplierStatus(status);
+        }
+        return repository.findByVarietyNameContainingAndSupplierStatus(keyword.trim(), status);
+    }
 }

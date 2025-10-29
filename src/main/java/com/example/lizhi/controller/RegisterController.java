@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class RegisterController {
@@ -29,24 +30,23 @@ public class RegisterController {
             @RequestParam("username") String username,
             @RequestParam("password") String password,
             @RequestParam("real_name") String realName,
-            // 新增电话、性别参数
             @RequestParam("phone") String phone,
             @RequestParam("gender") String gender,
-            Model model
+            @RequestParam("role") Integer role,
+            Model model,
+            RedirectAttributes redirectAttributes
     ) {
         User user = new User();
         user.setUsername(username);
         user.setPassword(password);
         user.setReal_name(realName);
-        // 绑定电话、性别
         user.setPhone(phone);
         user.setGender(gender);
-
-        user.setRole(2);   // 假设普通用户角色为2
-        user.setStatus(1); // 假设状态1为启用
+        user.setRole(role);
+        user.setStatus(1);
 
         if (userService.register(user)) {
-            model.addAttribute("message", "注册成功，请登录");
+            redirectAttributes.addFlashAttribute("success", "用户注册成功");
             return "redirect:/login";
         } else {
             model.addAttribute("error", "用户名已存在");

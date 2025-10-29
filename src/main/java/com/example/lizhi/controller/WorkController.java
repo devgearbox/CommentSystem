@@ -45,34 +45,33 @@ public class WorkController {
         }
         model.addAttribute("user", user);
 
-        // 2. 商品查询：按角色过滤（核心修改）
+        // 2. 商品查询：按角色过滤，并添加供应商状态过滤
         List<LitchiVariety> varieties;
         if (user.getRole() == 3) { // 角色为3（供应商）：仅查自己关联的供应商的商品
-            // 2.1 获取当前用户关联的所有供应商
+            // 2.1 获取当前用户关联的所有供应商，并过滤状态为1（正常）的供应商
             List<Supplier> userSuppliers = supplierService.getSuppliersByUserId(user.getId());
-            // 2.2 提取供应商ID列表（用于筛选商品）
+            // 2.2 提取状态为正常的供应商ID列表
             List<Integer> supplierIds = userSuppliers.stream()
-                    .map(Supplier::getSupplier_id) // 注意：Supplier类中ID字段是supplier_id
+                    .filter(supplier -> supplier.getStatus() == 1) // 只保留状态为1（正常）的供应商
+                    .map(Supplier::getSupplier_id)
                     .collect(Collectors.toList());
-
-            // 2.3 结合关键词查询：有关键词则“按名称+供应商ID”筛选，无关键词则“按供应商ID”筛选
+            // 2.3 结合关键词查询
             if (keyword != null && !keyword.trim().isEmpty()) {
-                // 需在LitchiVarietyService中新增“按名称+供应商ID列表”查询方法
                 varieties = litchiVarietyService.searchByVarietyNameAndSupplierIds(keyword, supplierIds);
             } else {
-                // 需在LitchiVarietyService中新增“按供应商ID列表”查询方法
                 varieties = litchiVarietyService.findBySupplierIds(supplierIds);
             }
-        } else { // 其他角色（管理员/采购部）：查询全部商品（原有逻辑不变）
+        } else { // 其他角色（管理员/采购部）：只查询正常供应商的商品
             if (keyword != null && !keyword.trim().isEmpty()) {
-                varieties = litchiVarietyService.searchByVarietyName(keyword);
+                //只搜索正常供应商的商品
+                varieties = litchiVarietyService.searchByVarietyNameAndSupplierStatus(keyword, 1);
             } else {
-                varieties = litchiVarietyService.findAll();
+                varieties = litchiVarietyService.findBySupplierStatus(1);
             }
         }
         model.addAttribute("varieties", varieties);
 
-        // 3. 为每个商品计算实际销售数量总和（修改逻辑）
+        // 3. 为每个商品计算实际销售数量总和
         Map<Integer, BigDecimal> salesQuantityMap = new HashMap<>();
         Map<Integer, String> formattedSalesMap = new HashMap<>();
         for (LitchiVariety variety : varieties) {

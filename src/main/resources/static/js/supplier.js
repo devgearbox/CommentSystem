@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // 填充详情数据
                 detailFields.id.textContent = supplier.supplier_id;
-                detailFields.status.textContent = supplier.status === 1 ? '启售' : '停售';
+                detailFields.status.textContent = supplier.status === 1 ? '正常' : '封禁中';
                 detailFields.name.textContent = supplier.supplier_name || '无';
                 detailFields.contact.textContent = supplier.contact || '无';
                 detailFields.phone.textContent = supplier.phone || '无';
@@ -206,8 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
         address: document.getElementById('edit-address'),
         varieties: document.getElementById('edit-varieties'),
         cooperation: document.getElementById('edit-cooperation'),
-        status: document.getElementById('edit-status'),
-        orderCount: document.getElementById('edit-order-count')
+        status: document.getElementById('edit-status')
     };
 
     // 事件委托：支持按钮内部元素点击
@@ -224,15 +223,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 const res = await fetch(`/suppliers/detail/${supplierId}`);
                 const supplier = await res.json();
 
-                // 填充编辑表单
-                editFields.id.value = supplier.supplier_id;
-                editFields.name.value = supplier.supplier_name || '';
-                editFields.contact.value = supplier.contact || '';
-                editFields.phone.value = supplier.phone || '';
-                editFields.address.value = supplier.address || '';
-                editFields.varieties.value = supplier.varieties || '';
-                editFields.cooperation.value = supplier.cooperation_start_date || '';
-                editFields.status.value = supplier.status || 1;
+                // 填充编辑表单 - 只填充存在的字段
+                if (editFields.id) editFields.id.value = supplier.supplier_id;
+                if (editFields.name) editFields.name.value = supplier.supplier_name || '';
+                if (editFields.contact) editFields.contact.value = supplier.contact || '';
+                if (editFields.phone) editFields.phone.value = supplier.phone || '';
+                if (editFields.address) editFields.address.value = supplier.address || '';
+                if (editFields.varieties) editFields.varieties.value = supplier.varieties || '';
+                if (editFields.cooperation) editFields.cooperation.value = supplier.cooperation_start_date || '';
+                if (editFields.status) editFields.status.value = supplier.status || 1;
 
                 editModal.style.display = 'flex';
             } catch (err) {
@@ -278,94 +277,99 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     }
-
     // ====================== 6. 商品上架功能 ======================
     const addProductModal = document.getElementById('add-product-modal');
     const addProductClose = document.querySelector('.add-product-close');
     const addProductForm = document.getElementById('add-product-form');
     const productSupplierIdInput = document.getElementById('product-supplier-id');
 
-    // 点击"上架商品"按钮显示弹窗（事件委托，支持动态元素）
-    supplierTableBody.addEventListener('click', (e) => {
+    // 点击"上架商品"按钮显示弹窗
+    supplierTableBody.addEventListener('click', async (e) => {
         const addProductBtn = e.target.closest('.add-product-btn');
         if (addProductBtn) {
             const supplierId = addProductBtn.getAttribute('data-id');
             if (supplierId) {
-                // 填充供应商ID到隐藏域
-                productSupplierIdInput.value = supplierId;
-                addProductModal.style.display = 'flex';
+                try {
+                    // 获取供应商详情，检查状态
+                    const res = await fetch(`/suppliers/detail/${supplierId}`);
+                    if (!res.ok) throw new Error('获取供应商详情失败');
+                    const supplier = await res.json();
+                    // 检查供应商状态：1=正常，0=封禁中
+                    if (supplier.status !== 1) {
+                        alert('该供应商已被封禁，无法上架商品！');
+                        return;
+                    }
+                    // 供应商状态正常，填充供应商ID到隐藏域
+                    productSupplierIdInput.value = supplierId;
+                    addProductModal.style.display = 'flex';
+                } catch (err) {
+                    console.error('检查供应商状态失败:', err);
+                    alert('获取供应商信息失败，请重试');
+                }
             } else {
                 alert('未获取到供应商ID');
             }
         }
     });
-
-    // 关闭商品上架弹窗
+    //关闭弹窗
     if (addProductClose) {
-        addProductClose.addEventListener('click', () => {
+        addProductClose.addEventListener('click', function() {
             addProductModal.style.display = 'none';
         });
-
-        // 点击弹窗外部关闭
-        addProductModal.addEventListener('click', (e) => {
-            if (e.target === addProductModal) {
-                addProductModal.style.display = 'none';
+    }
+    addProductModal.addEventListener('click', function(e) {
+        if (e.target === addProductModal) {
+            addProductModal.style.display = 'none';
+        }
+    });
+    // 提交商品上架表单
+    if (addProductForm) {
+        addProductForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(addProductForm);
+            // 基础数据校验
+            if (!formData.get('varietyName')) {
+                alert('请输入商品名称');
+                return;
+            }
+            if (!formData.get('price') || isNaN(formData.get('price')) || parseFloat(formData.get('price')) < 0) {
+                alert('请输入有效的价格');
+                return;
+            }
+            if (!formData.get('stock') || isNaN(formData.get('stock')) || parseInt(formData.get('stock')) < 0) {
+                alert('请输入有效的库存数量');
+                return;
+            }
+            if (!formData.get('productImage').name) {
+                alert('请选择商品图片');
+                return;
+            }
+            try {
+                const response = await fetch('/products/add', {
+                    method: 'POST',
+                    body: formData
+                });
+                // 检查响应状态
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                }
+                const result = await response.json();
+                if (result.success) {
+                    alert('商品上架成功！');
+                    addProductModal.style.display = 'none';
+                    addProductForm.reset();
+                    // 可选：刷新页面
+                    window.location.reload();
+                } else {
+                    alert('上架失败：' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('商品上架请求失败:', error);
+                alert('上架失败: ' + error.message);
             }
         });
     }
-
-// 提交商品上架表单
-if (addProductForm) {
-    addProductForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(addProductForm);
-
-        // 基础数据校验
-        if (!formData.get('varietyName')) {
-            alert('请输入商品名称');
-            return;
-        }
-        if (!formData.get('price') || isNaN(formData.get('price')) || parseFloat(formData.get('price')) < 0) {
-            alert('请输入有效的价格');
-            return;
-        }
-        if (!formData.get('stock') || isNaN(formData.get('stock')) || parseInt(formData.get('stock')) < 0) {
-            alert('请输入有效的库存数量');
-            return;
-        }
-        if (!formData.get('productImage').name) {
-            alert('请选择商品图片');
-            return;
-        }
-
-        try {
-            const response = await fetch('/products/add', {
-                method: 'POST',
-                body: formData
-            });
-
-            // 检查响应状态
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            }
-
-            const result = await response.json();
-            if (result.success) {
-                alert('商品上架成功！');
-                addProductModal.style.display = 'none';
-                addProductForm.reset();
-                // 可选：刷新页面
-                window.location.reload();
-            } else {
-                alert('上架失败：' + (result.message || '未知错误'));
-            }
-        } catch (error) {
-            console.error('商品上架请求失败:', error);
-            alert('上架失败: ' + error.message);
-        }
-    });
-}
 
     // ====================== 5. 添加供应商 ======================
     const addBtn = document.getElementById('add-supplier');

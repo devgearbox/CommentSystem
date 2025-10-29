@@ -24,7 +24,12 @@ public class Supplier {
     private String cooperation_start_date;
     private Integer status;
     public String getStatusText() {
-        return status == 1 ? "启售" : "停售";
+        switch (status) {
+            case 0: return "封禁中";
+            case 1: return "正常";
+            case 2: return "待审核";
+            default: return "未知";
+        }
     }
 
     @Column(name = "user_id")

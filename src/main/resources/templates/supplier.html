@@ -19,8 +19,7 @@
         <button id="cancel-delete" style="display: none;" class="view-all">取消</button>
         <button class="view-del" id="confirm-delete" style="display: none;">确认</button>
         <button class="view-all" id="search-all">查看全部</button>
-        <button class="view-all" id="add-supplier" th:if="${session.currentUser.role != 3}">添加供应商</button>
-        <!-- 修改：添加按钮容器 -->
+        <button class="view-all" id="add-supplier" th:if="${session.currentUser.role != 2}">添加供应商</button>
         <div class="delete-controls">
             <button class="view-del" id="del-supplier" th:if="${session.currentUser.role != 3}">删除供应商</button>
         </div>
@@ -54,7 +53,11 @@
             <td th:text="${supplier.address}"></td>
             <td th:text="${supplier.varieties}"></td>
             <td th:text="${supplier.cooperation_start_date}"></td>
-            <td th:text="${supplier.getStatusText()}"></td>
+            <td>
+                <span th:if="${supplier.status == 0}" class="badge badge-danger" style="color: #dc3545;">封禁中</span>
+                <span th:if="${supplier.status == 1}" class="badge badge-success" style="color: #28a745;">正常</span>
+                <span th:if="${supplier.status == 2}" class="badge badge-warning" style="color: #fd7e14;">待审核</span>
+            </td>
             <td class="action-header">
                 <button class="action-btn add-product-btn"
                         th:data-id="${supplier.supplier_id}"
@@ -142,6 +145,9 @@
                         <label>商品图片：</label>
                         <input type="file" name="productImage" accept="image/jpeg,image/png" required>
                         <small class="text-muted">支持JPG、PNG格式，建议尺寸400x300</small>
+                    </div>
+                    <div class="form-group">
+                        <label>规格（默认）</label>
                     </div>
                     <div class="form-group">
                         <label>商品描述：</label>
@@ -245,14 +251,11 @@
     <!-- 编辑弹窗 -->
     <div id="edit-modal" class="modal">
         <div class="modal-content">
-            <!-- 关闭按钮：与添加弹窗的 class 统一 -->
             <span class="close edit-close">&times;</span>
             <h2>编辑供应商</h2>
             <form id="edit-form">
                 <!-- 隐藏 ID -->
                 <input type="hidden" name="supplier_id" id="edit-id">
-
-                <!-- 表单分组：与添加弹窗的 .form-group 结构一致 -->
                 <div class="form-group">
                     <label>供应商名称：</label>
                     <input type="text" name="supplier_name" id="edit-name" required>
@@ -277,14 +280,14 @@
                     <label>合作开始日期：</label>
                     <input type="text" name="cooperation_start_date" id="edit-cooperation">
                 </div>
-                <div class="form-group">
+                <div class="form-group" th:if="${session.currentUser.role == 1}">
                     <label>状态：</label>
                     <select name="status" id="edit-status" required>
-                        <option value="1">启售</option>
-                        <option value="0">停售</option>
+                        <option value="2">待审核</option>
+                        <option value="1">正常</option>
+                        <option value="0">封禁中</option>
                     </select>
                 </div>
-                <!-- 提交按钮：与添加弹窗的 .submit-group、.submit-btn 统一 -->
                 <div class="form-group submit-group">
                     <button type="submit" class="submit-btn">保存修改</button>
                 </div>

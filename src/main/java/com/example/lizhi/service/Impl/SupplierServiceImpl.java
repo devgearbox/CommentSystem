@@ -58,7 +58,7 @@ public class SupplierServiceImpl implements SupplierService{
             supplier.setUser_id(currentUser.getId());
         }
         // 可在此处补充业务逻辑（如默认值设置）
-        supplier.setStatus(1); // 示例：默认状态为 1
+        supplier.setStatus(2); // 示例：默认状态为 1
         return supplierRepository.save(supplier);
     }
 
@@ -93,27 +93,54 @@ public class SupplierServiceImpl implements SupplierService{
 
     @Override
     public Supplier updateSupplier(Supplier supplier) {
-        // 验证供应商是否存在
-        Optional<Supplier> existingSupplier = supplierRepository.findById(supplier.getSupplier_id());
-        if (!existingSupplier.isPresent()) {
-            throw new IllegalArgumentException("供应商不存在");
+        try {
+            // 验证供应商是否存在
+            Optional<Supplier> existingSupplier = supplierRepository.findById(supplier.getSupplier_id());
+            if (!existingSupplier.isPresent()) {
+                throw new IllegalArgumentException("供应商不存在");
+            }
+
+            Supplier existing = existingSupplier.get();
+
+            // 只更新非空字段，保护关键字段不被意外修改
+            if (supplier.getSupplier_name() != null) {
+                existing.setSupplier_name(supplier.getSupplier_name());
+            }
+            if (supplier.getContact() != null) {
+                existing.setContact(supplier.getContact());
+            }
+            if (supplier.getPhone() != null) {
+                existing.setPhone(supplier.getPhone());
+            }
+            if (supplier.getAddress() != null) {
+                existing.setAddress(supplier.getAddress());
+            }
+            if (supplier.getVarieties() != null) {
+                existing.setVarieties(supplier.getVarieties());
+            }
+            if (supplier.getCooperation_start_date() != null) {
+                existing.setCooperation_start_date(supplier.getCooperation_start_date());
+            }
+
+            //状态字段 - 只有明确传入值时才更新
+            //防止状态被意外设置为 null
+            if (supplier.getStatus() != null) {
+                if (supplier.getStatus() >= 0 && supplier.getStatus() <= 2) {
+                    existing.setStatus(supplier.getStatus());
+                } else {
+                    throw new IllegalArgumentException("无效的状态值");
+                }
+            }
+            // 否则保持原有的状态值不变
+            // 自动更新修改时间
+            existing.setUpdate_time(LocalDateTime.now());
+
+            return supplierRepository.save(existing);
+        } catch (Exception e) {
+            System.err.println("更新供应商失败: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("更新供应商失败: " + e.getMessage());
         }
-
-        // 保留创建时间，不允许修改
-        Supplier updated = existingSupplier.get();
-        updated.setSupplier_name(supplier.getSupplier_name());
-        updated.setContact(supplier.getContact());
-        updated.setPhone(supplier.getPhone());
-        updated.setAddress(supplier.getAddress());
-        updated.setVarieties(supplier.getVarieties());
-        updated.setCooperation_start_date(supplier.getCooperation_start_date());
-        updated.setStatus(supplier.getStatus());
-        updated.setOrder_count(supplier.getOrder_count());
-
-        // 自动更新修改时间
-        updated.setUpdate_time(LocalDateTime.now());
-
-        return supplierRepository.save(updated);
     }
 
     @Override

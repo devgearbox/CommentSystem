@@ -453,9 +453,10 @@
         });
     }
 
-    document.getElementById('submitBtn').addEventListener('click', () => {
+    document.getElementById('submitBtn').addEventListener('click', async () => {
         const feedbackType = document.querySelector('input[name="feedbackType"]:checked');
         const feedbackContent = document.getElementById('feedbackContent').value.trim();
+        const contactInfo = document.getElementById('contactInfo').value.trim();
 
         if (!feedbackType) {
             alert('请选择反馈类型');
@@ -466,23 +467,42 @@
             return;
         }
 
-        console.log({
-            type: feedbackType.value,
-            content: feedbackContent,
-            contact: document.getElementById('contactInfo').value.trim(),
-            fileCount: selectedFiles.length
-        });
+        try {
+            const feedbackData = {
+                feedbackType: feedbackType.value,
+                content: feedbackContent,
+                contactInfo: contactInfo,
+                attachmentPaths: '' // 这里可以添加附件处理逻辑
+            };
 
-        const successPopup = document.getElementById('successPopup');
-        successPopup.style.display = 'block';
+            const response = await fetch('/feedback/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(feedbackData)
+            });
 
-        document.getElementById('feedbackForm').reset();
-        selectedFiles = [];
-        renderUploadedFiles();
+            const result = await response.json();
 
-        setTimeout(() => {
-            successPopup.style.display = 'none';
-        }, 3000);
+            if (result.success) {
+                const successPopup = document.getElementById('successPopup');
+                successPopup.style.display = 'block';
+
+                document.getElementById('feedbackForm').reset();
+                selectedFiles = [];
+                renderUploadedFiles();
+
+                setTimeout(() => {
+                    successPopup.style.display = 'none';
+                }, 3000);
+            } else {
+                alert('提交失败: ' + result.message);
+            }
+        } catch (error) {
+            console.error('提交反馈失败:', error);
+            alert('网络错误，请重试');
+        }
     });
 
     document.getElementById('cancelBtn').addEventListener('click', () => {

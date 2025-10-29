@@ -23,4 +23,14 @@ public interface LitchiVarietyRepository extends JpaRepository<LitchiVariety, In
             @Param("keyword") String keyword,
             @Param("supplierIds") List<Integer> supplierIds
     );
+    //筛选封禁中的供应商
+    @Query("select v from LitchiVariety v left join fetch v.supplier where v.supplier.status = :status")
+    List<LitchiVariety> findBySupplierStatus(@Param("status") Integer status);
+
+    // 根据商品名称和供应商状态搜索
+    @Query("select v from LitchiVariety v left join fetch v.supplier where v.variety_name like %:keyword% and v.supplier.status = :status")
+    List<LitchiVariety> findByVarietyNameContainingAndSupplierStatus(
+            @Param("keyword") String keyword,
+            @Param("status") Integer status
+    );
 }
