@@ -1,14 +1,19 @@
 package com.example.lizhi.controller;
 
 import com.example.lizhi.entity.StockIn;
+import com.example.lizhi.service.ExcelExportService;
 import com.example.lizhi.service.ReturnOrderService;
 import com.example.lizhi.service.StockInService;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -17,10 +22,14 @@ public class StockInController {
 
     private final StockInService stockInService;
     private final ReturnOrderService returnOrderService;
+    private final ExcelExportService excelExportService;
 
-    public StockInController(StockInService stockInService, ReturnOrderService returnOrderService) {
+    public StockInController(StockInService stockInService,
+                             ReturnOrderService returnOrderService,
+                             ExcelExportService excelExportService) {
         this.stockInService = stockInService;
         this.returnOrderService = returnOrderService;
+        this.excelExportService = excelExportService;
     }
 
     @GetMapping("/stock")
@@ -58,7 +67,7 @@ public class StockInController {
         return "stock :: #stock-table-body";
     }
 
-    // 新增：批量删除入库单
+    //批量删除入库单
     @DeleteMapping("/stock/delete/batch")
     public ResponseEntity<Map<String, Object>> batchDeleteStock(@RequestBody Map<String, List<Integer>> request) {
         List<Integer> ids = request.get("ids");
@@ -97,5 +106,35 @@ public class StockInController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("服务器错误：" + e.getMessage());
         }
+    }
+
+    // 导出所有入库单
+    @GetMapping("/stock/export")
+    public ResponseEntity<byte[]> exportAllStockIn() throws IOException {
+        List<StockIn> stockInList = stockInService.getAllStockInForExport();
+        byte[] excelBytes = excelExportService.exportStockInToExcel(stockInList);
+
+        String fileName = "入库单列表_" + System.currentTimeMillis() + ".xlsx";
+        String encodedFileName = new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
+                .body(excelBytes);
+    }
+
+    // 根据搜索条件导出入库单
+    @GetMapping("/stock/export/search")
+    public ResponseEntity<byte[]> exportStockInBySearch(@RequestParam String orderNo) throws IOException {
+        List<StockIn> stockInList = stockInService.getStockInForExportByOrderNo(orderNo);
+        byte[] excelBytes = excelExportService.exportStockInToExcel(stockInList);
+
+        String fileName = "入库单搜索列表_" + System.currentTimeMillis() + ".xlsx";
+        String encodedFileName = new String(fileName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
+                .body(excelBytes);
     }
 }

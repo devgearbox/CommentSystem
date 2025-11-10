@@ -59,15 +59,12 @@ public class ReturnOrderServiceImpl implements ReturnOrderService {
         if (returnOrderRepository.existsByOrderNo(orderNo)) {
             throw new RuntimeException("该订单已生成退货单，无需重复创建");
         }
-
         // 获取原订单信息
         Optional<PurchaseOrder> orderOpt = purchaseOrderRepository.findByOrderNo(orderNo);
         if (!orderOpt.isPresent()) {
             throw new RuntimeException("原订单不存在：" + orderNo);
         }
-
         PurchaseOrder order = orderOpt.get();
-
         // 创建退货单
         ReturnOrder returnOrder = new ReturnOrder();
         returnOrder.setOrderNo(orderNo);

@@ -136,7 +136,11 @@ public class StockInServiceImpl implements StockInService {
     @Override
     public Page<StockIn> findAllStockIn(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        return stockInRepository.findAll(pageable);
+        Page<StockIn> stockPage = stockInRepository.findAll(pageable);
+        // 为每个入库单计算保鲜状态
+        return stockPage.map(stock -> {
+            return stock;
+        });
     }
 
     @Override
@@ -147,7 +151,11 @@ public class StockInServiceImpl implements StockInService {
     @Override
     public Page<StockIn> searchByOrderNo(String orderNo, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        return stockInRepository.findByOrderNoContaining(orderNo, pageable);
+        Page<StockIn> stockPage = stockInRepository.findByOrderNoContaining(orderNo, pageable);
+        // 为每个入库单计算保鲜状态
+        return stockPage.map(stock -> {
+            return stock;
+        });
     }
 
     @Override
@@ -166,5 +174,15 @@ public class StockInServiceImpl implements StockInService {
         }
 
         stockInRepository.deleteAll(stockRecords);
+    }
+
+    @Override
+    public List<StockIn> getAllStockInForExport() {
+        return stockInRepository.findAll();
+    }
+
+    @Override
+    public List<StockIn> getStockInForExportByOrderNo(String orderNo) {
+        return stockInRepository.findByOrderNoContaining(orderNo);
     }
 }

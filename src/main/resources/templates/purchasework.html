@@ -15,6 +15,7 @@
         <i class="fas fa-leaf" style="font-size: 24px;"></i>
         <h1>荔枝批发管理系统</h1>
     </div>
+<!--    不同角色呈现不同页面-->
     <div class="menu">
         <div class="menu-item active" data-url="/work">
             <i class="fas fa-tachometer-alt"></i>
@@ -32,7 +33,8 @@
         </div>
         <div class="menu-item" data-url="/returns">
             <i class="fas fa-undo-alt"></i>
-            <span>退货管理</span>
+            <span th:if="${session.currentUser.role != 2}">退货管理</span>
+            <span th:if="${session.currentUser.role == 2}">退货详情</span>
         </div>
         <div class="menu-item" data-url="/suppliers" th:if="${session.currentUser.role != 2}">
             <i class="fas fa-users"></i>
@@ -135,7 +137,7 @@ $('.menu-item').click(function() {
     // });
     function logout() {
         // 跳转到登录页面（替换为你的实际登录页 URL）
-        window.location.href = "http://localhost:8080/login";
+        window.location.href = "http://localhost:7676/login";
 
         // 可选：清除登录状态（如 Cookie、SessionStorage 等）
         // 示例：清除 SessionStorage

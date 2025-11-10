@@ -16,4 +16,7 @@ public interface StockInService {
     List<StockIn> searchByOrderNo(String orderNo);
     Page<StockIn> searchByOrderNo(String orderNo, int page, int size);
     void batchDelete(List<Integer> ids);
+    //入库单导出
+    List<StockIn> getAllStockInForExport();
+    List<StockIn> getStockInForExportByOrderNo(String orderNo);
 }

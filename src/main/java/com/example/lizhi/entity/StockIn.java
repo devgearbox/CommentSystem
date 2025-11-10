@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Table(name = "stock_in")
@@ -28,8 +29,11 @@ public class StockIn {
     private LocalDateTime update_time;
     private String operator_name;
     private Integer operator_id;
+    @Transient
+    private FreshnessStatus freshness_status;
 
-    // 新增：关联订单实体
+
+    // 关联订单实体
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "order_no", referencedColumnName = "order_no", insertable = false, updatable = false)
     private PurchaseOrder order;
@@ -40,6 +44,26 @@ public class StockIn {
         this.update_time = LocalDateTime.now();
         this.stock_in_status = StockInStatus.pending;
     }
+
+    // 计算保鲜状态的方法
+    public FreshnessStatus getFreshness_status() {
+        if (create_time == null) {
+            return FreshnessStatus.UNKNOWN;
+        }
+
+        long daysBetween = ChronoUnit.DAYS.between(create_time, LocalDateTime.now());
+
+        if (daysBetween <= 3) {
+            return FreshnessStatus.FRESH;
+        } else if (daysBetween <= 7) {
+            return FreshnessStatus.WARNING;
+        } else if (daysBetween <= 10) {
+            return FreshnessStatus.URGENT;
+        } else {
+            return FreshnessStatus.EXPIRED;
+        }
+    }
+
 
     public enum StockInStatus {
         pending("待入库"),
@@ -57,6 +81,31 @@ public class StockIn {
 
         public String getLabel() {
             return label;
+        }
+    }
+
+    // 保鲜状态枚举
+    public enum FreshnessStatus {
+        FRESH("新鲜", "fresh"),
+        WARNING("预警", "warning"),
+        URGENT("紧急", "urgent"),
+        EXPIRED("过期", "expired"),
+        UNKNOWN("未知", "unknown");
+
+        private final String label;
+        private final String cssClass;
+
+        FreshnessStatus(String label, String cssClass) {
+            this.label = label;
+            this.cssClass = cssClass;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public String getCssClass() {
+            return cssClass;
         }
     }
 }

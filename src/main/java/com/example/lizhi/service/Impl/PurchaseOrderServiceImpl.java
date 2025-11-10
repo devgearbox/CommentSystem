@@ -141,10 +141,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         if (!allowedTransitions.getOrDefault(oldStatus, Collections.emptyList()).contains(newStatusEnum)) {
             throw new RuntimeException("非法状态流转：" + oldStatus.getLabel() + " -> " + newStatusEnum.getLabel());
         }
-
         order.setOrderStatus(newStatusEnum);
         PurchaseOrder updatedOrder = orderRepository.save(order);
-
         // 当状态变为 received 时，增加供应商和商品的 order_count
         if (newStatusEnum == PurchaseOrder.OrderStatus.received) {
             // 增加供应商订单数量

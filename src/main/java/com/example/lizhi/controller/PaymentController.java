@@ -50,7 +50,8 @@ public class PaymentController {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "<script>alert('支付请求创建失败: " + e.getMessage().replace("\"", "\\\"") + "');window.history.back();</script>";
+            return "<script>alert('支付请求创建失败: " + e.getMessage().replace("\"", "\\\"") +
+                    "');window.history.back();</script>";
         }
     }
 

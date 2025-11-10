@@ -88,7 +88,7 @@
                         th:data-status="${order.orderStatus}"
                 th:disabled="${order.orderStatus == T(com.example.lizhi.entity.PurchaseOrder.OrderStatus).received
                 || order.orderStatus == T(com.example.lizhi.entity.PurchaseOrder.OrderStatus).rejected}" th:if="${session.currentUser.role != 2}">
-                修改状态
+                更新状态
                 </button>
             </td>
         </tr>

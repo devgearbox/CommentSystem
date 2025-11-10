@@ -3,400 +3,522 @@
 <head>
   <meta charset="UTF-8">
   <title>入库管理</title>
-  <link rel="stylesheet" th:href="@{/css/supplier.css}"> <!-- 复用样式表 -->
+  <link rel="stylesheet" th:href="@{/css/supplier.css}">
+  <style>
+    /* 保鲜状态样式 */
+    .freshness-status {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: center;
+        display: inline-block;
+        min-width: 50px;
+    }
+
+    .freshness-fresh {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .freshness-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .freshness-urgent {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .freshness-expired {
+        background-color: #f5f5f5;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+        text-decoration: line-through;
+    }
+
+    .freshness-unknown {
+        background-color: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+  </style>
 </head>
-  <body>
-    <div class="section">
-      <div class="card-header">
-        <h2>入库管理</h2>
-      </div>
+<body>
+<div class="section">
+  <div class="card-header">
+    <h2>入库管理</h2>
+  </div>
 
-      <div class="header">
-        <div class="search-box">
-          <input type="text" id="search-input" placeholder="输入订单编号...">
-          <button id="search-button">搜索</button>
-        </div>
-        <button id="confirm-delete-stock" style="display: none;" class="view-del">确认删除</button>
-        <button id="cancel-delete-stock" style="display: none;" class="view-all">取消</button>
-        <button id="del-stock" class="view-del" th:if="${session.currentUser.role == 1}">删除入库记录</button>
-        <button class="view-all" id="search-all">查看全部</button>
-      </div>
+  <div class="header">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="输入订单编号...">
+      <button id="search-button">搜索</button>
+    </div>
+    <button id="confirm-delete-stock" style="display: none;" class="view-del">确认删除</button>
+    <button id="cancel-delete-stock" style="display: none;" class="view-all">取消</button>
+    <button id="del-stock" class="view-del" th:if="${session.currentUser.role == 1}">删除入库记录</button>
+    <button class="view-all" id="export-all">导出全部</button>
+    <button class="view-all" id="export-search" style="display: none;">导出搜索结果</button>
+    <button class="view-all" id="search-all">查看全部</button>
+  </div>
 
-      <table>
-        <thead>
-        <tr>
-          <th style="display: none">
-            <input type="checkbox" id="select-all-stock">
-          </th>
-          <th>订单编号</th>
-          <th>入库品种</th>
-          <th>荔枝规格</th>
-          <th>数量(斤)</th>
-          <th>经办人</th>
-          <th>入库单创建时间</th>
-          <th>入库时间</th>
-          <th>状态</th>
-          <th><div class="action-header" th:if="${session.currentUser.role != 3}">操作</div></th>
-        </tr>
-        </thead>
-        <tbody id="stock-table-body">
-        <tr th:each="stock : ${stockRecords}">
-          <td style="display: none">
-            <input type="checkbox" class="stock-check" th:data-id="${stock.stock_id}">
-          </td>
-          <td th:text="${stock.orderNo}"></td>
-          <td th:text="${stock.litchi_variety}"></td>
-          <td th:text="${stock.order.specification}"></td>
-          <td th:text="${stock.quantity}"></td>
-          <td th:text="${stock.operator_name}"></td>
-          <td th:text="${stock.create_time}"></td>
-          <td th:text="${stock.update_time}"></td>
-          <td th:text="${stock.stock_in_status.label}"></td>
-          <td>
-            <button class="status-btn" th:data-id="${stock.stock_id}" th:data-status="${stock.stock_in_status}" th:if="${session.currentUser.role != 3}">修改状态</button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-<!--      分页功能-->
-      <div class="pagination-container">
-        <div class="pagination-info">
-          共 <span th:text="${totalItems}">0</span> 条记录，
-          第 <span th:text="${currentPage}">1</span> 页 / 共 <span th:text="${totalPages}">1</span> 页
-        </div>
-
-        <div class="pagination-controls">
-          <!-- 首页 -->
-          <button th:if="${currentPage > 1}"
-                  onclick="goToPage(1)"
-                  class="page-btn first-page">首页</button>
-
-          <!-- 上一页 -->
-          <button th:if="${currentPage > 1}"
-                  th:onclick="'goToPage(' + (${currentPage - 1}) + ')'"
-                  class="page-btn prev-page">上一页</button>
-
-          <!-- 页码 -->
-          <span th:each="page : ${#numbers.sequence(1, totalPages)}">
-        <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
-                th:classappend="${page == currentPage} ? 'active' : ''"
-                th:onclick="'goToPage(' + ${page} + ')'"
-                class="page-btn">
-            [[${page}]]
+  <table>
+    <thead>
+    <tr>
+      <th style="display: none">
+        <input type="checkbox" id="select-all-stock">
+      </th>
+      <th>订单编号</th>
+      <th>入库品种</th>
+      <th>荔枝规格</th>
+      <th>数量(斤)</th>
+      <th>经办人</th>
+      <th>入库时间</th>
+      <th>保鲜状态</th>
+      <th>物流状态</th>
+      <th>
+        <div class="action-header" th:if="${session.currentUser.role != 3}">操作</div>
+      </th>
+    </tr>
+    </thead>
+    <tbody id="stock-table-body">
+    <tr th:each="stock : ${stockRecords}">
+      <td style="display: none">
+        <input type="checkbox" class="stock-check" th:data-id="${stock.stock_id}">
+      </td>
+      <td th:text="${stock.orderNo}"></td>
+      <td th:text="${stock.litchi_variety}"></td>
+      <td th:text="${stock.order.specification}"></td>
+      <td th:text="${stock.quantity}"></td>
+      <td th:text="${stock.operator_name}"></td>
+      <td th:text="${stock.update_time}"></td>
+      <td>
+        <span th:classappend="'freshness-status freshness-' + ${stock.freshness_status.cssClass}"
+              th:text="${stock.freshness_status.label}"></span>
+      </td>
+      <td th:text="${stock.stock_in_status.label}"></td>
+      <td>
+        <button class="status-btn"
+                th:data-id="${stock.stock_id}"
+                th:data-status="${stock.stock_in_status}"
+                th:if="${session.currentUser.role != 3}">
+          物流更新
         </button>
-    </span>
+      </td>
+    </tr>
+    </tbody>
+  </table>
 
-          <!-- 下一页 -->
-          <button th:if="${currentPage < totalPages}"
-                  th:onclick="'goToPage(' + (${currentPage + 1}) + ')'"
-                  class="page-btn next-page">下一页</button>
+  <!-- 分页功能 -->
+  <div class="pagination-container">
+    <div class="pagination-info">
+      共 <span th:text="${totalItems}">0</span> 条记录，
+      第 <span th:text="${currentPage}">1</span> 页 / 共 <span th:text="${totalPages}">1</span> 页
+    </div>
 
-          <!-- 末页 -->
-          <button th:if="${currentPage < totalPages}"
-                  th:onclick="'goToPage(' + ${totalPages} + ')'"
-                  class="page-btn last-page">末页</button>
+    <div class="pagination-controls">
+      <!-- 首页 -->
+      <button th:if="${currentPage > 1}"
+              onclick="goToPage(1)"
+              class="page-btn first-page">
+        首页
+      </button>
 
-          <!-- 页面大小选择 -->
-          <select onchange="changePageSize(this.value)" class="page-size-select">
-            <option value="5" th:selected="${pageSize == 5}">5条/页</option>
-            <option value="10" th:selected="${pageSize == 10}">10条/页</option>
-            <option value="20" th:selected="${pageSize == 20}">20条/页</option>
-            <option value="50" th:selected="${pageSize == 50}">50条/页</option>
+      <!-- 上一页 -->
+      <button th:if="${currentPage > 1}"
+              th:onclick="'goToPage(' + (${currentPage - 1}) + ')'"
+              class="page-btn prev-page">
+        上一页
+      </button>
+
+      <!-- 页码 -->
+      <span th:each="page : ${#numbers.sequence(1, totalPages)}">
+                    <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
+                            th:classappend="${page == currentPage} ? 'active' : ''"
+                            th:onclick="'goToPage(' + ${page} + ')'"
+                            class="page-btn">
+                        [[${page}]]
+                    </button>
+                </span>
+
+      <!-- 下一页 -->
+      <button th:if="${currentPage < totalPages}"
+              th:onclick="'goToPage(' + (${currentPage + 1}) + ')'"
+              class="page-btn next-page">
+        下一页
+      </button>
+
+      <!-- 末页 -->
+      <button th:if="${currentPage < totalPages}"
+              th:onclick="'goToPage(' + ${totalPages} + ')'"
+              class="page-btn last-page">
+        末页
+      </button>
+
+      <!-- 页面大小选择 -->
+      <select onchange="changePageSize(this.value)" class="page-size-select">
+        <option value="5" th:selected="${pageSize == 5}">5条/页</option>
+        <option value="10" th:selected="${pageSize == 10}">10条/页</option>
+        <option value="20" th:selected="${pageSize == 20}">20条/页</option>
+        <option value="50" th:selected="${pageSize == 50}">50条/页</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 状态修改弹窗（与订单复用结构） -->
+  <div id="status-modal" class="modal">
+    <div class="modal-content">
+      <span class="close status-close">&times;</span>
+      <h2>修改状态</h2>
+
+      <form id="status-form">
+        <input type="hidden" id="status-stock-id">
+        <input type="hidden" id="status-order-no">
+
+        <div class="form-group-status">
+          <label>当前状态：</label>
+          <span id="current-status" class="current-status-text"></span>
+        </div>
+
+        <div class="form-group-status">
+          <label>修改为：</label>
+          <select id="new-status" class="status-select" required>
           </select>
         </div>
-      </div>
 
-      <!-- 状态修改弹窗（与订单复用结构） -->
-      <div id="status-modal" class="modal">
-        <div class="modal-content">
-          <!-- 补充 .close 类，确保关闭按钮样式 -->
-          <span class="close status-close">&times;</span>
-          <h2>修改状态</h2>
-
-          <form id="status-form">
-            <input type="hidden" id="status-stock-id">
-            <input type="hidden" id="status-order-no">
-            <!-- 补充采购订单同款结构 -->
-            <div class="form-group-status">
-              <label>当前状态：</label>
-              <span id="current-status" class="current-status-text"></span>
-            </div>
-            <div class="form-group-status">
-              <label>修改为：</label>
-              <select id="new-status" class="status-select" required>
-              </select>
-            </div>
-            <div id="rejection-reason-group" class="form-group-status" style="display: none;">
-              <label for="rejection-reason">拒收原因：</label>
-              <textarea id="rejection-reason" class="reason-textarea" placeholder="请输入拒收原因..." rows="3"></textarea>
-            </div>
-            <div class="form-group submit-group">
-              <button type="submit" class="submit-btn">确认修改</button>
-            </div>
-          </form>
+        <div id="rejection-reason-group" class="form-group-status" style="display: none;">
+          <label for="rejection-reason">拒收原因：</label>
+          <textarea id="rejection-reason" class="reason-textarea" placeholder="请输入拒收原因..." rows="3"></textarea>
         </div>
-      </div>
+
+        <div class="form-group submit-group">
+          <button type="submit" class="submit-btn">确认修改</button>
+        </div>
+      </form>
     </div>
-    <script>
+  </div>
+</div>
 
-      // 搜索、批量删除功能
-document.addEventListener('DOMContentLoaded', function () {
-  const searchButton = document.getElementById('search-button');
-  const searchAllButton = document.getElementById('search-all');
-  const searchInput = document.getElementById('search-input');
+<script>
+  // 搜索、批量删除功能
+  document.addEventListener('DOMContentLoaded', function () {
+      const searchButton = document.getElementById('search-button');
+      const searchAllButton = document.getElementById('search-all');
+      const exportAllButton = document.getElementById('export-all');
+      const exportSearchButton = document.getElementById('export-search');
+      const searchInput = document.getElementById('search-input');
 
-  const batchDeleteBtn = document.getElementById('del-stock');
-  const confirmDeleteBtn = document.getElementById('confirm-delete-stock');
-  const cancelDeleteBtn = document.getElementById('cancel-delete-stock');
-  const selectAllStock = document.getElementById('select-all-stock');
+      const batchDeleteBtn = document.getElementById('del-stock');
+      const confirmDeleteBtn = document.getElementById('confirm-delete-stock');
+      const cancelDeleteBtn = document.getElementById('cancel-delete-stock');
+      const selectAllStock = document.getElementById('select-all-stock');
 
-  let isSelectVisible = false;
+      let isSelectVisible = false;
+      let currentSearchTerm = '';
 
-  // 搜索功能
-  searchButton.addEventListener('click', function () {
-    const searchTerm = searchInput.value.trim();
-    if (searchTerm) {
-      fetch('/stock/search?orderNo=' + encodeURIComponent(searchTerm))
-        .then(response => response.text())
-        .then(html => {
-          document.getElementById('stock-table-body').innerHTML = html;
-          resetBatchDeleteState();
-          bindStatusButtons();
-        })
-        .catch(error => {
-          console.error('搜索失败:', error);
-        });
-    }
-  });
-
-  // 查看全部
-  searchAllButton.addEventListener('click', function () {
-    window.location.href = '/stock';
-  });
-
-  // 批量删除功能
-  if (batchDeleteBtn) {
-    batchDeleteBtn.addEventListener('click', () => {
-      if (!isSelectVisible) {
-        isSelectVisible = true;
-        const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
-        selectColumns.forEach(column => {
-          column.style.display = 'table-cell';
-        });
-        if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'inline-block';
-        if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'inline-block';
-        updateStockChecks();
+      // 导出全部
+      if (exportAllButton) {
+          exportAllButton.addEventListener('click', function() {
+              window.location.href = '/stock/export';
+          });
       }
-    });
-  }
 
-  if (cancelDeleteBtn) {
-    cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);
-  }
+      // 导出搜索结果
+      if (exportSearchButton) {
+          exportSearchButton.addEventListener('click', function() {
+              if (currentSearchTerm) {
+                  window.location.href = '/stock/export/search?orderNo=' + encodeURIComponent(currentSearchTerm);
+              } else {
+                  alert('请先进行搜索');
+              }
+          });
+      }
 
-  if (selectAllStock) {
-    selectAllStock.addEventListener('change', () => {
-      const stockChecks = document.querySelectorAll('.stock-check');
-      stockChecks.forEach(check => check.checked = selectAllStock.checked);
-    });
-  }
-
-  if (confirmDeleteBtn) {
-    confirmDeleteBtn.addEventListener('click', async function () {
-      const selectedIds = [];
-      document.querySelectorAll('.stock-check').forEach(check => {
-        if (check.checked) selectedIds.push(parseInt(check.dataset.id));
+      // 搜索功能
+      searchButton.addEventListener('click', function () {
+          const searchTerm = searchInput.value.trim();
+          currentSearchTerm = searchTerm;
+          if (searchTerm) {
+              if (exportSearchButton) exportSearchButton.style.display = 'inline-block';
+              fetch('/stock/search?orderNo=' + encodeURIComponent(searchTerm))
+                  .then(response => response.text())
+                  .then(html => {
+                      document.getElementById('stock-table-body').innerHTML = html;
+                      resetBatchDeleteState();
+                      updateFreshnessStatus();
+                  })
+                  .catch(error => {
+                      console.error('搜索失败:', error);
+                  });
+          }
       });
 
-      if (selectedIds.length === 0) {
-        alert('请选择要删除的入库记录');
-        return;
-      }
+      // 初始绑定状态按钮事件
+      bindStatusButtons();
+      // 初始更新保鲜状态显示
+      updateFreshnessStatus();
 
-      try {
-        const response = await fetch('/stock/delete/batch', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: selectedIds })
-        });
-
-        const result = await response.json();
-        if (result.success) {
-          alert('批量删除入库记录成功');
-          window.location.reload();
-        } else {
-          alert('删除失败: ' + (result.message || '未知错误'));
-        }
-      } catch (error) {
-        console.error('删除请求失败:', error);
-        alert('网络错误，删除失败');
-      }
-    });
-  }
-
-  function updateStockChecks() {
-    const stockChecks = document.querySelectorAll('.stock-check');
-    stockChecks.forEach(check => {
-      check.removeEventListener('change', handleStockCheckChange);
-      check.addEventListener('change', handleStockCheckChange);
-    });
-  }
-
-  function handleStockCheckChange() {
-    const allChecks = document.querySelectorAll('.stock-check');
-    if (selectAllStock) {
-      selectAllStock.checked = Array.from(allChecks).every(cb => cb.checked);
-    }
-  }
-
-  function resetBatchDeleteState() {
-    isSelectVisible = false;
-    const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
-    selectColumns.forEach(column => {
-      column.style.display = 'none';
-    });
-    if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'none';
-    if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'none';
-    if (selectAllStock) selectAllStock.checked = false;
-    document.querySelectorAll('.stock-check').forEach(check => check.checked = false);
-  }
-
-  // 初始绑定状态按钮事件
-  bindStatusButtons();
-});
-const STATUS_FLOW = [
-  { value: 'pending', label: '待入库' },
-  { value: 'checking', label: '验收中' },
-  { value: 'completed', label: '已入库' },
-  { value: 'rejected', label: '拒收' }
-];
-
-function renderStatusOptions(currentStatus) {
-  const select = document.getElementById('new-status');
-  select.innerHTML = '';
-
-  const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
-  STATUS_FLOW.forEach((item, index) => {
-    if (index >= currentIndex) {
-      const option = document.createElement('option');
-      option.value = item.value;
-      option.textContent = item.label;
-      if (item.value === currentStatus) option.selected = true;
-      select.appendChild(option);
-    }
-  });
-}
-
-// 显示/隐藏拒收原因输入框
-function toggleRejectionReason(selectedStatus) {
-  const reasonGroup = document.getElementById('rejection-reason-group');
-  const reasonInput = document.getElementById('rejection-reason');
-
-  if (selectedStatus === 'rejected') {
-    reasonGroup.style.display = 'block';
-    reasonInput.required = true;
-  } else {
-    reasonGroup.style.display = 'none';
-    reasonInput.required = false;
-    reasonInput.value = ''; // 清空输入
-  }
-}
-
-// 绑定按钮点击事件
-document.querySelectorAll('.status-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const stockId = this.getAttribute('data-id');
-    const currentStatus = this.getAttribute('data-status');
-    const orderNo = this.closest('tr').querySelector('td:nth-child(2)').textContent;
-
-    renderStatusOptions(currentStatus);
-    document.getElementById('status-modal').style.display = 'block';
-    document.getElementById('status-stock-id').value = stockId;
-    document.getElementById('status-order-no').value = orderNo;
-    document.getElementById('current-status').textContent =
-      STATUS_FLOW.find(item => item.value === currentStatus)?.label || currentStatus;
-
-    // 初始化拒收原因输入框状态
-    toggleRejectionReason(currentStatus);
-  });
-});
-
-// 监听状态选择变化
-document.getElementById('new-status').addEventListener('change', function() {
-  toggleRejectionReason(this.value);
-});
-
-// 表单提交（调用入库单状态修改接口）
-document.getElementById('status-form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const stockId = document.getElementById('status-stock-id').value;
-  const orderNo = document.getElementById('status-order-no').value;
-  const newStatus = document.getElementById('new-status').value;
-  const rejectionReason = document.getElementById('rejection-reason').value;
-
-  // 如果是拒收状态，必须填写原因
-  if (newStatus === 'rejected' && !rejectionReason.trim()) {
-    alert('请填写拒收原因');
-    return;
-  }
-
-  // 构建请求数据
-  const requestData = {
-    stockId: parseInt(stockId),
-    newStatus: newStatus,
-    rejectionReason: newStatus === 'rejected' ? rejectionReason.trim() : null
-  };
-
-  fetch(`/api/stock/${stockId}/status`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(requestData)
-  })
-  .then(response => {
-    if (!response.ok) {
-      return response.json().then(errData => {
-        throw new Error(errData.message || '修改失败');
+      // 查看全部
+      searchAllButton.addEventListener('click', function () {
+          currentSearchTerm = '';
+          if (exportSearchButton) exportSearchButton.style.display = 'none';
+          searchInput.value = '';
+          window.location.href = '/stock?page=1';
       });
-    }
-    return response.json();
-  })
-  .then(data => {
-    location.reload();
-    alert('修改成功！');
-  })
-  .catch(error => {
-    console.error('请求失败：', error);
-    alert('修改失败，请联系对应供应商申请售后');
+
+      // 批量删除功能
+      if (batchDeleteBtn) {
+          batchDeleteBtn.addEventListener('click', () => {
+              if (!isSelectVisible) {
+                  isSelectVisible = true;
+                  const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
+                  selectColumns.forEach(column => {
+                      column.style.display = 'table-cell';
+                  });
+                  if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'inline-block';
+                  if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'inline-block';
+                  updateStockChecks();
+              }
+          });
+      }
+
+      if (cancelDeleteBtn) {
+          cancelDeleteBtn.addEventListener('click', resetBatchDeleteState);
+      }
+
+      if (selectAllStock) {
+          selectAllStock.addEventListener('change', () => {
+              const stockChecks = document.querySelectorAll('.stock-check');
+              stockChecks.forEach(check => check.checked = selectAllStock.checked);
+          });
+      }
+
+      if (confirmDeleteBtn) {
+          confirmDeleteBtn.addEventListener('click', async function () {
+              const selectedIds = [];
+              document.querySelectorAll('.stock-check').forEach(check => {
+                  if (check.checked) selectedIds.push(parseInt(check.dataset.id));
+              });
+
+              if (selectedIds.length === 0) {
+                  alert('请选择要删除的入库记录');
+                  return;
+              }
+
+              try {
+                  const response = await fetch('/stock/delete/batch', {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ ids: selectedIds })
+                  });
+
+                  const result = await response.json();
+                  if (result.success) {
+                      alert('批量删除入库记录成功');
+                      window.location.reload();
+                  } else {
+                      alert('删除失败: ' + (result.message || '未知错误'));
+                  }
+              } catch (error) {
+                  console.error('删除请求失败:', error);
+                  alert('网络错误，删除失败');
+              }
+          });
+      }
+
+      function updateStockChecks() {
+          const stockChecks = document.querySelectorAll('.stock-check');
+          stockChecks.forEach(check => {
+              check.removeEventListener('change', handleStockCheckChange);
+              check.addEventListener('change', handleStockCheckChange);
+          });
+      }
+
+      function handleStockCheckChange() {
+          const allChecks = document.querySelectorAll('.stock-check');
+          if (selectAllStock) {
+              selectAllStock.checked = Array.from(allChecks).every(cb => cb.checked);
+          }
+      }
+
+      function resetBatchDeleteState() {
+          isSelectVisible = false;
+          const selectColumns = document.querySelectorAll('th:nth-child(1), td:nth-child(1)');
+          selectColumns.forEach(column => {
+              column.style.display = 'none';
+          });
+          if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'none';
+          if (cancelDeleteBtn) cancelDeleteBtn.style.display = 'none';
+          if (selectAllStock) selectAllStock.checked = false;
+          document.querySelectorAll('.stock-check').forEach(check => check.checked = false);
+      }
+
+      // 初始绑定状态按钮事件
+      bindStatusButtons();
   });
-});
 
-// 关闭弹窗
-document.querySelector('.status-close').addEventListener('click', function() {
-  document.getElementById('status-modal').style.display = 'none';
-});
+  const STATUS_FLOW = [
+      { value: 'pending', label: '待入库' },
+      { value: 'checking', label: '验收中' },
+      { value: 'completed', label: '已入库' },
+      { value: 'rejected', label: '拒收' }
+  ];
 
-// 点击模态框外部关闭
-window.addEventListener('click', function(e) {
-  if (e.target === document.getElementById('status-modal')) {
-    document.getElementById('status-modal').style.display = 'none';
+  function renderStatusOptions(currentStatus) {
+      const select = document.getElementById('new-status');
+      select.innerHTML = '';
+
+      const currentIndex = STATUS_FLOW.findIndex(item => item.value === currentStatus);
+      STATUS_FLOW.forEach((item, index) => {
+          if (index >= currentIndex) {
+              const option = document.createElement('option');
+              option.value = item.value;
+              option.textContent = item.label;
+              if (item.value === currentStatus) option.selected = true;
+              select.appendChild(option);
+          }
+      });
   }
-});
 
-// 分页功能
-function goToPage(page) {
-const urlParams = new URLSearchParams(window.location.search);
-urlParams.set('page', page);
-window.location.href = window.location.pathname + '?' + urlParams.toString();
-}
+  // 显示/隐藏拒收原因输入框
+  function toggleRejectionReason(selectedStatus) {
+      const reasonGroup = document.getElementById('rejection-reason-group');
+      const reasonInput = document.getElementById('rejection-reason');
 
-function changePageSize(size) {
-const urlParams = new URLSearchParams(window.location.search);
-urlParams.set('size', size);
-urlParams.set('page', '1'); // 重置到第一页
-window.location.href = window.location.pathname + '?' + urlParams.toString();
-}
-    </script>
-  </body>
+      if (selectedStatus === 'rejected') {
+          reasonGroup.style.display = 'block';
+          reasonInput.required = true;
+      } else {
+          reasonGroup.style.display = 'none';
+          reasonInput.required = false;
+          reasonInput.value = ''; // 清空输入
+      }
+  }
+
+  // 监听状态选择变化
+  document.getElementById('new-status').addEventListener('change', function () {
+      toggleRejectionReason(this.value);
+  });
+
+  // 表单提交（调用入库单状态修改接口）
+  document.getElementById('status-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const stockId = document.getElementById('status-stock-id').value;
+      const orderNo = document.getElementById('status-order-no').value;
+      const newStatus = document.getElementById('new-status').value;
+      const rejectionReason = document.getElementById('rejection-reason').value;
+
+      // 如果是拒收状态，必须填写原因
+      if (newStatus === 'rejected' && !rejectionReason.trim()) {
+          alert('请填写拒收原因');
+          return;
+      }
+
+      // 构建请求数据
+      const requestData = {
+          stockId: parseInt(stockId),
+          newStatus: newStatus,
+          rejectionReason: newStatus === 'rejected' ? rejectionReason.trim() : null
+      };
+
+      fetch(`/api/stock/${stockId}/status`, {
+          method: 'PUT',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestData)
+      })
+          .then(response => {
+              if (!response.ok) {
+                  return response.json().then(errData => {
+                      throw new Error(errData.message || '修改失败');
+                  });
+              }
+              return response.json();
+          })
+          .then(data => {
+              location.reload();
+              alert('修改成功！');
+          })
+          .catch(error => {
+              console.error('请求失败：', error);
+              alert('修改失败，请联系对应供应商申请售后');
+          });
+  });
+
+  // 关闭弹窗
+  document.querySelector('.status-close').addEventListener('click', function () {
+      document.getElementById('status-modal').style.display = 'none';
+  });
+
+  // 点击模态框外部关闭
+  window.addEventListener('click', function (e) {
+      if (e.target === document.getElementById('status-modal')) {
+          document.getElementById('status-modal').style.display = 'none';
+      }
+  });
+
+  // 分页功能
+  function goToPage(page) {
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.set('page', page);
+      window.location.href = window.location.pathname + '?' + urlParams.toString();
+  }
+
+  function changePageSize(size) {
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.set('size', size);
+      urlParams.set('page', '1'); // 重置到第一页
+      window.location.href = window.location.pathname + '?' + urlParams.toString();
+  }
+
+  // 实时更新保鲜状态显示
+  function updateFreshnessStatus() {
+      const statusElements = document.querySelectorAll('.freshness-status');
+      statusElements.forEach(element => {
+          const statusText = element.textContent;
+          // 根据文本内容设置对应的CSS类
+          if (statusText.includes('新鲜')) {
+              element.className = 'freshness-status freshness-fresh';
+          } else if (statusText.includes('预警')) {
+              element.className = 'freshness-status freshness-warning';
+          } else if (statusText.includes('紧急')) {
+              element.className = 'freshness-status freshness-urgent';
+          } else if (statusText.includes('过期')) {
+              element.className = 'freshness-status freshness-expired';
+          } else {
+              element.className = 'freshness-status freshness-unknown';
+          }
+      });
+  }
+
+  // 绑定状态按钮事件（事件委托）
+  function bindStatusButtons() {
+      // 使用事件委托处理动态生成的按钮
+      document.getElementById('stock-table-body').addEventListener('click', function(event) {
+          const statusBtn = event.target.closest('.status-btn');
+          if (statusBtn) {
+              const stockId = statusBtn.getAttribute('data-id');
+              const currentStatus = statusBtn.getAttribute('data-status');
+              const orderNo = statusBtn.closest('tr').querySelector('td:nth-child(2)').textContent;
+
+              renderStatusOptions(currentStatus);
+              document.getElementById('status-modal').style.display = 'block';
+              document.getElementById('status-stock-id').value = stockId;
+              document.getElementById('status-order-no').value = orderNo;
+              document.getElementById('current-status').textContent =
+                  STATUS_FLOW.find(item => item.value === currentStatus)?.label || currentStatus;
+
+              // 初始化拒收原因输入框状态
+              toggleRejectionReason(currentStatus);
+          }
+      });
+  }
+</script>
+</body>
 </html>
