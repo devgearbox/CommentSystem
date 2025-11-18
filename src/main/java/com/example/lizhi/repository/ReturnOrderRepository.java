@@ -24,4 +24,16 @@ public interface ReturnOrderRepository extends JpaRepository<ReturnOrder, Intege
     // 添加分页查询方法
     Page<ReturnOrder> findAllByOrderByCreateTimeDesc(Pageable pageable);
     Page<ReturnOrder> findByOrderNoContaining(String orderNo, Pageable pageable);
+
+    // 根据用户ID查询退货单（采购员视角）
+    Page<ReturnOrder> findByOperatorIdOrderByCreateTimeDesc(Integer operatorId, Pageable pageable);
+
+    // 根据供应商名称查询退货单（供应商视角）
+    Page<ReturnOrder> findBySupplierNameOrderByCreateTimeDesc(String supplierName, Pageable pageable);
+
+    // 根据用户ID和订单号搜索
+    Page<ReturnOrder> findByOperatorIdAndOrderNoContaining(Integer operatorId, String orderNo, Pageable pageable);
+
+    // 根据供应商名称和订单号搜索
+    Page<ReturnOrder> findBySupplierNameAndOrderNoContaining(String supplierName, String orderNo, Pageable pageable);
 }

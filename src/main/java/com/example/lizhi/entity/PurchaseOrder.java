@@ -20,7 +20,7 @@ public class PurchaseOrder{
 
     private BigDecimal purchase_quantity;
     private String specification;
-    // 新增软删除字段
+    //软删除字段
     @Column(name = "is_deleted")
     private boolean isDeleted = false; // 默认未删除
 
@@ -60,7 +60,7 @@ public class PurchaseOrder{
 
     //关联litchi_variety表
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "variety_id",  // 新增的外键字段
+    @JoinColumn(name = "variety_id",
             referencedColumnName = "id",  // 关联到LitchiVariety的主键
             insertable = true,
             updatable = true)

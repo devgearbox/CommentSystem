@@ -13,7 +13,8 @@ import java.time.temporal.ChronoUnit;
 public class StockIn {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer stock_id;
+    @Column(name = "stock_id")
+    private Integer stockId;
 
     @Column(name = "order_no", unique = true, nullable = false)
     private String orderNo;
@@ -25,10 +26,15 @@ public class StockIn {
     @Enumerated(EnumType.STRING)
     private StockInStatus stock_in_status;
 
-    private LocalDateTime create_time;
+    @Column(name = "create_time")
+    private LocalDateTime createTime;
+
     private LocalDateTime update_time;
+    private LocalDateTime stock_in_time;
     private String operator_name;
-    private Integer operator_id;
+
+    @Column(name = "operator_id")
+    private Integer operatorId;
     @Transient
     private FreshnessStatus freshness_status;
 
@@ -40,18 +46,18 @@ public class StockIn {
 
     @PrePersist
     public void prePersist() {
-        this.create_time = LocalDateTime.now();
+        this.createTime = LocalDateTime.now();
         this.update_time = LocalDateTime.now();
         this.stock_in_status = StockInStatus.pending;
     }
 
     // 计算保鲜状态的方法
     public FreshnessStatus getFreshness_status() {
-        if (create_time == null) {
+        if (createTime == null) {
             return FreshnessStatus.UNKNOWN;
         }
 
-        long daysBetween = ChronoUnit.DAYS.between(create_time, LocalDateTime.now());
+        long daysBetween = ChronoUnit.DAYS.between(createTime, LocalDateTime.now());
 
         if (daysBetween <= 3) {
             return FreshnessStatus.FRESH;
@@ -63,7 +69,6 @@ public class StockIn {
             return FreshnessStatus.EXPIRED;
         }
     }
-
 
     public enum StockInStatus {
         pending("待入库"),

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>消息中心</title>
+    <link rel="stylesheet" th:href="@{/css/supplier.css}">
+    <style>
+        /* 筛选按钮样式 */
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background-color: #f5f5f5;
+            border-color: #1890ff;
+        }
+
+        .filter-btn.active {
+            background-color: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        /* 批量操作按钮样式 */
+        .batch-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 16px;
+        }
+
+        /* 消息样式 */
+        .message-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .message-item.unread {
+            background-color: #f0f8ff;
+            border-left: 4px solid #1890ff;
+        }
+
+        .message-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .message-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            flex: 1;
+        }
+
+        .message-time {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .message-content {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .message-type {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #1890ff;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px 6px;
+        }
+
+        .action-btn:hover {
+            color: #40a9ff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #d9d9d9;
+        }
+
+        .unread-badge {
+            background-color: #ff4d4f;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        /* 按钮样式与其他页面保持一致 */
+        .view-all, .view-del {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .view-all {
+            background-color: #fff;
+            color: #333;
+        }
+
+        .view-all:hover {
+            background-color: #f5f5f5;
+        }
+
+        .view-del {
+            background-color: #fff;
+            color: #ff4d4f;
+            border-color: #ff4d4f;
+        }
+
+        .view-del:hover {
+            background-color: #fff2f0;
+        }
+    </style>
+</head>
+<body>
+<div class="section">
+    <div class="card-header">
+        <h2>消息中心 <span th:if="${unreadCount > 0}" class="unread-badge" th:text="${unreadCount}"></span></h2>
+    </div>
+
+    <div class="header">
+        <!-- 左侧：消息类型筛选按钮 -->
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-type="ALL">全部消息</button>
+            <button class="filter-btn" data-type="ORDER_SHIPPED">发货提醒</button>
+            <button class="filter-btn" data-type="SYSTEM_NOTICE">系统通知</button>
+            <button class="filter-btn" data-type="WARNING">预警提醒</button>
+            <button class="filter-btn" data-type="UNREAD">未读消息</button>
+        </div>
+
+        <!-- 右侧：批量操作按钮 -->
+        <div class="batch-actions">
+            <input type="checkbox" id="select-all-messages">
+            <label for="select-all-messages">全选</label>
+            <button id="mark-read-btn" class="view-all">标记为已读</button>
+            <button id="delete-messages-btn" class="view-del">删除</button>
+            <button id="mark-all-read-btn" class="view-all">全部标记为已读</button>
+        </div>
+    </div>
+
+    <div id="messages-container">
+        <div th:if="${#lists.isEmpty(messages)}" class="empty-state">
+            <i class="fas fa-envelope-open"></i>
+            <p>暂无消息</p>
+        </div>
+
+        <div th:each="message : ${messages}"
+             th:classappend="${message.status.name() == 'UNREAD'} ? 'message-item unread' : 'message-item'"
+             class="message-item"
+             th:attr="data-type=${message.type}, data-status=${message.status}">
+            <div class="message-header">
+                <div class="message-title" th:text="${message.title}"></div>
+                <div class="message-time" th:text="${#temporals.format(message.createTime, 'yyyy-MM-dd HH:mm')}"></div>
+            </div>
+
+            <div class="message-content" th:text="${message.content}"></div>
+
+            <div class="message-meta">
+                <div>
+                    <span class="message-type" th:text="${message.type.label}"></span>
+                    <span th:if="${message.orderNo}" style="margin-left: 8px;">
+                        订单: <span th:text="${message.orderNo}"></span>
+                    </span>
+                </div>
+
+                <div class="message-actions">
+                    <input type="checkbox" class="message-check" th:data-id="${message.id}" style="display: none;">
+                    <button th:if="${message.status.name() == 'UNREAD'}"
+                            class="action-btn mark-read-single"
+                            th:data-id="${message.id}">标记已读</button>
+                    <button class="action-btn delete-single" th:data-id="${message.id}">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 分页功能 -->
+    <div class="pagination-container" th:if="${!#lists.isEmpty(messages)}">
+        <div class="pagination-info">
+            共 <span th:text="${totalItems}">0</span> 条消息，
+            第 <span th:text="${currentPage}">1</span> 页 / 共 <span th:text="${totalPages}">1</span> 页
+        </div>
+
+        <div class="pagination-controls">
+            <!-- 首页 -->
+            <button th:if="${currentPage > 1}" onclick="goToPage(1)" class="page-btn first-page">首页</button>
+
+            <!-- 上一页 -->
+            <button th:if="${currentPage > 1}" th:onclick="'goToPage(' + (${currentPage - 1}) + ')'" class="page-btn prev-page">上一页</button>
+
+            <!-- 页码 -->
+            <span th:each="page : ${#numbers.sequence(1, totalPages)}">
+                <button th:if="${(page >= currentPage - 2) and (page <= currentPage + 2)}"
+                        th:classappend="${page == currentPage} ? 'active' : ''"
+                        th:onclick="'goToPage(' + ${page} + ')'"
+                        class="page-btn">
+                    [[${page}]]
+                </button>
+            </span>
+
+            <!-- 下一页 -->
+            <button th:if="${currentPage < totalPages}" th:onclick="'goToPage(' + (${currentPage + 1}) + ')'" class="page-btn next-page">下一页</button>
+
+            <!-- 末页 -->
+            <button th:if="${currentPage < totalPages}" th:onclick="'goToPage(' + ${totalPages} + ')'" class="page-btn last-page">末页</button>
+
+            <!-- 页面大小选择 -->
+            <select onchange="changePageSize(this.value)" class="page-size-select">
+                <option value="10" th:selected="${pageSize == 10}">10条/页</option>
+                <option value="20" th:selected="${pageSize == 20}">20条/页</option>
+                <option value="50" th:selected="${pageSize == 50}">50条/页</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 筛选按钮功能
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        let currentFilter = 'ALL';
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // 更新按钮激活状态
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // 获取筛选类型
+                const filterType = this.getAttribute('data-type');
+                currentFilter = filterType;
+
+                // 执行筛选
+                filterMessages(filterType);
+            });
+        });
+
+        function filterMessages(filterType) {
+            const messageItems = document.querySelectorAll('.message-item');
+            let hasVisibleMessages = false;
+
+            messageItems.forEach(item => {
+                let shouldShow = true;
+                const messageDataType = item.getAttribute('data-type'); // 获取 data-type 属性
+                const messageStatus = item.getAttribute('data-status'); // 获取 data-status 属性
+
+                switch(filterType) {
+                    case 'ALL':
+                        shouldShow = true;
+                        break;
+                    case 'UNREAD':
+                        shouldShow = messageStatus === 'UNREAD';
+                        break;
+                    case 'ORDER_SHIPPED':
+                        shouldShow = messageDataType === 'ORDER_SHIPPED';
+                        break;
+                    case 'SYSTEM_NOTICE':
+                        shouldShow = messageDataType === 'SYSTEM_NOTICE';
+                        break;
+                    case 'WARNING':
+                        shouldShow = messageDataType === 'WARNING';
+                        break;
+                    default:
+                        shouldShow = true;
+                }
+
+                item.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) {
+                    hasVisibleMessages = true;
+                }
+            });
+
+            // 处理空状态显示
+            const existingEmptyState = document.querySelector('.empty-state');
+
+            if (!hasVisibleMessages) {
+                // 如果没有显示的消息，创建或显示空状态
+                if (!existingEmptyState) {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'empty-state';
+                    emptyDiv.innerHTML = '<i class="fas fa-envelope-open"></i><p>暂无此类消息</p>';
+                    document.getElementById('messages-container').appendChild(emptyDiv);
+                } else {
+                    existingEmptyState.style.display = 'block';
+                    existingEmptyState.querySelector('p').textContent = '暂无此类消息';
+                }
+            } else {
+                // 有显示的消息，隐藏空状态
+                if (existingEmptyState) {
+                    existingEmptyState.style.display = 'none';
+                }
+            }
+
+            // 重置全选复选框
+            const selectAll = document.getElementById('select-all-messages');
+            if (selectAll) {
+                selectAll.checked = false;
+            }
+
+            // 隐藏所有消息的复选框
+            document.querySelectorAll('.message-check').forEach(check => {
+                check.style.display = 'none';
+                check.checked = false;
+            });
+        }
+
+        // 批量操作功能
+        const selectAll = document.getElementById('select-all-messages');
+        const markReadBtn = document.getElementById('mark-read-btn');
+        const deleteMessagesBtn = document.getElementById('delete-messages-btn');
+        const markAllReadBtn = document.getElementById('mark-all-read-btn');
+
+        // 全选功能 - 只选择当前可见的消息
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                console.log('全选状态改变:', this.checked);
+
+                // 修复选择器：使用更通用的方式选择可见的消息项
+                const visibleMessages = document.querySelectorAll('.message-item');
+                const visibleChecks = [];
+
+                visibleMessages.forEach(item => {
+                    // 检查消息项是否可见（不是 display: none）
+                    const computedStyle = window.getComputedStyle(item);
+                    if (computedStyle.display !== 'none') {
+                        const check = item.querySelector('.message-check');
+                        if (check) {
+                            visibleChecks.push(check);
+                            check.checked = this.checked;
+                        }
+                    }
+                });
+
+                console.log('可见的复选框数量:', visibleChecks.length);
+            });
+        }
+
+        // 标记为已读
+        if (markReadBtn) {
+            markReadBtn.addEventListener('click', function() {
+                const selectedIds = getSelectedMessageIds();
+                if (selectedIds.length === 0) {
+                    alert('请选择要标记为已读的消息');
+                    return;
+                }
+                markMessagesAsRead(selectedIds);
+            });
+        }
+
+        // 删除消息
+        if (deleteMessagesBtn) {
+            deleteMessagesBtn.addEventListener('click', function() {
+                console.log('点击删除按钮');
+                const selectedIds = getSelectedMessageIds();
+                console.log('选中的消息ID:', selectedIds);
+
+                if (selectedIds.length === 0) {
+                    alert('请选择要删除的消息');
+                    return;
+                }
+                if (confirm('确定要删除选中的 ' + selectedIds.length + ' 条消息吗？')) {
+                    deleteMessages(selectedIds);
+                }
+            });
+        }
+
+        // 全部标记为已读
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function() {
+                if (confirm('确定要将所有消息标记为已读吗？')) {
+                    markAllAsRead();
+                }
+            });
+        }
+
+        // 单个消息操作 - 事件委托
+        document.getElementById('messages-container').addEventListener('click', function(e) {
+            // 标记单个消息为已读
+            if (e.target.classList.contains('mark-read-single')) {
+                const messageId = e.target.getAttribute('data-id');
+                markMessagesAsRead([parseInt(messageId)]);
+            }
+
+            // 删除单个消息
+            if (e.target.classList.contains('delete-single')) {
+                const messageId = e.target.getAttribute('data-id');
+                if (confirm('确定要删除这条消息吗？')) {
+                    deleteMessages([parseInt(messageId)]);
+                }
+            }
+        });
+
+        function getSelectedMessageIds() {
+            const selectedIds = [];
+
+            // 修复选择器：遍历所有消息项，检查哪些是可见的且被选中的
+            const allMessages = document.querySelectorAll('.message-item');
+
+            allMessages.forEach(item => {
+                const computedStyle = window.getComputedStyle(item);
+                if (computedStyle.display !== 'none') {
+                    const check = item.querySelector('.message-check:checked');
+                    if (check) {
+                        selectedIds.push(parseInt(check.getAttribute('data-id')));
+                    }
+                }
+            });
+
+            console.log('选中的消息ID:', selectedIds);
+            return selectedIds;
+        }
+
+        function markMessagesAsRead(messageIds) {
+            fetch('/messages/mark-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: messageIds })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('标记为已读成功');
+                    location.reload();
+                } else {
+                    alert('操作失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('标记已读失败:', error);
+                alert('操作失败，请重试');
+            });
+        }
+
+        function markAllAsRead() {
+            fetch('/messages/mark-all-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('全部标记为已读成功');
+                    location.reload();
+                } else {
+                    alert('操作失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('标记全部已读失败:', error);
+                alert('操作失败，请重试');
+            });
+        }
+
+        function deleteMessages(messageIds) {
+            fetch('/messages/delete/batch', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: messageIds })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('删除消息成功');
+                    location.reload();
+                } else {
+                    alert('删除失败: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('删除消息失败:', error);
+                alert('删除失败，请重试');
+            });
+        }
+
+        // 显示复选框（用于批量操作）
+        document.querySelectorAll('.message-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                const check = this.querySelector('.message-check');
+                if (check) check.style.display = 'inline-block';
+            });
+
+            item.addEventListener('mouseleave', function() {
+                const check = this.querySelector('.message-check');
+                if (check && !check.checked) check.style.display = 'none';
+            });
+        });
+
+        // 分页功能
+        function goToPage(page) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('page', page);
+            window.location.href = window.location.pathname + '?' + urlParams.toString();
+        }
+
+        function changePageSize(size) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('size', size);
+            urlParams.set('page', '1');
+            window.location.href = window.location.pathname + '?' + urlParams.toString();
+        }
+
+        function updateUnreadCount() {
+            fetch('/messages/unread/count')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.querySelector('.unread-badge');
+                    if (badge && data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline';
+                    } else if (badge) {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('获取未读消息数量失败:', error));
+        }
+
+        // 页面加载时更新
+        updateUnreadCount();
+        // 每分钟更新一次
+        setInterval(updateUnreadCount, 60000);
+    });
+</script>
+</body>
+</html>

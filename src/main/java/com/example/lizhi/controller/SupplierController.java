@@ -5,7 +5,7 @@ import com.example.lizhi.entity.User;
 import com.example.lizhi.service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page; // 新增导入
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -42,7 +42,7 @@ public class SupplierController {
         }
 
         model.addAttribute("suppliers", supplierPage.getContent());
-        // 新增分页信息
+        // 分页信息
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", supplierPage.getTotalPages());
         model.addAttribute("totalItems", supplierPage.getTotalElements());
@@ -72,7 +72,7 @@ public class SupplierController {
         }
 
         model.addAttribute("suppliers", supplierPage.getContent());
-        // 新增分页信息
+        // 分页信息
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", supplierPage.getTotalPages());
         model.addAttribute("totalItems", supplierPage.getTotalElements());
@@ -81,7 +81,6 @@ public class SupplierController {
         return "supplier :: #supplier-table-body";
     }
 
-    // 以下方法保持不变...
     @PostMapping("/suppliers/add")
     public ResponseEntity<?> addSupplier(@RequestBody Supplier supplier) {
         try {
@@ -133,6 +132,44 @@ public class SupplierController {
             response.put("success", false);
             response.put("message", "更新供应商失败");
             return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @GetMapping("/supplier/user")
+    public String getSupplierUserPage(HttpSession session, Model model) {
+        User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null || currentUser.getRole() != 3) {
+            return "redirect:/login";
+        }
+
+        // 获取当前用户的供应商信息
+        Optional<Supplier> supplierOpt = supplierService.findByUserId(currentUser.getId());
+
+        if (supplierOpt.isPresent()) {
+            model.addAttribute("supplier", supplierOpt.get());
+        } else {
+            model.addAttribute("supplier", null);
+        }
+
+        return "supplier-user";
+    }
+
+    @GetMapping("/suppliers/detail/current")
+    @ResponseBody
+    public ResponseEntity<?> getCurrentUserSupplier(HttpSession session) {
+        User currentUser = (User) session.getAttribute("currentUser");
+
+        if (currentUser == null || currentUser.getRole() != 3) {
+            return ResponseEntity.status(401).body("未授权");
+        }
+
+        Optional<Supplier> supplierOpt = supplierService.findByUserId(currentUser.getId());
+
+        if (supplierOpt.isPresent()) {
+            return ResponseEntity.ok(supplierOpt.get());
+        } else {
+            return ResponseEntity.status(404).body("未找到供应商信息");
         }
     }
 }

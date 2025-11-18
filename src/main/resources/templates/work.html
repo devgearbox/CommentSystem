@@ -235,7 +235,7 @@
                                     onclick="checkAddressAndRedirect(this)" th:if="${session.currentUser.role != 3}">
                                 采购
                             </button>
-                            <!-- 新增：下架按钮（权限控制） -->
+                            <!-- 下架按钮（权限控制） -->
                             <!-- 权限判断：角色1（管理员）显示；角色3（供应商）需判断商品所属供应商是否为自己的 -->
                             <button class="btn btn-danger"
                                     th:data-variety-id="${variety.id}"
@@ -315,7 +315,7 @@
         window.location.href = '/commodity?varietyId=' + varietyId;
     }
 
-        // 新增1：删除确认弹窗（使用原生JS弹窗，也可替换为Bootstrap模态框）
+        //删除确认弹窗（使用原生JS弹窗，也可替换为Bootstrap模态框）
     function confirmDelete(button) {
         // 获取商品ID和商品名称（用于弹窗提示）
         const varietyId = button.getAttribute('data-variety-id');
@@ -328,7 +328,7 @@
         }
     }
 
-    // 新增2：发送删除请求（异步）
+    //发送删除请求（异步）
     function deleteVariety(varietyId) {
         $.ajax({
             url: '/variety/delete', // 后端删除接口（需后续定义）

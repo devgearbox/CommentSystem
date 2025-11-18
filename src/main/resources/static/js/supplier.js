@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await res.json();
 
             if (result.success) {
-                alert('添加成功');
+                alert('添加申请已发送，请等待审核');
                 addModal.style.display = 'none';
                 window.location.reload();
             } else {

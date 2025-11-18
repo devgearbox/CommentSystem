@@ -174,7 +174,7 @@ public class AnalyseServiceImpl implements AnalyseService {
         return lastMonthReceived == null ? 0L : lastMonthReceived;
     }
 
-    // 3. 新增：拼接“带图标+样式”的HTML片段（核心修改）
+    // 3. 拼接“带图标+样式”的HTML片段（核心修改）
     private String buildGrowthHtml(String growthRate) {
         String iconClass;
         String displayText;
@@ -193,7 +193,7 @@ public class AnalyseServiceImpl implements AnalyseService {
         return String.format("<i class='fa %s'></i> %s 较上月", iconClass, displayText);
     }
 
-    // 新增：按用户计算所有指标的“较上月”数据（含HTML片段）
+    // 按用户计算所有指标的“较上月”数据（含HTML片段）
     public Map<String, Object> calculateMonthOnMonthGrowthByUser(LocalDateTime currentStart, LocalDateTime currentEnd, Long userId) {
         Map<String, Object> growthResult = new HashMap<>();
 

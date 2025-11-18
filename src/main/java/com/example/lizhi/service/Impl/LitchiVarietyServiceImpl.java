@@ -52,7 +52,7 @@ public class LitchiVarietyServiceImpl implements LitchiVarietyService {
         return repository.save(variety); // 保存商品
     }
 
-    // 新增：按品种名模糊搜索（关联供应商）
+    // 按品种名模糊搜索（关联供应商）
     @Override
     @Transactional(readOnly = true) // 只读事务优化性能
     public List<LitchiVariety> searchByVarietyName(String keyword) {
@@ -63,25 +63,25 @@ public class LitchiVarietyServiceImpl implements LitchiVarietyService {
         return repository.findByVarietyNameContainingWithSupplier(keyword.trim());
     }
 
-    // 实现新增1：按供应商ID列表查询商品
+    // 按供应商ID列表查询商品
     @Override
     @Transactional(readOnly = true)
     public List<LitchiVariety> findBySupplierIds(List<Integer> supplierIds) {
         if (supplierIds == null || supplierIds.isEmpty()) {
             return List.of(); // 无关联供应商时，返回空列表
         }
-        // 调用Repository新增的方法（需在LitchiVarietyRepository中定义）
+        // 调用Repository方法（需在LitchiVarietyRepository中定义）
         return repository.findBySupplier_SupplierIdIn(supplierIds);
     }
 
-    // 实现新增2：按“品种名+供应商ID列表”查询商品
+    //按“品种名+供应商ID列表”查询商品
     @Override
     @Transactional(readOnly = true)
     public List<LitchiVariety> searchByVarietyNameAndSupplierIds(String keyword, List<Integer> supplierIds) {
         if (keyword == null || keyword.trim().isEmpty() || supplierIds.isEmpty()) {
             return findBySupplierIds(supplierIds); // 关键词为空时，按供应商ID列表查
         }
-        // 调用Repository新增的方法（需在LitchiVarietyRepository中定义）
+        // 调用Repository法（需在LitchiVarietyRepository中定义）
         return repository.findByVarietyNameContainingAndSupplier_SupplierIdIn(keyword.trim(), supplierIds);
     }
 

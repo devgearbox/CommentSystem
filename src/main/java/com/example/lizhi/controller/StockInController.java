@@ -1,9 +1,11 @@
 package com.example.lizhi.controller;
 
 import com.example.lizhi.entity.StockIn;
+import com.example.lizhi.entity.User;
 import com.example.lizhi.service.ExcelExportService;
 import com.example.lizhi.service.ReturnOrderService;
 import com.example.lizhi.service.StockInService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -36,9 +38,11 @@ public class StockInController {
     public String getStockInPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
+            HttpSession session,
             Model model) {
 
-        Page<StockIn> stockRecordPage = stockInService.findAllStockIn(page, size);
+        User currentUser = (User) session.getAttribute("currentUser");
+        Page<StockIn> stockRecordPage = stockInService.findAllStockIn(page, size, currentUser);
 
         model.addAttribute("stockRecords", stockRecordPage.getContent());
         model.addAttribute("currentPage", page);
@@ -54,9 +58,11 @@ public class StockInController {
             @RequestParam String orderNo,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
+            HttpSession session,
             Model model) {
 
-        Page<StockIn> stockRecordPage = stockInService.searchByOrderNo(orderNo, page, size);
+        User currentUser = (User) session.getAttribute("currentUser");
+        Page<StockIn> stockRecordPage = stockInService.searchByOrderNo(orderNo, page, size, currentUser);
 
         model.addAttribute("stockRecords", stockRecordPage.getContent());
         model.addAttribute("currentPage", page);

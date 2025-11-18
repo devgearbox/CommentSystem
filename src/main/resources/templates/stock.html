@@ -46,6 +46,16 @@
         color: #383d41;
         border: 1px solid #d6d8db;
     }
+
+    .not-stocked {
+    color: #6c757d;
+    font-style: italic;
+    }
+
+        table th:nth-child(7),
+    table td:nth-child(7) {
+        text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -89,14 +99,17 @@
     <tbody id="stock-table-body">
     <tr th:each="stock : ${stockRecords}">
       <td style="display: none">
-        <input type="checkbox" class="stock-check" th:data-id="${stock.stock_id}">
+        <input type="checkbox" class="stock-check" th:data-id="${stock.stockId}">
       </td>
       <td th:text="${stock.orderNo}"></td>
       <td th:text="${stock.litchi_variety}"></td>
       <td th:text="${stock.order.specification}"></td>
       <td th:text="${stock.quantity}"></td>
       <td th:text="${stock.operator_name}"></td>
-      <td th:text="${stock.update_time}"></td>
+      <td>
+        <span th:if="${stock.stock_in_time != null}" th:text="${stock.stock_in_time}"></span>
+        <span th:if="${stock.stock_in_time == null}" class="not-stocked">-</span>
+      </td>
       <td>
         <span th:classappend="'freshness-status freshness-' + ${stock.freshness_status.cssClass}"
               th:text="${stock.freshness_status.label}"></span>
@@ -104,7 +117,7 @@
       <td th:text="${stock.stock_in_status.label}"></td>
       <td>
         <button class="status-btn"
-                th:data-id="${stock.stock_id}"
+                th:data-id="${stock.stockId}"
                 th:data-status="${stock.stock_in_status}"
                 th:if="${session.currentUser.role != 3}">
           物流更新
@@ -421,7 +434,6 @@
 
       // 构建请求数据
       const requestData = {
-          stockId: parseInt(stockId),
           newStatus: newStatus,
           rejectionReason: newStatus === 'rejected' ? rejectionReason.trim() : null
       };
@@ -447,7 +459,7 @@
           })
           .catch(error => {
               console.error('请求失败：', error);
-              alert('修改失败，请联系对应供应商申请售后');
+              alert('修改失败！订单已签收过，请联系对应供应商申请售后');
           });
   });
 

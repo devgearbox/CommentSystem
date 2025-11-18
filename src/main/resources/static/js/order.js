@@ -301,7 +301,7 @@ if (batchDeleteBtn) { // 只有按钮存在时才执行后续绑定
 
 
     // ====================== 5. 其他弹窗关闭逻辑（统一处理） ======================
-    // 新增订单弹窗关闭
+    // 订单弹窗关闭
     const addModal = document.getElementById('add-modal');
     const addModalClose = document.getElementById('add-modal-close');
     if (addModal && addModalClose) {

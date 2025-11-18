@@ -6,10 +6,7 @@ import com.example.lizhi.entity.Supplier;
 import com.example.lizhi.entity.User;
 import com.example.lizhi.repository.PurchaseOrderRepository;
 import com.example.lizhi.repository.StockInRepository;
-import com.example.lizhi.service.LitchiVarietyService;
-import com.example.lizhi.service.ReturnOrderService;
-import com.example.lizhi.service.StockInService;
-import com.example.lizhi.service.SupplierService;
+import com.example.lizhi.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +27,7 @@ public class StockInServiceImpl implements StockInService {
     private final SupplierService supplierService;
     private final LitchiVarietyService litchiVarietyService;
     private final ReturnOrderService returnOrderService;
+    private final MessageService messageService;
 
     @Override
     @Transactional
@@ -50,7 +49,7 @@ public class StockInServiceImpl implements StockInService {
         stockIn.setLitchi_variety(order.getPurchase_variety());
         stockIn.setQuantity(order.getPurchase_quantity());
         stockIn.setOperator_name(purchaser.getReal_name());
-        stockIn.setOperator_id(Math.toIntExact(purchaser.getId()));
+        stockIn.setOperatorId(Math.toIntExact(purchaser.getId()));
 
         return stockInRepository.save(stockIn);
     }
@@ -65,7 +64,7 @@ public class StockInServiceImpl implements StockInService {
     public StockIn updateStatus(Integer stockId, String newStatus, String rejectionReason) {
         StockIn stockIn = stockInRepository.findById(stockId)
                 .orElseThrow(() -> new RuntimeException("入库单不存在：" + stockId));
-
+        StockIn.FreshnessStatus oldFreshnessStatus = stockIn.getFreshness_status();
         StockIn.StockInStatus newStatusEnum;
         try {
             newStatusEnum = StockIn.StockInStatus.valueOf(newStatus);
@@ -81,8 +80,26 @@ public class StockInServiceImpl implements StockInService {
             throw new RuntimeException("非法状态流转：" + oldStatus.getLabel() + " -> " + newStatusEnum.getLabel());
         }
 
+        // 如果状态变为"已入库"，记录入库完成时间
+        if (newStatusEnum == StockIn.StockInStatus.completed && stockIn.getStock_in_time() == null) {
+            stockIn.setStock_in_time(LocalDateTime.now());
+        }
+
         stockIn.setStock_in_status(newStatusEnum);
+        stockIn.setUpdate_time(LocalDateTime.now());
         StockIn updatedStock = stockInRepository.save(stockIn);
+
+        // 检查保鲜状态变化，如果变为紧急状态则发送消息
+        StockIn.FreshnessStatus newFreshnessStatus = updatedStock.getFreshness_status();
+        if (newFreshnessStatus == StockIn.FreshnessStatus.URGENT &&
+                oldFreshnessStatus != StockIn.FreshnessStatus.URGENT) {
+            try {
+                sendFreshnessUrgentMessage(updatedStock);
+            } catch (Exception e) {
+                // 消息发送失败不应影响主要业务流程
+                System.err.println("发送保鲜紧急提醒失败: " + e.getMessage());
+            }
+        }
 
         String orderNo = stockIn.getOrderNo();
         Optional<PurchaseOrder> orderOptional = purchaseOrderRepository.findByOrderNo(orderNo);
@@ -133,14 +150,46 @@ public class StockInServiceImpl implements StockInService {
         return updatedStock;
     }
 
+    // 发送保鲜紧急提醒消息
+    private void sendFreshnessUrgentMessage(StockIn stockIn) {
+        try {
+            String title = "库存保鲜紧急提醒";
+            String content = String.format(
+                    "入库单 %s 的荔枝品种 %s 数量 %s 斤已进入紧急保鲜状态，请及时处理！入库时间：%s",
+                    stockIn.getOrderNo(),
+                    stockIn.getLitchi_variety(),
+                    stockIn.getQuantity(),
+                    stockIn.getCreateTime() != null ?
+                            stockIn.getCreateTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "未知"
+            );
+
+            // 获取操作员ID（采购员ID）
+            Long recipientId = stockIn.getOperatorId() != null ?
+                    stockIn.getOperatorId().longValue() : null;
+
+            if (recipientId != null) {
+                messageService.sendFreshnessUrgentMessage(stockIn.getOrderNo(), recipientId, content);
+                System.out.println("保鲜紧急提醒发送成功，入库单：" + stockIn.getOrderNo());
+            } else {
+                System.err.println("无法发送保鲜紧急提醒：操作员ID为空，入库单：" + stockIn.getOrderNo());
+            }
+        } catch (Exception e) {
+            System.err.println("发送保鲜紧急提醒异常: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     @Override
-    public Page<StockIn> findAllStockIn(int page, int size) {
+    public Page<StockIn> findAllStockIn(int page, int size, User currentUser) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<StockIn> stockPage = stockInRepository.findAll(pageable);
-        // 为每个入库单计算保鲜状态
-        return stockPage.map(stock -> {
-            return stock;
-        });
+
+        if (currentUser.getRole() == 2) { // 采购员只能看到自己的入库单
+            return stockInRepository.findByOperatorIdOrderByCreateTimeDesc(
+                    Math.toIntExact(currentUser.getId()), pageable);
+        } else { // 管理员和供应商查看所有（根据业务需求调整）
+            Page<StockIn> stockPage = stockInRepository.findAll(pageable);
+            return stockPage.map(stock -> stock);
+        }
     }
 
     @Override
@@ -149,13 +198,16 @@ public class StockInServiceImpl implements StockInService {
     }
 
     @Override
-    public Page<StockIn> searchByOrderNo(String orderNo, int page, int size) {
+    public Page<StockIn> searchByOrderNo(String orderNo, int page, int size, User currentUser) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<StockIn> stockPage = stockInRepository.findByOrderNoContaining(orderNo, pageable);
-        // 为每个入库单计算保鲜状态
-        return stockPage.map(stock -> {
-            return stock;
-        });
+
+        if (currentUser.getRole() == 2) { // 采购员只能搜索自己的入库单
+            return stockInRepository.findByOperatorIdAndOrderNoContaining(
+                    Math.toIntExact(currentUser.getId()), orderNo, pageable);
+        } else { // 管理员和供应商搜索所有
+            Page<StockIn> stockPage = stockInRepository.findByOrderNoContaining(orderNo, pageable);
+            return stockPage.map(stock -> stock);
+        }
     }
 
     @Override

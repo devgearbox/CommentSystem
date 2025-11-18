@@ -140,7 +140,7 @@ public class LoginController {
 
     private static Map<String, PhoneCodeInfo> phoneCodeMap = new ConcurrentHashMap<>();
 
-    // 新增：验证码信息内部类
+    // 验证码信息内部类
     private static class PhoneCodeInfo {
         private String code;
         private long expireTime; // 过期时间戳
@@ -155,7 +155,7 @@ public class LoginController {
         public boolean isExpired() { return System.currentTimeMillis() > expireTime; }
     }
 
-    // 新增：手机号格式校验方法
+    // 手机号格式校验方法
     private boolean isValidPhoneNumber(String phone) {
         if (phone == null || phone.trim().isEmpty()) {
             return false;
@@ -290,7 +290,7 @@ public class LoginController {
             user.setSignature("该用户很懒，什么都没有留下...");
         }
 
-        // 4. 新增：查询当前用户的地址列表（核心修改）
+        // 4.查询当前用户的地址列表（核心修改）
         List<Address> addresses = addressService.getAddressesByUserId(user.getId()); // 使用登录用户的真实ID
         model.addAttribute("addresses", addresses);
 
@@ -389,13 +389,13 @@ public class LoginController {
     @ResponseBody
     public String deleteAddress(
             @RequestParam Long id,
-            HttpSession session // 新增 Session 获取当前用户
+            HttpSession session //  Session 获取当前用户
     ) {
         User currentUser = (User) session.getAttribute("currentUser");
         if (currentUser == null) {
             return "fail"; // 未登录
         }
-        // 校验地址的 userId 是否属于当前用户（需 AddressService 新增方法）
+        // 校验地址的 userId 是否属于当前用户
         boolean isOwned = addressService.isAddressOwnedByUser(id, currentUser.getId());
         if (!isOwned) {
             return "fail"; // 无权删除

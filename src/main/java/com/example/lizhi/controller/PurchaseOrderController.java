@@ -52,7 +52,7 @@ public class PurchaseOrderController {
                 // 供应商角色：只显示自己关联的供应商订单（分页）
                 purchaseOrderPage = orderService.getOrdersByUserId(currentUser.getId(), page, size);
             } else if (currentUser.getRole() == 2) {
-                // 新增：普通用户角色：只显示自己创建的订单（分页）
+                // 普通用户角色：只显示自己创建的订单（分页）
                 purchaseOrderPage = orderService.getOrdersByPurchaserId(currentUser.getId(), page, size);
             } else {
                 // 管理员角色：显示全部未删除的订单（分页）
@@ -132,7 +132,7 @@ public class PurchaseOrderController {
         }
     }
 
-    // 新增提交订单接口，假设前端传参为 JSON 格式
+    // 提交订单接口，假设前端传参为 JSON 格式
     @PostMapping("/work/submit")
     @ResponseBody
     public ResponseEntity<?> submitOrder(
@@ -156,7 +156,7 @@ public class PurchaseOrderController {
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("未找到供应商：" + request.getSupplierName()));
 
-            // 4.新增：查询商品并检查库存
+            // 4.查询商品并检查库存
             List<LitchiVariety> varieties = litchiVarietyService.searchByVarietyName(request.getVarietyName());
             if (varieties.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -224,7 +224,7 @@ public class PurchaseOrderController {
         }
     }
 
-    // 新增状态修改接口
+    // 状态修改接口
     @PutMapping("/api/orders/{orderId}/status")
     public ResponseEntity<?> updateOrderStatus(
             @PathVariable Integer orderId,

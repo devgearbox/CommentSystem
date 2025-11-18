@@ -3,6 +3,7 @@ package com.example.lizhi.service.Impl;
 import com.example.lizhi.entity.Supplier;
 import com.example.lizhi.entity.User;
 import com.example.lizhi.repository.SupplierRepository;
+import com.example.lizhi.service.MessageService;
 import com.example.lizhi.service.SupplierService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
@@ -22,13 +23,15 @@ import java.util.Optional;
 public class SupplierServiceImpl implements SupplierService{
     @Autowired
     private SupplierRepository supplierRepository;
+    @Autowired
+    private MessageService messageService;
 
     @Override
     public List<Supplier> getAllSuppliers() {
         return supplierRepository.findAll();
     }
 
-    // 新增分页实现
+    // 分页实现
     @Override
     public Page<Supplier> getAllSuppliers(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
@@ -40,7 +43,7 @@ public class SupplierServiceImpl implements SupplierService{
         return supplierRepository.findBySupplierNameContaining(name);
     }
 
-    // 新增分页搜索实现
+    // 分页搜索实现
     @Override
     public Page<Supplier> searchSuppliersByName(String name, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
@@ -56,25 +59,33 @@ public class SupplierServiceImpl implements SupplierService{
         // 如果当前用户是供应商角色（role=3），关联用户ID
         if (currentUser != null && currentUser.getRole() == 3) {
             supplier.setUser_id(currentUser.getId());
+            supplier.setStatus(2);
+            // 保存供应商
+            Supplier savedSupplier = supplierRepository.save(supplier);
+
+            // 发送审核通知消息给管理员
+            sendSupplierReviewMessage(savedSupplier, currentUser);
+
+            return savedSupplier;
+        } else {
+            supplier.setStatus(1);
+            return supplierRepository.save(supplier);
         }
-        // 可在此处补充业务逻辑（如默认值设置）
-        supplier.setStatus(2); // 示例：默认状态为 1
-        return supplierRepository.save(supplier);
     }
 
     @Override
     public List<Supplier> getSuppliersByUserId(Long userId) {
-        return supplierRepository.findByUserId(userId);
+        return supplierRepository.findListByUserId(userId);
     }
 
-    // 新增分页实现
+    // 分页实现
     @Override
     public Page<Supplier> getSuppliersByUserId(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        return supplierRepository.findByUserId(userId, pageable);
+        return supplierRepository.findPageByUserId(userId, pageable);
     }
 
-    // 新增：按用户ID和名称搜索（分页）
+    // 按用户ID和名称搜索（分页）
     @Override
     public Page<Supplier> searchSuppliersByNameAndUserId(String name, Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
@@ -164,5 +175,71 @@ public class SupplierServiceImpl implements SupplierService{
             System.err.println("增加供应商订单数量失败: " + e.getMessage());
             throw e; // 重新抛出异常以确保事务回滚
         }
+    }
+
+    /**
+     * 发送供应商审核通知消息给管理员
+     */
+    private void sendSupplierReviewMessage(Supplier supplier, User submitter) {
+        try {
+            // 构建消息内容
+            String messageContent = String.format(
+                    "新的供应商申请等待审核：\n" +
+                            "供应商名称：%s\n" +
+                            "联系人：%s\n" +
+                            "联系电话：%s\n" +
+                            "提交者：%s\n" +
+                            "请及时进行审核处理。",
+                    supplier.getSupplier_name(),
+                    supplier.getContact() != null ? supplier.getContact() : "未填写",
+                    supplier.getPhone() != null ? supplier.getPhone() : "未填写",
+                    submitter.getUsername(),
+                    submitter.getId()
+            );
+
+            // 创建消息对象
+            com.example.lizhi.entity.Message message = new com.example.lizhi.entity.Message();
+            message.setTitle("新供应商申请待审核");
+            message.setContent(messageContent);
+            message.setType(com.example.lizhi.entity.Message.MessageType.SYSTEM_NOTICE);
+
+            // 发送给所有管理员（这里需要根据实际情况确定管理员ID）
+            // 假设管理员角色为1，我们可以发送给特定的管理员ID，或者所有管理员
+            // 这里先发送给ID为1的管理员，您可以根据需要修改
+            message.setRecipientId(1L); // 管理员用户ID
+            message.setSenderId(0L); // 系统发送
+
+            // 保存消息
+            messageService.sendMessage(message);
+
+            System.out.println("供应商审核通知已发送，供应商ID: " + supplier.getSupplier_id());
+
+        } catch (Exception e) {
+            // 记录错误但不影响主要业务流程
+            System.err.println("发送供应商审核通知失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String getSupplierNameByUserId(Long userId) {
+        try {
+            Optional<Supplier> supplierOpt = findByUserId(userId);
+            if (supplierOpt.isPresent()) {
+                return supplierOpt.get().getSupplier_name();
+            } else {
+                // 明确抛出异常，表明用户没有关联供应商
+                throw new RuntimeException("用户ID " + userId + " 没有关联的供应商");
+            }
+        } catch (Exception e) {
+            System.err.println("获取供应商名称失败: " + e.getMessage());
+            throw new RuntimeException("获取供应商名称失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Optional<Supplier> findByUserId(Long userId) {
+        // 修复：调用Repository中返回Optional的方法
+        return supplierRepository.findByUserId(userId);
     }
 }

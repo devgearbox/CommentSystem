@@ -54,8 +54,8 @@ public class ExcelExportService {
                 row.createCell(4).setCellValue(stock.getOperator_name() != null ? stock.getOperator_name() : "");
 
                 // 格式化时间
-                if (stock.getCreate_time() != null) {
-                    row.createCell(5).setCellValue(stock.getCreate_time().format(formatter));
+                if (stock.getCreateTime() != null) {
+                    row.createCell(5).setCellValue(stock.getCreateTime().format(formatter));
                 } else {
                     row.createCell(5).setCellValue("");
                 }

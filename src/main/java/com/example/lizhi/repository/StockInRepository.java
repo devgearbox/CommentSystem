@@ -18,4 +18,10 @@ public interface StockInRepository extends JpaRepository<StockIn, Integer> {
 
     List<StockIn> findByOrderNoContaining(String orderNo);
     Page<StockIn> findByOrderNoContaining(String orderNo, Pageable pageable);
+
+    // 根据经办人ID查询入库单
+    Page<StockIn> findByOperatorIdOrderByCreateTimeDesc(Integer operatorId, Pageable pageable);
+
+    // 根据经办人ID和订单号搜索
+    Page<StockIn> findByOperatorIdAndOrderNoContaining(Integer operatorId, String orderNo, Pageable pageable);
 }

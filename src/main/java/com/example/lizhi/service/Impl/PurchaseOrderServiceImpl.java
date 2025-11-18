@@ -4,10 +4,7 @@ import com.example.lizhi.entity.LitchiVariety;
 import com.example.lizhi.entity.PurchaseOrder;
 import com.example.lizhi.entity.Supplier;
 import com.example.lizhi.repository.PurchaseOrderRepository;
-import com.example.lizhi.service.LitchiVarietyService;
-import com.example.lizhi.service.PurchaseOrderService;
-import com.example.lizhi.service.StockInService;
-import com.example.lizhi.service.SupplierService;
+import com.example.lizhi.service.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,19 +22,21 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     private final StockInService stockInService;
     private final SupplierService supplierService;
     private final LitchiVarietyService litchiVarietyService;
+    private final MessageService messageService;
 
     // 使用构造注入所有依赖
     public PurchaseOrderServiceImpl(
             PurchaseOrderRepository purchaseOrderRepository,
             StockInService stockInService,
             SupplierService supplierService,
-            LitchiVarietyService litchiVarietyService
+            LitchiVarietyService litchiVarietyService, MessageService messageService
     ) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.orderRepository = purchaseOrderRepository; // 使用同一个repository实例
         this.stockInService = stockInService;
         this.supplierService = supplierService;
         this.litchiVarietyService = litchiVarietyService;
+        this.messageService = messageService;
     }
 
     @Override
@@ -143,6 +142,24 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         }
         order.setOrderStatus(newStatusEnum);
         PurchaseOrder updatedOrder = orderRepository.save(order);
+
+        // 当状态变为 shipped 时，发送消息给采购员
+        if (newStatusEnum == PurchaseOrder.OrderStatus.shipped && oldStatus != PurchaseOrder.OrderStatus.shipped) {
+            try {
+                // 发送消息给采购员
+                if (order.getUser() != null) {
+                    messageService.sendOrderShippedMessage(
+                            order.getOrderNo(),
+                            order.getUser().getId(),
+                            order.getSupplier() != null ? order.getSupplier().getSupplier_name() : "未知供应商"
+                    );
+                }
+            } catch (Exception e) {
+                // 消息发送失败不应影响主要业务流程
+                System.err.println("发送订单发货消息失败: " + e.getMessage());
+            }
+            stockInService.createStockInFromOrder(updatedOrder);
+        }
         // 当状态变为 received 时，增加供应商和商品的 order_count
         if (newStatusEnum == PurchaseOrder.OrderStatus.received) {
             // 增加供应商订单数量
@@ -168,12 +185,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
                 System.err.println("订单未关联商品: " + order.getOrderNo());
             }
         }
-
-        // 当状态变为 shipped 时，创建入库记录
-        if (newStatusEnum == PurchaseOrder.OrderStatus.shipped && oldStatus != PurchaseOrder.OrderStatus.shipped) {
-            stockInService.createStockInFromOrder(updatedOrder);
-        }
-
         return updatedOrder;
     }
 

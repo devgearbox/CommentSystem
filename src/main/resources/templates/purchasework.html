@@ -36,13 +36,22 @@
             <span th:if="${session.currentUser.role != 2}">退货管理</span>
             <span th:if="${session.currentUser.role == 2}">退货详情</span>
         </div>
-        <div class="menu-item" data-url="/suppliers" th:if="${session.currentUser.role != 2}">
+        <div class="menu-item"
+             th:if="${session.currentUser.role != 2}"
+             th:attr="data-url=${session.currentUser.role == 3 ? '/supplier/user' : '/suppliers'}">
             <i class="fas fa-users"></i>
-            <span>供应商</span>
+            <span th:if="${session.currentUser.role != 3}">供应商管理</span>
+            <span th:if="${session.currentUser.role == 3}">我的供应商</span>
         </div>
         <div class="menu-item" data-url="/analyse" th:if="${session.currentUser.role != 3}">
             <i class="fas fa-chart-bar"></i>
             <span>采购统计分析</span>
+        </div>
+        <div class="menu-item" data-url="/messages" th:if="${session.currentUser.role != 3}">
+            <i class="fas fa-bell"></i>
+            <span>消息中心
+        <span id="unread-count-badge" class="unread-badge" style="display: none;"></span>
+    </span>
         </div>
         <div class="menu-item" data-url="/settings">
             <i class="fas fa-cog"></i>

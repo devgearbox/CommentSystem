@@ -62,7 +62,7 @@ public class LitchiVarietyController {
             }
         }
 
-        // 4. 执行删除（需在Service中新增delete方法）
+        // 4. 执行删除
         try {
             varietyService.deleteById(varietyId);
             result.put("success", true);

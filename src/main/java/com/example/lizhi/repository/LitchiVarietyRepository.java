@@ -10,14 +10,14 @@ import java.util.List;
 public interface LitchiVarietyRepository extends JpaRepository<LitchiVariety, Integer> {
     @Query("select v from LitchiVariety v left join fetch v.supplier")
     List<LitchiVariety> findAllWithSupplier();
-    // 新增：按variety_name模糊查询（关联供应商）
+    // 按variety_name模糊查询（关联供应商）
     @Query("select v from LitchiVariety v left join fetch v.supplier where v.variety_name like %:keyword%")
     List<LitchiVariety> findByVarietyNameContainingWithSupplier(String keyword);
-    // 新增1：按供应商ID列表查询商品（关联供应商）
+    // 按供应商ID列表查询商品（关联供应商）
     @Query("select v from LitchiVariety v left join fetch v.supplier where v.supplier.supplier_id in :supplierIds")
     List<LitchiVariety> findBySupplier_SupplierIdIn(@Param("supplierIds") List<Integer> supplierIds);
 
-    // 新增2：按“品种名+供应商ID列表”查询商品（关联供应商）
+    // 按“品种名+供应商ID列表”查询商品（关联供应商）
     @Query("select v from LitchiVariety v left join fetch v.supplier where v.variety_name like %:keyword% and v.supplier.supplier_id in :supplierIds")
     List<LitchiVariety> findByVarietyNameContainingAndSupplier_SupplierIdIn(
             @Param("keyword") String keyword,

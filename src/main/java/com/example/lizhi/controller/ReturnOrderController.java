@@ -1,7 +1,9 @@
 package com.example.lizhi.controller;
 
 import com.example.lizhi.entity.ReturnOrder;
+import com.example.lizhi.entity.User;
 import com.example.lizhi.service.ReturnOrderService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -24,9 +26,11 @@ public class ReturnOrderController {
     public String getReturnOrdersPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
+            HttpSession session,
             Model model) {
 
-        Page<ReturnOrder> returnOrderPage = returnOrderService.getAllReturnOrders(page, size);
+        User currentUser = (User) session.getAttribute("currentUser");
+        Page<ReturnOrder> returnOrderPage = returnOrderService.getAllReturnOrders(page, size, currentUser);
 
         model.addAttribute("returnOrders", returnOrderPage.getContent());
         model.addAttribute("currentPage", page);
@@ -75,9 +79,11 @@ public class ReturnOrderController {
             @RequestParam String orderNo,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
+            HttpSession session,
             Model model) {
 
-        Page<ReturnOrder> returnOrderPage = returnOrderService.searchByOrderNo(orderNo, page, size);
+        User currentUser = (User) session.getAttribute("currentUser");
+        Page<ReturnOrder> returnOrderPage = returnOrderService.searchByOrderNo(orderNo, page, size, currentUser);
 
         model.addAttribute("returnOrders", returnOrderPage.getContent());
         model.addAttribute("currentPage", page);

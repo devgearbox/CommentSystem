@@ -9,12 +9,12 @@ import java.util.Optional;
 public interface SupplierService {
     List<Supplier> getAllSuppliers();
 
-    // 新增分页方法
+    // 分页方法
     Page<Supplier> getAllSuppliers(int page, int size);
 
     List<Supplier> searchSuppliersByName(String name);
 
-    // 新增分页搜索方法
+    // 分页搜索方法
     Page<Supplier> searchSuppliersByName(String name, int page, int size);
 
     Supplier addSupplier(Supplier supplier);
@@ -23,11 +23,23 @@ public interface SupplierService {
     Supplier updateSupplier(Supplier supplier);
     List<Supplier> getSuppliersByUserId(Long userId);
 
-    // 新增分页方法
+    // 分页方法
     Page<Supplier> getSuppliersByUserId(Long userId, int page, int size);
 
-    // 新增：按用户ID和名称搜索（分页）
+    // 按用户ID和名称搜索（分页）
     Page<Supplier> searchSuppliersByNameAndUserId(String name, Long userId, int page, int size);
 
     void incrementOrderCount(Integer supplierId);
+
+    /**
+     * 根据用户ID获取供应商名称
+     * 基于"一个供应商用户只能对应一个供应商"的设计原则
+     */
+    String getSupplierNameByUserId(Long userId);
+
+    /**
+     * 根据用户ID查找供应商
+     * 基于"一个供应商用户只能对应一个供应商"的设计原则
+     */
+    Optional<Supplier> findByUserId(Long userId);
 }
