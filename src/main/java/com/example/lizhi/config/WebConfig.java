@@ -26,20 +26,21 @@ public class WebConfig implements WebMvcConfigurer {
         System.out.println("图片资源映射: " + uploadPath);
     }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loginInterceptor)
-                .addPathPatterns("/**")
-                .excludePathPatterns(
-                        "/login",
-                        "/register",
-                        "/css/**",
-                        "/js/**",
-                        "/images/**",
-                        "/img/**",
-                        "/error",
-                        "/api/public/**",
-                        "/uploads/img/**"
-                );
-    }
+//    @Override
+//    public void addInterceptors(InterceptorRegistry registry) {
+//        registry.addInterceptor(loginInterceptor)
+//                .addPathPatterns("/**")
+//                .excludePathPatterns(
+//                        "/login",
+//                        "/register",
+//                        "/css/**",
+//                        "/js/**",
+//                        "/images/**",
+//                        "/img/**",
+//                        "/error",
+//                        "/api/public/**",
+//                        "/uploads/img/**",
+//                        "/payment/**"
+//                );
+//    }
 }

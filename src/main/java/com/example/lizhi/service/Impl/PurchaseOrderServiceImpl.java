@@ -365,4 +365,18 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
             return false;
         }
     }
+
+    @Override
+    public BigDecimal getMonthlyRevenueBySupplierId(Integer supplierId) {
+        if (supplierId == null) {
+            return BigDecimal.ZERO;
+        }
+
+        try {
+            return purchaseOrderRepository.sumMonthlyRevenueBySupplierId(supplierId);
+        } catch (Exception e) {
+            System.err.println("计算供应商本月收入失败: " + e.getMessage());
+            return BigDecimal.ZERO;
+        }
+    }
 }

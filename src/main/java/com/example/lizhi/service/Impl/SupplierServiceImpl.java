@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -241,5 +242,25 @@ public class SupplierServiceImpl implements SupplierService{
     public Optional<Supplier> findByUserId(Long userId) {
         // 修复：调用Repository中返回Optional的方法
         return supplierRepository.findByUserId(userId);
+    }
+
+    @Override
+    public Integer getProductCountBySupplierId(Integer supplierId) {
+        try {
+            return supplierRepository.getProductCountBySupplierId(supplierId);
+        } catch (Exception e) {
+            System.err.println("获取供应商商品数量失败: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    @Override
+    public BigDecimal getMonthlyRevenueBySupplierId(Integer supplierId) {
+        try {
+            return supplierRepository.getMonthlyRevenueBySupplierId(supplierId);
+        } catch (Exception e) {
+            System.err.println("获取供应商本月收入失败: " + e.getMessage());
+            return BigDecimal.ZERO;
+        }
     }
 }

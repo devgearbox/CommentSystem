@@ -121,4 +121,15 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, In
             "WHERE po.litchiVariety.id = :varietyId " +
             "AND po.isDeleted = false")
     BigDecimal sumPurchaseQuantityByVarietyId(@Param("varietyId") Integer varietyId);
+
+    /**
+     * 根据供应商ID获取本月已接收订单的总金额
+     */
+    @Query("SELECT COALESCE(SUM(po.totalPrice), 0) FROM PurchaseOrder po " +
+            "WHERE po.supplier.supplier_id = :supplierId " +
+            "AND po.orderStatus = 'received' " +
+            "AND po.isDeleted = false " +
+            "AND YEAR(po.createTime) = YEAR(CURRENT_DATE) " +
+            "AND MONTH(po.createTime) = MONTH(CURRENT_DATE)")
+    BigDecimal sumMonthlyRevenueBySupplierId(@Param("supplierId") Integer supplierId);
 }

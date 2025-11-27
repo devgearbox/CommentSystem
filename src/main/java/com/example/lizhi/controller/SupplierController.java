@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,9 +148,21 @@ public class SupplierController {
         Optional<Supplier> supplierOpt = supplierService.findByUserId(currentUser.getId());
 
         if (supplierOpt.isPresent()) {
-            model.addAttribute("supplier", supplierOpt.get());
+            Supplier supplier = supplierOpt.get();
+            model.addAttribute("supplier", supplier);
+
+            // 计算统计数据
+            Integer productCount = supplierService.getProductCountBySupplierId(supplier.getSupplier_id());
+            BigDecimal monthlyRevenue = supplierService.getMonthlyRevenueBySupplierId(supplier.getSupplier_id());
+
+            model.addAttribute("productCount", productCount);
+            model.addAttribute("monthlyRevenue", monthlyRevenue);
+
         } else {
             model.addAttribute("supplier", null);
+            model.addAttribute("totalOrders", 0);
+            model.addAttribute("productCount", 0);
+            model.addAttribute("monthlyRevenue", BigDecimal.ZERO);
         }
 
         return "supplier-user";

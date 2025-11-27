@@ -145,11 +145,11 @@
                 <div class="stat-label">累计订单</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">--</div>
+                <div class="stat-number" th:text="${productCount}">0</div>
                 <div class="stat-label">上架商品</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">--</div>
+                <div class="stat-number" th:text="${'¥' + #numbers.formatDecimal(monthlyRevenue, 0, 'COMMA', 2, 'POINT')}">¥0.00</div>
                 <div class="stat-label">本月收入</div>
             </div>
         </div>

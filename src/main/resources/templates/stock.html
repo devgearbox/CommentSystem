@@ -494,7 +494,6 @@
       const statusElements = document.querySelectorAll('.freshness-status');
       statusElements.forEach(element => {
           const statusText = element.textContent;
-          // 根据文本内容设置对应的CSS类
           if (statusText.includes('新鲜')) {
               element.className = 'freshness-status freshness-fresh';
           } else if (statusText.includes('预警')) {

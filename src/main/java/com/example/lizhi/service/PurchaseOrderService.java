@@ -50,4 +50,5 @@ public interface PurchaseOrderService {
 
     BigDecimal getTotalSalesQuantityByVarietyId(Integer varietyId);
     boolean isOrderPaid(String orderId);
+    BigDecimal getMonthlyRevenueBySupplierId(Integer supplierId);
 }

@@ -142,14 +142,12 @@ public class FeedbackServiceImpl implements FeedbackService {
     private void sendFeedbackProcessedMessage(Feedback feedback) {
         try {
             String messageContent = String.format(
-                    "您的反馈已被处理。反馈内容：%s。处理备注：%s",
-                    feedback.getId(),
+                    "您的反馈已被处理；反馈内容：%s；处理备注：%s",
                     // 截取内容前50个字符，避免消息过长
                     feedback.getContent().length() > 50 ?
                             feedback.getContent().substring(0, 50) + "..." : feedback.getContent(),
                     feedback.getProcessRemark() != null ? feedback.getProcessRemark() : "无"
             );
-
             // 创建消息对象
             com.example.lizhi.entity.Message message = new com.example.lizhi.entity.Message();
             message.setTitle("反馈处理完成通知");

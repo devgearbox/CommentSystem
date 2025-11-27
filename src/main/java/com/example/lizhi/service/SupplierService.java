@@ -3,6 +3,7 @@ package com.example.lizhi.service;
 import com.example.lizhi.entity.Supplier;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,4 +43,13 @@ public interface SupplierService {
      * 基于"一个供应商用户只能对应一个供应商"的设计原则
      */
     Optional<Supplier> findByUserId(Long userId);
+    /**
+     * 获取供应商上架的商品数量
+     */
+    Integer getProductCountBySupplierId(Integer supplierId);
+
+    /**
+     * 获取供应商本月收入
+     */
+    BigDecimal getMonthlyRevenueBySupplierId(Integer supplierId);
 }
